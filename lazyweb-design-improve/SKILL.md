@@ -42,7 +42,17 @@ Determine the CLI command. Check in order:
 2. `lazyweb` on PATH (try `which lazyweb`)
 3. Fall back to `bun run ~/Dropbox/cli-lazyweb/src/index.ts`
 
-Before searching, verify the backend: `$LAZYWEB_CLI health`
+Before searching, verify the CLI is authenticated: `$LAZYWEB_CLI health`
+
+**If the CLI is not found or not configured:**
+Tell the user: "Lazyweb CLI is not installed. You can get it at https://lazyweb.com/ —
+you'll need a subscription to access the screenshot database. Once purchased, run
+`lazyweb auth <your-user-id>` to authenticate."
+Then proceed with web research only — the skill still works, just without Lazyweb's database.
+
+**If auth fails (401/403):**
+Tell the user: "Your Lazyweb subscription may have expired. Visit https://lazyweb.com/
+to renew, then run `lazyweb auth <your-user-id>` to re-authenticate."
 
 ## Workflow
 
@@ -70,26 +80,40 @@ If no screenshot can be captured, ask the user to provide one. Don't proceed wit
 Use image comparison to find visually similar screens:
 
 ```bash
-$LAZYWEB_CLI compare <path-to-current-screenshot> --limit 20 --json
+$LAZYWEB_CLI compare <path-to-current-screenshot> --limit 30 --json
 ```
 
-Also do a text search for the screen type:
+Also do text searches for the screen type with multiple angles:
 
 ```bash
-$LAZYWEB_CLI search "<description of the screen>" --limit 20 --json
+$LAZYWEB_CLI search "<description of the screen>" --limit 30 --json
+$LAZYWEB_CLI search "<alternative description>" --limit 30 --json
+$LAZYWEB_CLI search "<specific component>" --limit 30 --json
 ```
 
 If you know the category, filter: `--category "<category>"`
 
-### 3. Supplement with Web Research
+**Explore generously.** Run 3-5 searches to find the best references. More raw material
+means better improvement ideas.
 
-Search for best-in-class examples of this screen type:
-- "[screen type] best design examples [current year]"
-- "[competitor] [screen type] design"
+### 3. Web Research (REQUIRED for balance)
+
+**Always supplement with web research**, especially for desktop/web designs.
+
+- Search for "[screen type] best design examples [current year]"
+- Search for "[competitor] [screen type] design"
+- Search for "best [screen type] UX"
+
+**Use the browse tool** (if available) to capture screenshots of best-in-class desktop/web
+examples. Save them to the references folder.
+
+**Platform balance:** If the user's design is for desktop/web, you MUST include desktop/web
+references — don't only show mobile Lazyweb results. Cross-platform inspiration is
+valuable (mobile patterns often translate to web beautifully), but the references should
+reflect the user's target platform. Aim for at least 50% same-platform references.
 
 ### 4. Download References
 
-Determine the absolute path for this report's directory:
 ```bash
 REPORT_DIR="$(pwd)/.lazyweb/design-improve/{screen-slug}-{YYYY-MM-DD}"
 mkdir -p "$REPORT_DIR/references"
@@ -100,13 +124,16 @@ Copy the current screenshot:
 cp <current-screenshot> "$REPORT_DIR/references/current.png"
 ```
 
-Download Lazyweb results (cap 20):
+Download Lazyweb results (cap 30):
 ```bash
 curl -sL "{imageUrl}" -o "$REPORT_DIR/references/{company}-{screen}.png"
 ```
 
-Use relative paths for image references in the report:
-`![Alt](references/company-screen.png)`
+For web screenshots:
+```bash
+$B goto <url>
+$B screenshot "$REPORT_DIR/references/{company}-{screen}.png"
+```
 
 ### 5. Analyze and Generate Ideas
 
@@ -132,27 +159,22 @@ Generate 1-5 concrete improvement ideas. Each must be:
 
 Write to `.lazyweb/design-improve/{screen-slug}-{YYYY-MM-DD}/report.md`
 
+**Reverse pyramid:** Lead with what to do, then show the evidence.
+
 ```markdown
 # Design Improvement: {Screen/Feature}
 
 ## TL;DR
 {The single biggest opportunity — 1-2 sentences}
 
-## Current State
-![Current Design](references/current.png)
-
-## What's Working
-{Be specific about what's good. Developers need to know what NOT to change.
-List 2-4 concrete things that are done well.}
-
 ## Improvement Ideas
 
-### 1. {Idea Title}
+### 1. {Idea Title} ⭐ (highest impact)
 {Clear description of what to change and why}
 
 **Inspired by:**
 ![Reference](references/stripe-pricing.png)
-*{Company} — {What they do that inspired this idea}*
+*{Company} — {What they do that inspired this idea} [{Lazyweb|Web}]*
 
 **Why this works:** {What makes this pattern effective in the reference,
 and why it would work for the user's product}
@@ -163,9 +185,18 @@ and why it would work for the user's product}
 ### 3. {Idea Title}
 ...
 
-## References
-{Gallery of all reference screenshots used, with company and context}
+## What's Working
+{Be specific about what's good. Developers need to know what NOT to change.
+List 2-4 concrete things that are done well.}
+
+## Current State
+![Current Design](references/current.png)
+
+## All References
+{Gallery of all reference screenshots used, with company, source, and context}
 ```
+
+Label each reference `[Lazyweb]` or `[Web]` for provenance.
 
 ### 7. Generate HTML Report
 
@@ -173,16 +204,11 @@ After writing report.md, generate a `report.html` alongside it for visual previe
 The HTML report should:
 - Be a self-contained single HTML file with inline CSS (no external dependencies)
 - Use clean, readable styling: system fonts, max-width 900px, comfortable line-height
-- Reference images using RELATIVE paths (`references/filename.png`) — HTML files loaded
-  in a browser resolve relative paths correctly from their own directory
+- Reference images using RELATIVE paths (`references/filename.png`)
 - Style images with rounded corners, subtle shadow, max-width that fits the layout
 - Use a light blue callout box for the TL;DR section
-- Include proper semantic HTML (h1, h2, h3, p, ul, ol, table)
 - Make tables clean with light borders and header background
 - Open the HTML file in the user's browser: `open "$REPORT_DIR/report.html"`
-
-**IMPORTANT:** The markdown report.md should ALSO use relative paths (`references/filename.png`).
-The HTML is the primary visual preview — markdown is for reading/editing in editors.
 
 Tell the user where the report was saved.
 

@@ -44,8 +44,17 @@ Determine the CLI command. Check in order:
 2. `lazyweb` on PATH (try `which lazyweb`)
 3. Fall back to `bun run ~/Dropbox/cli-lazyweb/src/index.ts`
 
-Before searching, verify the backend: `$LAZYWEB_CLI health`
-If down, tell the user and proceed with web research only.
+Before searching, verify the CLI is authenticated: `$LAZYWEB_CLI health`
+
+**If the CLI is not found or not configured:**
+Tell the user: "Lazyweb CLI is not installed. You can get it at https://lazyweb.com/ —
+you'll need a subscription to access the screenshot database. Once purchased, run
+`lazyweb auth <your-user-id>` to authenticate."
+Then proceed with web research only — the skill still works, just without Lazyweb's database.
+
+**If auth fails (401/403):**
+Tell the user: "Your Lazyweb subscription may have expired. Visit https://lazyweb.com/
+to renew, then run `lazyweb auth <your-user-id>` to re-authenticate."
 
 ## Workflow
 
@@ -68,7 +77,7 @@ Run multiple searches with different angles:
 
 ```bash
 # Search by screen type
-$LAZYWEB_CLI search "<specific screen/component>" --limit 20 --json
+$LAZYWEB_CLI search "<specific screen/component>" --limit 30 --json
 
 # Search by competitor
 $LAZYWEB_CLI search "<screen type>" --company "<competitor>" --json
@@ -76,18 +85,40 @@ $LAZYWEB_CLI search "<screen type>" --company "<competitor>" --json
 # Search with category filter
 $LAZYWEB_CLI search "<screen type>" --category "<category>" --json
 
-# Try alternative framings
-$LAZYWEB_CLI search "<different description of same thing>" --limit 20 --json
+# Try alternative framings — explore widely
+$LAZYWEB_CLI search "<different description of same thing>" --limit 30 --json
+$LAZYWEB_CLI search "<even more specific variant>" --limit 30 --json
 ```
 
 **Assess quality:** `matchCount` 2/3 or 3/3 = strong. 1/3 = weak. `similarity` > 0.4 = good.
 
-### 4. Supplement with Web Research
+**Explore generously.** Run 3-5 searches minimum with different query angles. Cast a wide
+net — you can filter later. Don't stop at the first search.
 
-For gaps — especially desktop/web designs, recent apps, or niche categories:
-- Search for "[screen type] design patterns [current year]"
-- Search for "[competitor] [feature] UX"
-- Look for curated design galleries and blog analyses
+### 4. Web Research (REQUIRED — not optional)
+
+Lazyweb is strong for mobile app screenshots. But most design research also needs
+desktop/web examples, recent trends, and expert analysis. **Always do web research
+alongside Lazyweb**, even when Lazyweb results are good.
+
+For desktop/web examples:
+- Search for "[screen type] design examples desktop [current year]"
+- Search for "[competitor name] [feature] desktop"
+- Search for "best [screen type] web design"
+
+For analysis and expert opinion:
+- Search for "[topic] UX best practices"
+- Search for "[topic] design patterns analysis"
+
+**Use the browse tool** (if available) to capture screenshots of desktop/web examples.
+Save them to the references folder alongside Lazyweb screenshots. This is critical —
+the report needs BOTH mobile and desktop references for balance.
+
+**Platform balance rule:** If the user's product is desktop/web, aim for at least 50%
+desktop/web references. If mobile, Lazyweb can be primary but still include 2-3 web
+examples for broader context. Cross-pollination between mobile and desktop is valuable —
+mobile patterns often work great on web and vice versa — but the report should reflect
+the user's target platform.
 
 ### 5. Download References
 
@@ -102,38 +133,49 @@ For each strong Lazyweb result, download the image:
 curl -sL "{imageUrl}" -o "$REPORT_DIR/references/{company}-{screen-slug}.png"
 ```
 
-Cap at 20 images total. Name files descriptively: `stripe-pricing-page.png`, `linear-onboarding-step1.png`.
+For web-found examples, use the browse tool to screenshot them:
+```bash
+$B goto <url>
+$B screenshot "$REPORT_DIR/references/{company}-{screen-slug}.png"
+```
 
-For web-found examples, use the browse tool or screenshot tools if available to capture them. If not available, describe them in the report and note they couldn't be captured locally.
+Cap at 30 images total. Name files descriptively: `stripe-pricing-page.png`, `linear-onboarding-step1.png`.
 
-Use relative paths for image references in the report:
-`![Alt](references/company-screen.png)`
+Label each reference with its source in the report: `[Lazyweb]` or `[Web]` so the
+user knows the provenance.
 
 ### 6. Write the Report
 
 Write to `.lazyweb/design-research/{topic-slug}-{YYYY-MM-DD}/report.md`
 
-**Skip sections that don't apply.** A narrow question doesn't need all 7 sections. Only include sections where you have real findings.
+**Reverse pyramid structure:** Lead with action, back into analysis. The reader should
+get the answer in the first 30 seconds, then optionally dive deeper.
+
+**Skip sections that don't apply.** A narrow question doesn't need all sections. Only include sections where you have real findings.
 
 ```markdown
 # Design Research: {Topic}
 
 ## TL;DR
-{2-3 sentences. The most important finding. What should the user take away?}
+{2-3 sentences. The single most important finding and what to do about it.}
 
-## Examples
-{Screenshot gallery — the visual centerpiece of the report.
-Each with company name, inline image, and 1-line description.}
+## Recommendations / Next Steps
+{What to implement, in priority order. Each recommendation tied to evidence below.
+This is the ACTION section — specific, implementable guidance.}
+
+1. **{Recommendation}** — {Why, with reference to evidence}
+2. **{Recommendation}** — {Why}
+3. **{Recommendation}** — {Why}
+
+## Key Examples
+{The visual centerpiece. Screenshot gallery with company, source, and 1-line insight.
+Mix of Lazyweb and web-captured screenshots. Label each source.}
 
 ![Stripe Pricing](references/stripe-pricing-page.png)
-*Stripe — Toggle between monthly/annual, social proof above pricing tiers*
+*Stripe — Toggle between monthly/annual, social proof above pricing tiers [Web]*
 
 ![Linear Onboarding](references/linear-onboarding.png)
-*Linear — Single question per screen, progress bar, minimal UI*
-
-## Findings
-{What the research reveals about this problem space.
-Key observations, not just descriptions of screenshots.}
+*Linear — Single question per screen, progress bar, minimal UI [Lazyweb]*
 
 ## Patterns
 {Common denominators — things the best examples share.
@@ -148,13 +190,13 @@ Specific examples from the research, not generic advice.}
 ONE company does that made you stop and look twice. The X100 detail.
 Could be a micro-interaction, an unusual layout, a clever copy choice.}
 
-## Recommendations / Next Steps
-{Actionable guidance tied to the user's specific context.
-What should they do with this research?}
+## Findings
+{Deeper analysis of the research. How we arrived at the recommendations above.
+What the research reveals about this problem space.}
 
 ## Sources
 {Compact list. Lazyweb screenshots are cited inline above.
-Web sources listed here.}
+Web sources listed here with URLs.}
 ```
 
 ### 7. Generate HTML Report
@@ -171,9 +213,6 @@ The HTML report should:
 - Make tables clean with light borders and header background
 - Open the HTML file in the user's browser: `open "$REPORT_DIR/report.html"`
 
-**IMPORTANT:** The markdown report.md should ALSO use relative paths (`references/filename.png`).
-The HTML is the primary visual preview — markdown is for reading/editing in editors.
-
 Tell the user where the report was saved. Mention they may want to add `.lazyweb/` to `.gitignore`.
 
 ## Quality Calibration
@@ -183,3 +222,4 @@ Tell the user where the report was saved. Mention they may want to add `.lazyweb
 - Your synthesis is interpretation — label it as such
 - Don't over-index on weak Lazyweb results (matchCount 1/3, similarity < 0.3)
 - When the corpus is weak for a topic, say so. Don't pad with irrelevant results.
+- A report with 5 strong references beats 20 weak ones
