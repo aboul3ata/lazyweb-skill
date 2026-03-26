@@ -21,39 +21,43 @@ allowed-tools:
 
 Search Lazyweb's database of real app screenshots for design inspiration and UI references.
 
-## Prerequisites
+## CLI Setup
 
-The Lazyweb backend must be running locally:
-```bash
-cd ~/Dropbox/cli-lazybackend && bun run src/index.ts &
-```
+Determine the CLI command. Check in order:
+1. `LAZYWEB_CLI` environment variable (if set, use it)
+2. `lazyweb` on PATH (try `which lazyweb`)
+3. Fall back to `bun run ~/Dropbox/cli-lazyweb/src/index.ts`
 
-The CLI lives at `~/Dropbox/cli-lazyweb/src/index.ts`.
+Store the resolved command and use it for all searches in this session.
+
+The backend must be running. Check with `$LAZYWEB_CLI health`. If the backend is
+unreachable, tell the user: "Lazyweb backend is not running. Start it with
+`cd ~/Dropbox/cli-lazybackend && bun run dev`" (or wherever their backend lives).
 
 ## CLI Reference
 
 ```bash
 # Text search — find screenshots matching a description
-bun run ~/Dropbox/cli-lazyweb/src/index.ts search "<query>" --limit N --json
+$LAZYWEB_CLI search "<query>" --limit N --json
 
 # Image comparison — find screenshots visually similar to a local image
-bun run ~/Dropbox/cli-lazyweb/src/index.ts compare <image-path> --limit N --json
+$LAZYWEB_CLI compare <image-path> --limit N --json
 
 # Similar — find screenshots similar to one you already found
-bun run ~/Dropbox/cli-lazyweb/src/index.ts similar <screenshot-id> --limit N --json
+$LAZYWEB_CLI similar <screenshot-id> --limit N --json
 
 # Filter by category or company
-bun run ~/Dropbox/cli-lazyweb/src/index.ts search "<query>" --category "Productivity" --company "linear" --json
+$LAZYWEB_CLI search "<query>" --category "Productivity" --company "linear" --json
 
 # Rich metadata (opt-in to save tokens by default)
-bun run ~/Dropbox/cli-lazyweb/src/index.ts search "<query>" --fields business_model,high_design_bar,tags --json
+$LAZYWEB_CLI search "<query>" --fields business_model,high_design_bar,tags --json
 ```
 
 Always use `--json` when invoking programmatically. The JSON output includes:
 - `screenshotId`, `screenshotName`, `companyName`, `category`
 - `imageUrl` — signed URL (expires in 1 hour, use promptly)
 - `similarity` — cosine similarity score (0-1)
-- `matchCount` — how many of 3 embedding providers agreed (1/3, 2/3, or 3/3)
+- `matchCount` — confidence indicator showing how many search models agreed
 
 ## How to Search Well
 
@@ -78,8 +82,8 @@ Sports, Travel, Utilities, Weather, and more. Use `--category` to narrow results
 Results include `matchCount` and `similarity` — use these to gauge confidence:
 
 **Strong results** (trust and present to user):
-- `matchCount` of 2/3 or 3/3 — multiple embedding models agree this is relevant
-- `similarity` above 0.5 — strong semantic match
+- `matchCount` of 2/3 or 3/3 — multiple search models agree this is relevant
+- `similarity` above 0.4 — strong semantic match
 
 **Weak results** (use with caveats or supplement):
 - All results have `matchCount` of 1/3 — only one model thought this was relevant
@@ -89,8 +93,20 @@ Results include `matchCount` and `similarity` — use these to gauge confidence:
 **When results are weak**, do not present them as strong matches. Instead:
 1. Tell the user what you found and that relevance is limited
 2. Try rephrasing the query — be more specific about the UI element, not the concept
-3. Try breaking a complex query into simpler parts (search for the screen type separately from the style)
+3. Try breaking a complex query into simpler parts
 4. Supplement with web research for the specific use case
+
+## Visual Output — The Whole Point
+
+Your primary value is VISUAL. When presenting Lazyweb results:
+
+1. ALWAYS include image URLs — these are signed URLs that can be viewed by the user
+2. Show at least the top 3-5 results with their images
+3. For each result, show: company name, screen description, and image URL
+4. After showing images, synthesize what patterns you see across them
+
+The user came to Lazyweb for VISUAL inspiration. Text descriptions of screenshots
+defeat the entire purpose. Show the images first, analyze second.
 
 ## Follow-up Strategies
 
@@ -102,14 +118,16 @@ When the user wants to go deeper after initial results:
 - **"What about competitors?"** → Search for the same screen type across different companies
 - **"Can you find the actual flow?"** → Search for sequential screens: "onboarding step 1", "onboarding step 2", etc.
 
-## Presenting Results to the User
+## Presenting Results
 
-When showing Lazyweb results to the user:
-- Show the image URL so they can see the screenshot
-- Name the company and what the screen shows
-- If multiple results, highlight what's common across them (patterns)
-- If the user is building something, connect the reference to their specific use case
-- Don't just dump a list — synthesize what you see across the results
+**Priority order:**
+1. Screenshot image URLs from Lazyweb (these ARE the content)
+2. Company name and what the screen shows
+3. Patterns across multiple results
+4. Connection to the user's specific use case
+
+Don't just dump a list — synthesize what you see across the results.
+Group by pattern when multiple results share an approach.
 
 ## When NOT to Use Lazyweb
 

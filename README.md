@@ -71,12 +71,7 @@ Copy `.env.example` to `.env` and fill in your API keys:
 cp .env.example .env
 ```
 
-Required keys:
-- `SUPABASE_URL` — Your Lazyweb Supabase project URL
-- `SUPABASE_SERVICE_ROLE_KEY` — Service role key for the project
-- `OPENAI_API_KEY` — For text embeddings
-- `VOYAGE_API_KEY` — For multimodal embeddings
-- `COHERE_API_KEY` — For embeddings + reranking
+See `.env.example` for the required API keys.
 
 ### 4. Start the backend
 
@@ -104,18 +99,11 @@ cd cli-lazyweb && bun run src/index.ts search "pricing page" --limit 3
 | `lazyweb similar 12345` | Find screenshots similar to one you already found |
 | `lazyweb search "pricing" --fields high_design_bar` | Include rich metadata |
 
-Results include consensus scoring (`matchCount`) from 3 embedding models — your agent knows which results to trust and which to supplement with web research.
+Results include a confidence score so your agent knows which results to trust and which to supplement with web research.
 
 ## How it works
 
-The backend runs a full ensemble search ported from Lazyweb's production system:
-
-1. **3 parallel embeddings** — OpenAI, Voyage (multimodal), and Cohere
-2. **3 parallel database searches** — Each against its own vector index
-3. **Reranking** — Cohere and Voyage rerankers refine results per provider
-4. **Consensus scoring** — Results ranked by how many models agree (3/3 > 2/3 > 1/3)
-5. **Per-company dedup** — One result per company by default
-6. **Version history** — Latest version of each screen automatically used
+Lazyweb searches across multiple AI models simultaneously and uses consensus scoring to surface the most relevant results. One result per company by default, latest version of each screen automatically used.
 
 ## License
 
