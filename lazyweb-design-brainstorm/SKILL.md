@@ -112,6 +112,7 @@ First, understand what everyone in the user's space does. Quick search in the ob
 
 ```bash
 $LAZYWEB_CLI search "<screen type>" --category "<their category>" --limit 10 --json
+$LAZYWEB_CLI search "<screen type>" --category "<their category>" --platform desktop --limit 10 --json
 ```
 
 This establishes the baseline — the "zig" that everyone does.
@@ -131,8 +132,19 @@ The more different the category, the more novel the inspiration.
 # Search for the SAME screen type in DIFFERENT categories
 $LAZYWEB_CLI search "<screen type>" --category "Gaming" --limit 15 --json
 $LAZYWEB_CLI search "<screen type>" --category "Entertainment" --limit 15 --json
-$LAZYWEB_CLI search "<screen type>" --category "Social Networking" --limit 15 --json
+$LAZYWEB_CLI search "<screen type>" --category "Social Networking" --platform desktop --limit 15 --json
 ```
+
+**Platform routing:** Lazyweb has both mobile app screenshots and desktop/web site screenshots.
+- `--platform mobile` — mobile app screenshots only
+- `--platform desktop` — desktop/web site screenshots only
+- `--platform all` (default) — search both, results grouped desktop-first then mobile
+- A mac app, SaaS dashboard, or web product → use `--platform desktop`
+- An iPhone/Android app → use `--platform mobile`
+- General research or cross-platform → omit (searches both)
+
+Each result includes a `platform` field ("mobile" or "desktop") so you know the source.
+Desktop results also include a `pageUrl` field with the original site URL.
 
 Also try searching for the underlying FUNCTION rather than the screen name:
 - Instead of "dashboard" → search "data visualization with gamification"
@@ -157,8 +169,8 @@ Mismatched references destroy user trust faster than anything else.
 
 ### 5. Web Research (REQUIRED for balance)
 
-Lazyweb provides great mobile references for cross-pollination. But the brainstorm
-also needs desktop/web examples — especially if the user's product is for web.
+Lazyweb covers both mobile and desktop screenshots for cross-pollination. But the
+brainstorm also benefits from additional web research for unconventional takes.
 
 **Always search the web** for unconventional takes:
 - "unconventional [screen type] design"
@@ -166,13 +178,14 @@ also needs desktop/web examples — especially if the user's product is for web.
 - "creative [screen type] examples [current year]"
 - "[award-winning site] [screen type]" — Awwwards, FWA, CSS Design Awards winners
 
-**Use the browse tool** (if available) to capture screenshots of standout web examples.
-Desktop/web examples are often the most novel cross-pollination sources because they
-have more design freedom than mobile.
+**Use the browse tool** (if available) to capture additional screenshots of standout
+live sites. Desktop/web examples are often the most novel cross-pollination sources
+because they have more design freedom than mobile.
 
-**Platform balance:** Even for a mobile product, include 2-3 desktop/web examples.
-Patterns transfer across platforms — a novel web layout can inspire a fresh mobile
-approach and vice versa. Aim for a healthy mix.
+**Platform balance:** Use `--platform desktop` or `--platform mobile` to match the
+user's target platform, but also deliberately search the OTHER platform for
+cross-pollination. Patterns transfer across platforms — a novel web layout can inspire
+a fresh mobile approach and vice versa. Aim for a healthy mix.
 
 ### 6. Download References
 

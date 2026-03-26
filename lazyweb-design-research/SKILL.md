@@ -120,10 +120,25 @@ $LAZYWEB_CLI search "<screen type>" --company "<competitor>" --json
 # Search with category filter
 $LAZYWEB_CLI search "<screen type>" --category "<category>" --json
 
+# Search a specific platform
+$LAZYWEB_CLI search "<screen type>" --platform desktop --limit 30 --json
+$LAZYWEB_CLI search "<screen type>" --platform mobile --limit 30 --json
+
 # Try alternative framings — explore widely
 $LAZYWEB_CLI search "<different description of same thing>" --limit 30 --json
 $LAZYWEB_CLI search "<even more specific variant>" --limit 30 --json
 ```
+
+**Platform routing:** Lazyweb has both mobile app screenshots and desktop/web site screenshots.
+- `--platform mobile` — mobile app screenshots only
+- `--platform desktop` — desktop/web site screenshots only
+- `--platform all` (default) — search both, results grouped desktop-first then mobile
+- A mac app, SaaS dashboard, or web product → use `--platform desktop`
+- An iPhone/Android app → use `--platform mobile`
+- General research or cross-platform → omit (searches both)
+
+Each result includes a `platform` field ("mobile" or "desktop") so you know the source.
+Desktop results also include a `pageUrl` field with the original site URL.
 
 **Assess quality:** `matchCount` 2/3 or 3/3 = strong. 1/3 = weak. `similarity` > 0.4 = good.
 
@@ -146,25 +161,20 @@ Mismatched references destroy user trust faster than anything else.
 
 ### 5. Web Research (REQUIRED — not optional)
 
-Lazyweb is strong for mobile app screenshots. But most design research also needs
-desktop/web examples, recent trends, and expert analysis. **Always do web research
-alongside Lazyweb**, even when Lazyweb results are good.
-
-For desktop/web examples:
-- Search for "[screen type] design examples desktop [current year]"
-- Search for "[competitor name] [feature] desktop"
-- Search for "best [screen type] web design"
+Lazyweb covers both mobile and desktop screenshots, but most design research also needs
+recent trends and expert analysis. **Always do web research alongside Lazyweb**, even
+when Lazyweb results are good.
 
 For analysis and expert opinion:
 - Search for "[topic] UX best practices"
 - Search for "[topic] design patterns analysis"
 
-**Use the browse tool** (if available) to capture screenshots of desktop/web examples.
-Save them to the references folder alongside Lazyweb screenshots. This is critical —
-the report needs BOTH mobile and desktop references for balance.
+**Use the browse tool** (if available) to capture additional screenshots of live sites.
+Save them to the references folder alongside Lazyweb screenshots.
 
-**Platform balance rule:** If the user's product is desktop/web, aim for at least 50%
-desktop/web references. If mobile, Lazyweb can be primary but still include 2-3 web
+**Platform balance rule:** Use `--platform desktop` or `--platform mobile` to match the
+user's target platform. If the user's product is desktop/web, aim for at least 50%
+desktop/web references. If mobile, focus on mobile but still include 2-3 desktop
 examples for broader context. Cross-pollination between mobile and desktop is valuable —
 mobile patterns often work great on web and vice versa — but the report should reflect
 the user's target platform.

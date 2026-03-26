@@ -104,11 +104,22 @@ Also do text searches for the screen type with multiple angles:
 
 ```bash
 $LAZYWEB_CLI search "<description of the screen>" --limit 30 --json
-$LAZYWEB_CLI search "<alternative description>" --limit 30 --json
+$LAZYWEB_CLI search "<alternative description>" --platform desktop --limit 30 --json
 $LAZYWEB_CLI search "<specific component>" --limit 30 --json
 ```
 
 If you know the category, filter: `--category "<category>"`
+
+**Platform routing:** Lazyweb has both mobile app screenshots and desktop/web site screenshots.
+- `--platform mobile` — mobile app screenshots only
+- `--platform desktop` — desktop/web site screenshots only
+- `--platform all` (default) — search both, results grouped desktop-first then mobile
+- A mac app, SaaS dashboard, or web product → use `--platform desktop`
+- An iPhone/Android app → use `--platform mobile`
+- General research or cross-platform → omit (searches both)
+
+Each result includes a `platform` field ("mobile" or "desktop") so you know the source.
+Desktop results also include a `pageUrl` field with the original site URL.
 
 **Explore generously.** Run 3-5 searches to find the best references. More raw material
 means better improvement ideas.
@@ -128,19 +139,20 @@ Mismatched references destroy user trust faster than anything else.
 
 ### 3. Web Research (REQUIRED for balance)
 
-**Always supplement with web research**, especially for desktop/web designs.
+**Always supplement with web research** for additional context and recent trends.
 
 - Search for "[screen type] best design examples [current year]"
 - Search for "[competitor] [screen type] design"
 - Search for "best [screen type] UX"
 
-**Use the browse tool** (if available) to capture screenshots of best-in-class desktop/web
-examples. Save them to the references folder.
+**Use the browse tool** (if available) to capture additional screenshots of live sites.
+Save them to the references folder.
 
-**Platform balance:** If the user's design is for desktop/web, you MUST include desktop/web
-references — don't only show mobile Lazyweb results. Cross-platform inspiration is
-valuable (mobile patterns often translate to web beautifully), but the references should
-reflect the user's target platform. Aim for at least 50% same-platform references.
+**Platform balance:** Use `--platform desktop` or `--platform mobile` to match the
+user's target platform. If the user's design is for desktop/web, aim for at least 50%
+desktop/web references. Cross-platform inspiration is valuable (mobile patterns often
+translate to web beautifully), but the references should reflect the user's target
+platform.
 
 ### 4. Download References
 

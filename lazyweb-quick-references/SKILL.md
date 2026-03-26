@@ -98,7 +98,7 @@ Run 2-4 searches with different angles:
 ```bash
 $LAZYWEB_CLI search "<query>" --limit 30 --json
 $LAZYWEB_CLI search "<alternative framing>" --limit 30 --json
-$LAZYWEB_CLI search "<more specific variant>" --limit 30 --json
+$LAZYWEB_CLI search "<more specific variant>" --platform desktop --limit 30 --json
 ```
 
 **Query tips:**
@@ -106,6 +106,17 @@ $LAZYWEB_CLI search "<more specific variant>" --limit 30 --json
 - Use `--category` for domain filtering: "Health & Fitness", "Finance", "Productivity"
 - Use `--company` to find specific apps: `--company "stripe"`
 - Use `--fields high_design_bar` to filter for quality
+
+**Platform routing:** Lazyweb has both mobile app screenshots and desktop/web site screenshots.
+- `--platform mobile` — mobile app screenshots only
+- `--platform desktop` — desktop/web site screenshots only
+- `--platform all` (default) — search both, results grouped desktop-first then mobile
+- A mac app, SaaS dashboard, or web product → use `--platform desktop`
+- An iPhone/Android app → use `--platform mobile`
+- General research or cross-platform → omit (searches both)
+
+Each result includes a `platform` field ("mobile" or "desktop") so you know the source.
+Desktop results also include a `pageUrl` field with the original site URL.
 
 **Assess quality:** `matchCount` 2/3+ = strong. 1/3 = weak. `similarity` > 0.4 = good.
 
@@ -127,12 +138,13 @@ Mismatched references destroy user trust faster than anything else.
 
 ### 3. Supplement with Web Research
 
-**Always supplement**, especially for desktop/web requests. Lazyweb is primarily mobile.
+**Always supplement** with web research for additional context and recent trends.
 
-- Use the browse tool (if available) to capture screenshots of desktop/web examples
+- Use the browse tool (if available) to capture additional screenshots of live sites
 - Search for "[screen type] design examples [current year]"
 
-**Platform balance:** If the user is building for desktop/web, aim for at least 50%
+**Platform balance:** Use `--platform desktop` or `--platform mobile` to match the
+user's target platform. If the user is building for desktop/web, aim for at least 50%
 desktop/web references. Cross-platform inspiration is great (mobile → web transfers
 well) but the collection should reflect their target platform.
 
