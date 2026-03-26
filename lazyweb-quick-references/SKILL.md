@@ -23,6 +23,21 @@ allowed-tools:
 Find real app screenshots fast, download them locally, and group by pattern.
 Lighter than design-research — no competitive analysis, no anti-patterns. Just find → group → show.
 
+## CRITICAL: Output Behavior
+
+**This skill produces FILES, not a plan.** Regardless of whether you are in plan mode
+or not, ALWAYS:
+
+1. Write the report to `.lazyweb/quick-references/{topic}-{date}/report.md`
+2. Write the HTML to `.lazyweb/quick-references/{topic}-{date}/report.html`
+3. Download references to `.lazyweb/quick-references/{topic}-{date}/references/`
+4. Do NOT write research content into a plan file
+5. After saving, show the user a summary and tell them where the files are
+6. Ask the user if the references look good
+7. If in plan mode, exit plan mode after the user confirms
+8. Suggest next steps: "You can now use these references to inform your design,
+   run `/lazyweb-design-research` for deeper analysis, or start building."
+
 ## When to Use This
 
 - User wants to see a specific type of screen ("show me pricing pages")

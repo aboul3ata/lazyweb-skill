@@ -24,6 +24,21 @@ allowed-tools:
 Structured design research that identifies competitors, gathers real app screenshots,
 and produces a report with downloaded visual references.
 
+## CRITICAL: Output Behavior
+
+**This skill produces FILES, not a plan.** Regardless of whether you are in plan mode
+or not, ALWAYS:
+
+1. Write the report to `.lazyweb/design-research/{topic}-{date}/report.md`
+2. Write the HTML to `.lazyweb/design-research/{topic}-{date}/report.html`
+3. Download references to `.lazyweb/design-research/{topic}-{date}/references/`
+4. Do NOT write research content into a plan file
+5. After saving, show the user a summary of findings and tell them where the files are
+6. Ask the user if the research looks good
+7. If in plan mode, exit plan mode after the user confirms — the research is done
+8. Suggest next steps: "You can now use this research to inform your implementation,
+   run `/lazyweb-design-improve` on your current design, or start building."
+
 ## When to Use This
 
 - User wants to understand a design space before building

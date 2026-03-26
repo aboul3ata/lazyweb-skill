@@ -20,6 +20,23 @@ allowed-tools:
 
 # Lazyweb Design Improve
 
+## CRITICAL: Output Behavior
+
+**This skill produces FILES, not a plan.** Regardless of whether you are in plan mode
+or not, ALWAYS:
+
+1. Write the report to `.lazyweb/design-improve/{screen}-{date}/report.md`
+2. Write the HTML to `.lazyweb/design-improve/{screen}-{date}/report.html`
+3. Download references to `.lazyweb/design-improve/{screen}-{date}/references/`
+4. Do NOT write improvement content into a plan file
+5. After saving, show the user a summary of improvement ideas and tell them where the files are
+6. Ask the user if the improvements look good
+7. If in plan mode, exit plan mode after the user confirms
+8. Suggest next steps: "You can now implement these improvements, run
+   `/lazyweb-design-brainstorm` for more creative ideas, or start building."
+
+---
+
 Capture the current state of a design, find similar screens from the best apps,
 and generate 1-5 concrete improvement ideas — each tied to a real reference.
 

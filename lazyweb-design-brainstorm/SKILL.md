@@ -20,6 +20,23 @@ allowed-tools:
 
 # Lazyweb Design Brainstorm
 
+## CRITICAL: Output Behavior
+
+**This skill produces FILES, not a plan.** Regardless of whether you are in plan mode
+or not, ALWAYS:
+
+1. Write the report to `.lazyweb/design-brainstorm/{topic}-{date}/report.md`
+2. Write the HTML to `.lazyweb/design-brainstorm/{topic}-{date}/report.html`
+3. Download references to `.lazyweb/design-brainstorm/{topic}-{date}/references/`
+4. Do NOT write brainstorm content into a plan file
+5. After saving, show the user a summary of ideas and tell them where the files are
+6. Ask the user if the brainstorm looks good
+7. If in plan mode, exit plan mode after the user confirms
+8. Suggest next steps: "You can now prototype the top ideas, run `/lazyweb-design-research`
+   for deeper analysis on a specific idea, or start building."
+
+---
+
 Find novel design patterns by deliberately looking OUTSIDE the obvious category.
 If everyone in fintech copies each other's dashboards, look at how gaming apps
 handle data visualization. If every productivity app has the same onboarding,
