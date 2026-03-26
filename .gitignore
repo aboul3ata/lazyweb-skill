@@ -1,2 +1,9 @@
 node_modules/
 .DS_Store
+browse/dist/browse
+browse/dist/find-browse
+browse/dist/server-node.mjs
+browse/dist/bun-polyfill.cjs
+browse/dist/.version
+browse/node_modules/
+bun.lock

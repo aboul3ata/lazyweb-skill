@@ -71,6 +71,27 @@ Then proceed with web research only — the skill still works, just without Lazy
 Tell the user: "Your Lazyweb subscription may have expired. Visit https://lazyweb.com/
 to renew, then run `lazyweb auth <your-user-id>` to re-authenticate."
 
+## Browse Setup (run BEFORE any web capture)
+
+```bash
+LB=""
+# Check lazyweb-skill browse first
+for _P in "$(pwd)/.claude/skills/lazyweb-skill/browse/dist/browse" ~/.claude/skills/lazyweb-skill/browse/dist/browse; do
+  [ -x "$_P" ] && LB="$_P" && break
+done
+# Fall back to gstack browse
+if [ -z "$LB" ]; then
+  _ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
+  [ -n "$_ROOT" ] && [ -x "$_ROOT/.claude/skills/gstack/browse/dist/browse" ] && LB="$_ROOT/.claude/skills/gstack/browse/dist/browse"
+  [ -z "$LB" ] && [ -x ~/.claude/skills/gstack/browse/dist/browse ] && LB=~/.claude/skills/gstack/browse/dist/browse
+fi
+[ -x "$LB" ] && echo "BROWSE_READY: $LB" || echo "NO_BROWSE"
+```
+
+If `NO_BROWSE`: Web screenshot capture is unavailable. Lazyweb results still work —
+just describe web examples in text without screenshots. To enable web captures,
+run: `cd ~/.claude/skills/lazyweb-skill/browse && ./setup`
+
 ## Workflow
 
 ### 1. Capture the Current Design
@@ -137,22 +158,27 @@ a text description of what's actually in the screenshot. Read it.
 
 Mismatched references destroy user trust faster than anything else.
 
-### 3. Web Research (REQUIRED for balance)
+### 3. Web Research + Live Screenshot Capture (REQUIRED)
 
-**Always supplement with web research** for additional context and recent trends.
+**Always supplement** with live competitor screenshots and recent examples.
 
+**Step A — Find competitor URLs via WebSearch:**
 - Search for "[screen type] best design examples [current year]"
 - Search for "[competitor] [screen type] design"
 - Search for "best [screen type] UX"
+Collect 3-5 URLs of best-in-class examples.
 
-**Use the browse tool** (if available) to capture additional screenshots of live sites.
-Save them to the references folder.
+**Step B — Capture live screenshots:**
+```bash
+if [ -x "$LB" ]; then
+  $LB goto "https://competitor.com/page"
+  $LB screenshot "$REPORT_DIR/references/competitor-page.png"
+fi
+```
 
-**Platform balance:** Use `--platform desktop` or `--platform mobile` to match the
-user's target platform. If the user's design is for desktop/web, aim for at least 50%
-desktop/web references. Cross-platform inspiration is valuable (mobile patterns often
-translate to web beautifully), but the references should reflect the user's target
-platform.
+If no browse tool is available, describe web examples in the report without images.
+
+**Platform balance:** Aim for at least 50% same-platform references.
 
 ### 4. Download References
 
@@ -173,8 +199,10 @@ curl -sL "{imageUrl}" -o "$REPORT_DIR/references/{company}-{screen}.png"
 
 For web screenshots:
 ```bash
-$B goto <url>
-$B screenshot "$REPORT_DIR/references/{company}-{screen}.png"
+if [ -x "$LB" ]; then
+  $LB goto "https://example.com"
+  $LB screenshot "$REPORT_DIR/references/{company}-{screen}.png"
+fi
 ```
 
 ### 5. Analyze and Generate Ideas

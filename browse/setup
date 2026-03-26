@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$DIR"
+
+# Check bun
+if ! command -v bun &>/dev/null; then
+  echo "bun is required. Install: curl -fsSL https://bun.sh/install | bash"
+  exit 1
+fi
+
+echo "Installing dependencies..."
+bun install
+
+echo "Building browse binary..."
+bun build --compile src/cli.ts --outfile dist/browse
+bun build --compile src/find-browse.ts --outfile dist/find-browse 2>/dev/null || true
+
+# Build Node.js server bundle for Windows compatibility
+if [ -f scripts/build-node-server.sh ]; then
+  bash scripts/build-node-server.sh 2>/dev/null || true
+fi
+
+echo "Installing Chromium..."
+bunx playwright install chromium
+
+echo ""
+echo "Browse tool ready: $DIR/dist/browse"
+echo "Test: $DIR/dist/browse status"

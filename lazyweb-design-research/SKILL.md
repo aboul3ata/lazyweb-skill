@@ -71,6 +71,27 @@ Then proceed with web research only — the skill still works, just without Lazy
 Tell the user: "Your Lazyweb subscription may have expired. Visit https://lazyweb.com/
 to renew, then run `lazyweb auth <your-user-id>` to re-authenticate."
 
+## Browse Setup (run BEFORE any web capture)
+
+```bash
+LB=""
+# Check lazyweb-skill browse first
+for _P in "$(pwd)/.claude/skills/lazyweb-skill/browse/dist/browse" ~/.claude/skills/lazyweb-skill/browse/dist/browse; do
+  [ -x "$_P" ] && LB="$_P" && break
+done
+# Fall back to gstack browse
+if [ -z "$LB" ]; then
+  _ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
+  [ -n "$_ROOT" ] && [ -x "$_ROOT/.claude/skills/gstack/browse/dist/browse" ] && LB="$_ROOT/.claude/skills/gstack/browse/dist/browse"
+  [ -z "$LB" ] && [ -x ~/.claude/skills/gstack/browse/dist/browse ] && LB=~/.claude/skills/gstack/browse/dist/browse
+fi
+[ -x "$LB" ] && echo "BROWSE_READY: $LB" || echo "NO_BROWSE"
+```
+
+If `NO_BROWSE`: Web screenshot capture is unavailable. Lazyweb results still work —
+just describe web examples in text without screenshots. To enable web captures,
+run: `cd ~/.claude/skills/lazyweb-skill/browse && ./setup`
+
 ## Workflow
 
 ### 1. Understand the Research Question
@@ -159,25 +180,40 @@ a text description of what's actually in the screenshot. Read it.
 
 Mismatched references destroy user trust faster than anything else.
 
-### 5. Web Research (REQUIRED — not optional)
+### 5. Web Research + Live Screenshot Capture (REQUIRED)
 
-Lazyweb covers both mobile and desktop screenshots, but most design research also needs
-recent trends and expert analysis. **Always do web research alongside Lazyweb**, even
-when Lazyweb results are good.
+Lazyweb covers both mobile and desktop, but most research also needs recent trends,
+expert analysis, and live examples from competitors. **Always do web research alongside
+Lazyweb**, even when Lazyweb results are good.
 
-For analysis and expert opinion:
-- Search for "[topic] UX best practices"
+**Step A — Find interesting URLs via WebSearch:**
+- Search for "[topic] UX best practices [current year]"
 - Search for "[topic] design patterns analysis"
+- Search for "[competitor name] [screen type]"
+- Search for "best [screen type] examples"
 
-**Use the browse tool** (if available) to capture additional screenshots of live sites.
-Save them to the references folder alongside Lazyweb screenshots.
+Collect 3-8 interesting URLs from the search results.
+
+**Step B — Capture live screenshots from those URLs:**
+For each interesting URL found in step A, visit the page and screenshot it.
+Save directly to the report's references folder.
+
+```bash
+if [ -x "$LB" ]; then
+  $LB goto "https://example.com/pricing"
+  $LB screenshot "$REPORT_DIR/references/example-pricing-page.png"
+fi
+```
+
+If the browse tool is not available, use `curl` to download any publicly accessible
+screenshot URLs you find, or describe the page in the report without an image.
+
+**This is not optional.** The report should have a MIX of Lazyweb database screenshots
+AND live web captures. Lazyweb gives you curated, clean screenshots. Web captures give
+you the latest, most current state of competitor sites.
 
 **Platform balance rule:** Use `--platform desktop` or `--platform mobile` to match the
-user's target platform. If the user's product is desktop/web, aim for at least 50%
-desktop/web references. If mobile, focus on mobile but still include 2-3 desktop
-examples for broader context. Cross-pollination between mobile and desktop is valuable —
-mobile patterns often work great on web and vice versa — but the report should reflect
-the user's target platform.
+user's target platform. Aim for at least 50% same-platform references.
 
 ### 6. Download References
 
@@ -192,10 +228,12 @@ For each strong Lazyweb result, download the image:
 curl -sL "{imageUrl}" -o "$REPORT_DIR/references/{company}-{screen-slug}.png"
 ```
 
-For web-found examples, use the browse tool to screenshot them:
+For web-captured examples (from step 5B):
 ```bash
-$B goto <url>
-$B screenshot "$REPORT_DIR/references/{company}-{screen-slug}.png"
+if [ -x "$LB" ]; then
+  $LB goto "https://example.com"
+  $LB screenshot "$REPORT_DIR/references/{company}-{screen-slug}.png"
+fi
 ```
 
 Cap at 30 images total. Name files descriptively: `stripe-pricing-page.png`, `linear-onboarding-step1.png`.

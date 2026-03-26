@@ -76,6 +76,27 @@ Then proceed with web research only — the brainstorm still works, just with we
 Tell the user: "Your Lazyweb subscription may have expired. Visit https://lazyweb.com/
 to renew, then run `lazyweb auth <your-user-id>` to re-authenticate."
 
+## Browse Setup (run BEFORE any web capture)
+
+```bash
+LB=""
+# Check lazyweb-skill browse first
+for _P in "$(pwd)/.claude/skills/lazyweb-skill/browse/dist/browse" ~/.claude/skills/lazyweb-skill/browse/dist/browse; do
+  [ -x "$_P" ] && LB="$_P" && break
+done
+# Fall back to gstack browse
+if [ -z "$LB" ]; then
+  _ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
+  [ -n "$_ROOT" ] && [ -x "$_ROOT/.claude/skills/gstack/browse/dist/browse" ] && LB="$_ROOT/.claude/skills/gstack/browse/dist/browse"
+  [ -z "$LB" ] && [ -x ~/.claude/skills/gstack/browse/dist/browse ] && LB=~/.claude/skills/gstack/browse/dist/browse
+fi
+[ -x "$LB" ] && echo "BROWSE_READY: $LB" || echo "NO_BROWSE"
+```
+
+If `NO_BROWSE`: Web screenshot capture is unavailable. Lazyweb results still work —
+just describe web examples in text without screenshots. To enable web captures,
+run: `cd ~/.claude/skills/lazyweb-skill/browse && ./setup`
+
 ## Workflow
 
 ### 1. Understand What They're Building
@@ -167,25 +188,35 @@ a text description of what's actually in the screenshot. Read it.
 
 Mismatched references destroy user trust faster than anything else.
 
-### 5. Web Research (REQUIRED for balance)
+### 5. Web Research + Live Screenshot Capture (REQUIRED)
 
-Lazyweb covers both mobile and desktop screenshots for cross-pollination. But the
-brainstorm also benefits from additional web research for unconventional takes.
+Lazyweb gives you curated screenshots. But brainstorms need the UNEXPECTED — Awwwards
+winners, experimental sites, award-winning designs nobody in the user's space is looking at.
 
-**Always search the web** for unconventional takes:
+**Step A — Find unconventional URLs via WebSearch:**
 - "unconventional [screen type] design"
 - "[different industry] approach to [problem]"
 - "creative [screen type] examples [current year]"
 - "[award-winning site] [screen type]" — Awwwards, FWA, CSS Design Awards winners
 
-**Use the browse tool** (if available) to capture additional screenshots of standout
-live sites. Desktop/web examples are often the most novel cross-pollination sources
-because they have more design freedom than mobile.
+Collect 3-8 URLs of standout, unconventional examples.
 
-**Platform balance:** Use `--platform desktop` or `--platform mobile` to match the
-user's target platform, but also deliberately search the OTHER platform for
-cross-pollination. Patterns transfer across platforms — a novel web layout can inspire
-a fresh mobile approach and vice versa. Aim for a healthy mix.
+**Step B — Capture live screenshots from those URLs:**
+```bash
+if [ -x "$LB" ]; then
+  $LB goto "https://awwwards-winner.com/page"
+  $LB screenshot "$REPORT_DIR/references/awwwards-winner-page.png"
+fi
+```
+
+If the browse tool is not available, describe web examples in the report without images.
+
+**This is especially important for brainstorms.** Web captures of unconventional sites
+are often the most novel cross-pollination sources because desktop/web has more design
+freedom than mobile.
+
+**Platform balance:** Also deliberately search the OTHER platform for cross-pollination.
+A novel web layout can inspire a fresh mobile approach and vice versa.
 
 ### 6. Download References
 
@@ -194,15 +225,17 @@ REPORT_DIR="$(pwd)/.lazyweb/design-brainstorm/{topic-slug}-{YYYY-MM-DD}"
 mkdir -p "$REPORT_DIR/references"
 ```
 
-Download results (cap 30):
+Download Lazyweb results (cap 30):
 ```bash
 curl -sL "{imageUrl}" -o "$REPORT_DIR/references/{company}-{screen}.png"
 ```
 
-For web screenshots:
+For web-captured examples:
 ```bash
-$B goto <url>
-$B screenshot "$REPORT_DIR/references/{company}-{screen}.png"
+if [ -x "$LB" ]; then
+  $LB goto "https://example.com"
+  $LB screenshot "$REPORT_DIR/references/{company}-{screen}.png"
+fi
 ```
 
 ### 7. Identify Transferable Patterns

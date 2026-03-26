@@ -69,6 +69,27 @@ Then proceed with web research only.
 Tell the user: "Your Lazyweb subscription may have expired. Visit https://lazyweb.com/
 to renew, then run `lazyweb auth <your-user-id>` to re-authenticate."
 
+## Browse Setup (run BEFORE any web capture)
+
+```bash
+LB=""
+# Check lazyweb-skill browse first
+for _P in "$(pwd)/.claude/skills/lazyweb-skill/browse/dist/browse" ~/.claude/skills/lazyweb-skill/browse/dist/browse; do
+  [ -x "$_P" ] && LB="$_P" && break
+done
+# Fall back to gstack browse
+if [ -z "$LB" ]; then
+  _ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
+  [ -n "$_ROOT" ] && [ -x "$_ROOT/.claude/skills/gstack/browse/dist/browse" ] && LB="$_ROOT/.claude/skills/gstack/browse/dist/browse"
+  [ -z "$LB" ] && [ -x ~/.claude/skills/gstack/browse/dist/browse ] && LB=~/.claude/skills/gstack/browse/dist/browse
+fi
+[ -x "$LB" ] && echo "BROWSE_READY: $LB" || echo "NO_BROWSE"
+```
+
+If `NO_BROWSE`: Web screenshot capture is unavailable. Lazyweb results still work —
+just describe web examples in text without screenshots. To enable web captures,
+run: `cd ~/.claude/skills/lazyweb-skill/browse && ./setup`
+
 ## Workflow
 
 ### 1. Capture Current State (if applicable)
@@ -136,17 +157,26 @@ a text description of what's actually in the screenshot. Read it.
 
 Mismatched references destroy user trust faster than anything else.
 
-### 3. Supplement with Web Research
+### 3. Web Research + Live Screenshot Capture
 
-**Always supplement** with web research for additional context and recent trends.
+**Always supplement** Lazyweb with live web captures for the most current examples.
 
-- Use the browse tool (if available) to capture additional screenshots of live sites
+**Step A — Find URLs via WebSearch:**
 - Search for "[screen type] design examples [current year]"
+- Search for "[competitor] [screen type]"
+Collect 2-5 interesting URLs.
 
-**Platform balance:** Use `--platform desktop` or `--platform mobile` to match the
-user's target platform. If the user is building for desktop/web, aim for at least 50%
-desktop/web references. Cross-platform inspiration is great (mobile → web transfers
-well) but the collection should reflect their target platform.
+**Step B — Capture live screenshots:**
+```bash
+if [ -x "$LB" ]; then
+  $LB goto "https://example.com/page"
+  $LB screenshot "$REPORT_DIR/references/example-page.png"
+fi
+```
+
+If the browse tool is not available, describe web examples in the report without images.
+
+**Platform balance:** Aim for at least 50% same-platform references.
 
 ### 4. Download References
 
@@ -155,15 +185,17 @@ REPORT_DIR="$(pwd)/.lazyweb/quick-references/{topic-slug}-{YYYY-MM-DD}"
 mkdir -p "$REPORT_DIR/references"
 ```
 
-Download all results, cap at 30 images:
+Download Lazyweb results, cap at 30 images:
 ```bash
 curl -sL "{imageUrl}" -o "$REPORT_DIR/references/{company}-{screen}.png"
 ```
 
-For web screenshots:
+For web-captured examples:
 ```bash
-$B goto <url>
-$B screenshot "$REPORT_DIR/references/{company}-{screen}.png"
+if [ -x "$LB" ]; then
+  $LB goto "https://example.com"
+  $LB screenshot "$REPORT_DIR/references/{company}-{screen}.png"
+fi
 ```
 
 ### 5. Write Reference Document
