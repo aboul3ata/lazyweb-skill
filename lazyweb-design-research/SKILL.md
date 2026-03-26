@@ -106,9 +106,8 @@ Cap at 20 images total. Name files descriptively: `stripe-pricing-page.png`, `li
 
 For web-found examples, use the browse tool or screenshot tools if available to capture them. If not available, describe them in the report and note they couldn't be captured locally.
 
-**IMPORTANT:** When writing image references in the report, always use ABSOLUTE paths
-so they render in any markdown viewer (VS Code, GitHub, etc.):
-`![Alt]($REPORT_DIR/references/company-screen.png)` — NOT relative `references/` paths.
+Use relative paths for image references in the report:
+`![Alt](references/company-screen.png)`
 
 ### 6. Write the Report
 
@@ -126,10 +125,10 @@ Write to `.lazyweb/design-research/{topic-slug}-{YYYY-MM-DD}/report.md`
 {Screenshot gallery — the visual centerpiece of the report.
 Each with company name, inline image, and 1-line description.}
 
-![Stripe Pricing](/absolute/path/to/references/stripe-pricing-page.png)
+![Stripe Pricing](references/stripe-pricing-page.png)
 *Stripe — Toggle between monthly/annual, social proof above pricing tiers*
 
-![Linear Onboarding](/absolute/path/to/references/linear-onboarding.png)
+![Linear Onboarding](references/linear-onboarding.png)
 *Linear — Single question per screen, progress bar, minimal UI*
 
 ## Findings
@@ -157,6 +156,23 @@ What should they do with this research?}
 {Compact list. Lazyweb screenshots are cited inline above.
 Web sources listed here.}
 ```
+
+### 7. Generate HTML Report
+
+After writing report.md, generate a `report.html` alongside it for visual preview.
+The HTML report should:
+- Be a self-contained single HTML file with inline CSS (no external dependencies)
+- Use clean, readable styling: system fonts, max-width 900px, comfortable line-height
+- Reference images using RELATIVE paths (`references/filename.png`) — HTML files loaded
+  in a browser resolve relative paths correctly from their own directory
+- Style images with rounded corners, subtle shadow, max-width that fits the layout
+- Use a light blue callout box for the TL;DR section
+- Include proper semantic HTML (h1, h2, h3, p, ul, ol, table)
+- Make tables clean with light borders and header background
+- Open the HTML file in the user's browser: `open "$REPORT_DIR/report.html"`
+
+**IMPORTANT:** The markdown report.md should ALSO use relative paths (`references/filename.png`).
+The HTML is the primary visual preview — markdown is for reading/editing in editors.
 
 Tell the user where the report was saved. Mention they may want to add `.lazyweb/` to `.gitignore`.
 

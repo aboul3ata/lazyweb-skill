@@ -105,9 +105,8 @@ Download Lazyweb results (cap 20):
 curl -sL "{imageUrl}" -o "$REPORT_DIR/references/{company}-{screen}.png"
 ```
 
-**IMPORTANT:** When writing image references in the report, always use ABSOLUTE paths
-so they render in any markdown viewer (VS Code, GitHub, etc.):
-`![Alt]($REPORT_DIR/references/company-screen.png)` — NOT relative `references/` paths.
+Use relative paths for image references in the report:
+`![Alt](references/company-screen.png)`
 
 ### 5. Analyze and Generate Ideas
 
@@ -140,7 +139,7 @@ Write to `.lazyweb/design-improve/{screen-slug}-{YYYY-MM-DD}/report.md`
 {The single biggest opportunity — 1-2 sentences}
 
 ## Current State
-![Current Design](/absolute/path/to/references/current.png)
+![Current Design](references/current.png)
 
 ## What's Working
 {Be specific about what's good. Developers need to know what NOT to change.
@@ -152,7 +151,7 @@ List 2-4 concrete things that are done well.}
 {Clear description of what to change and why}
 
 **Inspired by:**
-![Reference](/absolute/path/to/references/stripe-pricing.png)
+![Reference](references/stripe-pricing.png)
 *{Company} — {What they do that inspired this idea}*
 
 **Why this works:** {What makes this pattern effective in the reference,
@@ -167,6 +166,23 @@ and why it would work for the user's product}
 ## References
 {Gallery of all reference screenshots used, with company and context}
 ```
+
+### 7. Generate HTML Report
+
+After writing report.md, generate a `report.html` alongside it for visual preview.
+The HTML report should:
+- Be a self-contained single HTML file with inline CSS (no external dependencies)
+- Use clean, readable styling: system fonts, max-width 900px, comfortable line-height
+- Reference images using RELATIVE paths (`references/filename.png`) — HTML files loaded
+  in a browser resolve relative paths correctly from their own directory
+- Style images with rounded corners, subtle shadow, max-width that fits the layout
+- Use a light blue callout box for the TL;DR section
+- Include proper semantic HTML (h1, h2, h3, p, ul, ol, table)
+- Make tables clean with light borders and header background
+- Open the HTML file in the user's browser: `open "$REPORT_DIR/report.html"`
+
+**IMPORTANT:** The markdown report.md should ALSO use relative paths (`references/filename.png`).
+The HTML is the primary visual preview — markdown is for reading/editing in editors.
 
 Tell the user where the report was saved.
 

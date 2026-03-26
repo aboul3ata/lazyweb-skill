@@ -111,9 +111,8 @@ Download results (cap 20):
 curl -sL "{imageUrl}" -o "$REPORT_DIR/references/{company}-{screen}.png"
 ```
 
-**IMPORTANT:** When writing image references in the report, always use ABSOLUTE paths
-so they render in any markdown viewer (VS Code, GitHub, etc.):
-`![Alt]($REPORT_DIR/references/company-screen.png)` — NOT relative `references/` paths.
+Use relative paths for image references in the report:
+`![Alt](references/company-screen.png)`
 
 ### 6. Identify Transferable Patterns
 
@@ -141,13 +140,13 @@ Write to `.lazyweb/design-brainstorm/{topic-slug}-{YYYY-MM-DD}/report.md`
 {What everyone in this category does — the "zig."
 Brief, with 1-2 example screenshots from the user's category.}
 
-![Typical Example](/absolute/path/to/references/typical-category-app.png)
+![Typical Example](references/typical-category-app.png)
 *{Company} — the standard approach in {category}*
 
 ## Cross-Pollination Ideas
 
 ### From {Source Category}: {Company}
-![Reference](/absolute/path/to/references/company-screen.png)
+![Reference](references/company-screen.png)
 *{Company} — {What they do}*
 
 **The Pattern:** {What's the underlying design pattern, abstracted from the specific app}
@@ -169,6 +168,23 @@ HIGH novelty AND HIGH feasibility — not just weird for weird's sake.}
 |------|---------|-------------|---------|
 | {idea} | High/Med/Low | High/Med/Low | Prototype / Explore / Skip |
 ```
+
+### 8. Generate HTML Report
+
+After writing report.md, generate a `report.html` alongside it for visual preview.
+The HTML report should:
+- Be a self-contained single HTML file with inline CSS (no external dependencies)
+- Use clean, readable styling: system fonts, max-width 900px, comfortable line-height
+- Reference images using RELATIVE paths (`references/filename.png`) — HTML files loaded
+  in a browser resolve relative paths correctly from their own directory
+- Style images with rounded corners, subtle shadow, max-width that fits the layout
+- Use a light blue callout box for the TL;DR section
+- Include proper semantic HTML (h1, h2, h3, p, ul, ol, table)
+- Make tables clean with light borders and header background
+- Open the HTML file in the user's browser: `open "$REPORT_DIR/report.html"`
+
+**IMPORTANT:** The markdown report.md should ALSO use relative paths (`references/filename.png`).
+The HTML is the primary visual preview — markdown is for reading/editing in editors.
 
 Tell the user where the report was saved.
 
