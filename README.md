@@ -4,13 +4,17 @@
 
 AI agents design from training data averages — generic layouts, safe colors, patterns you've seen a thousand times. This skill gives your agent access to Lazyweb's database of real app screenshots from thousands of the best mobile apps ever built.
 
-Your agent searches before it designs. It finds real examples, assesses quality using multi-model consensus scoring, and synthesizes patterns into actionable guidance. Research that takes designers hours, done in seconds.
+Your agent searches before it designs. It finds real examples, downloads them locally, and produces structured reports with inline images you can preview in any markdown viewer.
 
-## Two skills included
+## Four skills included
 
-**`/lazyweb-search`** — Find real app screenshots by describing what you need. Text search, image comparison, find-similar. Your agent learns to construct good queries, assess result quality, and route between mobile references (Lazyweb) and desktop/web references (web research).
+**`/lazyweb-design-research`** — Deep design research. Identifies competitors, searches Lazyweb + web, downloads reference screenshots, and produces a structured report with: TL;DR, Examples, Findings, Patterns, Anti-Patterns, Unique Angles, and Recommendations. Use for competitive analysis and best practices research.
 
-**`/lazyweb-research`** — Deep design research that combines Lazyweb with web research to answer questions like "what are best practices for onboarding flows in fitness apps?" Goes beyond finding screenshots — synthesizes patterns, runs competitive analysis, and delivers actionable design principles grounded in real examples.
+**`/lazyweb-quick-references`** — Find screenshots fast. Searches Lazyweb, downloads results, groups by pattern. Lighter than design-research — just find, group, show. Use when you need visual references, not a full report.
+
+**`/lazyweb-design-improve`** — Improve an existing design. Captures a screenshot of your current app, finds similar screens from the best apps, and generates 1-5 concrete improvement ideas — each tied to a real reference. Adapted from Lazyweb's production design critique system.
+
+**`/lazyweb-design-brainstorm`** — Cross-pollination brainstorm. Deliberately searches OUTSIDE your category to find novel patterns. If everyone in fintech copies each other, this skill looks at gaming, entertainment, and social apps for transferable ideas. The "zig when everyone zags" skill.
 
 ## Install
 
@@ -28,12 +32,6 @@ Clone into your skills directory:
 git clone https://github.com/aboul3ata/lazyweb-skill.git ~/.claude/skills/lazyweb-skill
 ```
 
-Then symlink each skill:
-```bash
-ln -sf ~/.claude/skills/lazyweb-skill/lazyweb-search ~/.claude/skills/lazyweb-search
-ln -sf ~/.claude/skills/lazyweb-skill/lazyweb-research ~/.claude/skills/lazyweb-research
-```
-
 **Cursor:**
 ```bash
 git clone https://github.com/aboul3ata/lazyweb-skill.git .cursor/skills/lazyweb-skill
@@ -42,7 +40,7 @@ git clone https://github.com/aboul3ata/lazyweb-skill.git .cursor/skills/lazyweb-
 
 ## Prerequisites
 
-These skills call the Lazyweb CLI, which talks to a local backend server that queries Lazyweb's Supabase database. You need:
+These skills call the Lazyweb CLI, which talks to a local backend server that queries Lazyweb's database. You need:
 
 1. **cli-lazybackend** — The search backend (runs locally)
 2. **cli-lazyweb** — The CLI that the skills invoke
@@ -99,11 +97,20 @@ cd cli-lazyweb && bun run src/index.ts search "pricing page" --limit 3
 | `lazyweb similar 12345` | Find screenshots similar to one you already found |
 | `lazyweb search "pricing" --fields high_design_bar` | Include rich metadata |
 
-Results include a confidence score so your agent knows which results to trust and which to supplement with web research.
+## Output format
 
-## How it works
+All skills produce a report with downloaded reference images:
 
-Lazyweb searches across multiple AI models simultaneously and uses consensus scoring to surface the most relevant results. One result per company by default, latest version of each screen automatically used.
+```
+.lazyweb/{skill}/{topic}-{date}/
+├── report.md          ← Structured findings with inline images
+└── references/        ← Downloaded screenshots (persisted locally)
+    ├── stripe-pricing-page.png
+    ├── linear-onboarding.png
+    └── ...
+```
+
+Preview `report.md` in any markdown viewer to see the screenshots inline.
 
 ## License
 
