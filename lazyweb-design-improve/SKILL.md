@@ -167,6 +167,10 @@ Write to `.lazyweb/design-improve/{screen-slug}-{YYYY-MM-DD}/report.md`
 ## TL;DR
 {The single biggest opportunity — 1-2 sentences}
 
+## Current State
+![Current Design](references/current.png)
+*{Brief description of what we're looking at}*
+
 ## Improvement Ideas
 
 ### 1. {Idea Title} ⭐ (highest impact)
@@ -179,6 +183,9 @@ Write to `.lazyweb/design-improve/{screen-slug}-{YYYY-MM-DD}/report.md`
 **Why this works:** {What makes this pattern effective in the reference,
 and why it would work for the user's product}
 
+**Sketch:**
+{ASCII wireframe showing what the improvement would look like}
+
 ### 2. {Idea Title}
 ...
 
@@ -189,14 +196,32 @@ and why it would work for the user's product}
 {Be specific about what's good. Developers need to know what NOT to change.
 List 2-4 concrete things that are done well.}
 
-## Current State
-![Current Design](references/current.png)
-
 ## All References
 {Gallery of all reference screenshots used, with company, source, and context}
 ```
 
 Label each reference `[Lazyweb]` or `[Web]` for provenance.
+
+**ASCII mockups:** For each improvement idea, include a rough ASCII wireframe sketch
+showing what the change would look like. Keep them simple — box-drawing characters,
+just enough to communicate the layout idea. Example:
+
+```
+┌─────────────────────────────┐
+│  Logo            [Sign In]  │
+├─────────────────────────────┤
+│                             │
+│   ┌─────┐ ┌─────┐ ┌─────┐  │
+│   │ img │ │ img │ │ img │  │
+│   └──┬──┘ └──┬──┘ └──┬──┘  │
+│   Plan A   Plan B   Plan C  │
+│                             │
+│   [Get Started →]           │
+└─────────────────────────────┘
+```
+
+These sketches help the user visualize the improvement without needing to open a
+design tool. They don't need to be pixel-perfect — just communicative.
 
 ### 7. Generate HTML Report
 

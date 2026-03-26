@@ -65,13 +65,33 @@ Before searching, clarify:
 - What's their product? (app type, platform, audience)
 - Mobile or desktop/web patterns needed?
 
-### 2. Identify Competitors and Adjacent Companies
+### 2. Capture Current State (if applicable)
+
+If the user is researching a specific page or app they're building (not a general topic),
+capture the current state:
+
+- **Running dev server or URL available:** Use preview/browse tools to screenshot it
+- **Mobile app:** Ask user to provide a screenshot
+- **No specific page:** Skip this step
+
+Save as `$REPORT_DIR/references/current-state.png` and include it in the report
+after the TL;DR as:
+
+```markdown
+## Current State
+![Current State](references/current-state.png)
+*{Brief description of what we're looking at}*
+```
+
+This grounds the entire report — the reader sees where we are before seeing where we could go.
+
+### 3. Identify Competitors and Adjacent Companies
 
 Think about two groups:
 - **Direct competitors** — apps that solve the same problem
 - **Adjacent companies with great design** — apps in related spaces known for excellent UX (e.g., researching a fintech app? Look at Stripe, Linear, Notion for general design quality)
 
-### 3. Search Lazyweb
+### 4. Search Lazyweb
 
 Run multiple searches with different angles:
 
@@ -95,7 +115,7 @@ $LAZYWEB_CLI search "<even more specific variant>" --limit 30 --json
 **Explore generously.** Run 3-5 searches minimum with different query angles. Cast a wide
 net — you can filter later. Don't stop at the first search.
 
-### 4. Web Research (REQUIRED — not optional)
+### 5. Web Research (REQUIRED — not optional)
 
 Lazyweb is strong for mobile app screenshots. But most design research also needs
 desktop/web examples, recent trends, and expert analysis. **Always do web research
@@ -120,7 +140,7 @@ examples for broader context. Cross-pollination between mobile and desktop is va
 mobile patterns often work great on web and vice versa — but the report should reflect
 the user's target platform.
 
-### 5. Download References
+### 6. Download References
 
 Determine the absolute path for this report's directory:
 ```bash
@@ -144,7 +164,7 @@ Cap at 30 images total. Name files descriptively: `stripe-pricing-page.png`, `li
 Label each reference with its source in the report: `[Lazyweb]` or `[Web]` so the
 user knows the provenance.
 
-### 6. Write the Report
+### 7. Write the Report
 
 Write to `.lazyweb/design-research/{topic-slug}-{YYYY-MM-DD}/report.md`
 
@@ -159,6 +179,11 @@ get the answer in the first 30 seconds, then optionally dive deeper.
 ## TL;DR
 {2-3 sentences. The single most important finding and what to do about it.}
 
+## Current State
+{Include ONLY if a current state screenshot was captured in step 2. Otherwise omit this section.}
+![Current State](references/current-state.png)
+*{Brief description of what we're looking at}*
+
 ## Recommendations / Next Steps
 {What to implement, in priority order. Each recommendation tied to evidence below.
 This is the ACTION section — specific, implementable guidance.}
@@ -166,6 +191,27 @@ This is the ACTION section — specific, implementable guidance.}
 1. **{Recommendation}** — {Why, with reference to evidence}
 2. **{Recommendation}** — {Why}
 3. **{Recommendation}** — {Why}
+
+**ASCII mockups:** For each recommendation, include a rough ASCII wireframe sketch
+showing the proposed change. Keep them simple — box-drawing characters, just enough
+to communicate the layout idea. Example:
+
+```
+┌─────────────────────────────┐
+│  Logo            [Sign In]  │
+├─────────────────────────────┤
+│                             │
+│   ┌─────┐ ┌─────┐ ┌─────┐  │
+│   │ img │ │ img │ │ img │  │
+│   └──┬──┘ └──┬──┘ └──┬──┘  │
+│   Plan A   Plan B   Plan C  │
+│                             │
+│   [Get Started →]           │
+└─────────────────────────────┘
+```
+
+These sketches help the user visualize the recommendation without needing to
+open a design tool. They don't need to be pixel-perfect — just communicative.
 
 ## Key Examples
 {The visual centerpiece. Screenshot gallery with company, source, and 1-line insight.
@@ -199,7 +245,7 @@ What the research reveals about this problem space.}
 Web sources listed here with URLs.}
 ```
 
-### 7. Generate HTML Report
+### 8. Generate HTML Report
 
 After writing report.md, generate a `report.html` alongside it for visual preview.
 The HTML report should:

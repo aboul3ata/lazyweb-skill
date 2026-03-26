@@ -69,7 +69,27 @@ Clarify:
 - What's the "obvious" approach they want to avoid?
 - **Mobile or desktop/web?** This determines the reference balance.
 
-### 2. Map the Obvious Category
+### 2. Capture Current State (if applicable)
+
+If the user is brainstorming for a specific page or app they're building,
+capture the current state:
+
+- **Running dev server or URL available:** Use preview/browse tools to screenshot it
+- **Mobile app:** Ask user to provide a screenshot
+- **No specific page yet:** Skip this step
+
+Save as `$REPORT_DIR/references/current-state.png` and include it in the report
+after the TL;DR as:
+
+```markdown
+## Current State
+![Current State](references/current-state.png)
+*{Brief description of what we're looking at}*
+```
+
+This grounds the brainstorm — the reader sees where we are before seeing where we could go.
+
+### 3. Map the Obvious Category
 
 First, understand what everyone in the user's space does. Quick search in the obvious category:
 
@@ -79,7 +99,7 @@ $LAZYWEB_CLI search "<screen type>" --category "<their category>" --limit 10 --j
 
 This establishes the baseline — the "zig" that everyone does.
 
-### 3. Search Outside the Category
+### 4. Search Outside the Category
 
 Now deliberately search in UNRELATED categories for the same screen type.
 The more different the category, the more novel the inspiration.
@@ -105,7 +125,7 @@ Also try searching for the underlying FUNCTION rather than the screen name:
 **Explore generously.** Run 4-6 searches across different categories. Cast a very wide
 net — you can filter later. More raw material = better cross-pollination.
 
-### 4. Web Research (REQUIRED for balance)
+### 5. Web Research (REQUIRED for balance)
 
 Lazyweb provides great mobile references for cross-pollination. But the brainstorm
 also needs desktop/web examples — especially if the user's product is for web.
@@ -124,7 +144,7 @@ have more design freedom than mobile.
 Patterns transfer across platforms — a novel web layout can inspire a fresh mobile
 approach and vice versa. Aim for a healthy mix.
 
-### 5. Download References
+### 6. Download References
 
 ```bash
 REPORT_DIR="$(pwd)/.lazyweb/design-brainstorm/{topic-slug}-{YYYY-MM-DD}"
@@ -142,7 +162,7 @@ $B goto <url>
 $B screenshot "$REPORT_DIR/references/{company}-{screen}.png"
 ```
 
-### 6. Identify Transferable Patterns
+### 7. Identify Transferable Patterns
 
 For each cross-category result, ask:
 - What pattern is this app using? (not what it looks like, but what it DOES)
@@ -154,7 +174,7 @@ For each cross-category result, ask:
 might be terrible. Filter for ideas where the UNDERLYING PATTERN transfers, even if
 the surface aesthetic doesn't.
 
-### 7. Write Brainstorm Document
+### 8. Write Brainstorm Document
 
 Write to `.lazyweb/design-brainstorm/{topic-slug}-{YYYY-MM-DD}/report.md`
 
@@ -166,6 +186,11 @@ then the analysis. The reader should know what to do in the first 30 seconds.
 
 ## TL;DR
 {The most provocative transferable idea — 1-2 sentences}
+
+## Current State
+{Include ONLY if a current state screenshot was captured in step 2. Otherwise omit this section.}
+![Current State](references/current-state.png)
+*{Brief description of what we're looking at}*
 
 ## Which Ideas to Prototype
 {ACTION FIRST. Rank ideas by feasibility × novelty. Best brainstorm ideas are
@@ -191,6 +216,28 @@ Brief, with 1-2 example screenshots from the user's category.}
 **The Pattern:** {What's the underlying design pattern, abstracted from the specific app}
 **Applied Here:** {How this could work in the user's product — be specific}
 **Why It's a Zag:** {What makes this different from what everyone else in the category does}
+**Sketch:** {ASCII wireframe showing how this idea would look in the user's product}
+
+**ASCII mockups:** For each cross-pollination idea, include a rough ASCII wireframe sketch
+showing how the pattern would look applied to the user's product. Keep them simple —
+box-drawing characters, just enough to communicate the layout idea. Example:
+
+```
+┌─────────────────────────────┐
+│  Logo            [Sign In]  │
+├─────────────────────────────┤
+│                             │
+│   ┌─────┐ ┌─────┐ ┌─────┐  │
+│   │ img │ │ img │ │ img │  │
+│   └──┬──┘ └──┬──┘ └──┬──┘  │
+│   Plan A   Plan B   Plan C  │
+│                             │
+│   [Get Started →]           │
+└─────────────────────────────┘
+```
+
+These sketches help the user visualize the idea without needing to open a design tool.
+They don't need to be pixel-perfect — just communicative.
 
 ### From {Source Category}: {Company}
 ...
@@ -202,7 +249,7 @@ considering. Flag the risk alongside the upside.}
 
 Label each reference `[Lazyweb]` or `[Web]` so the user knows where it came from.
 
-### 8. Generate HTML Report
+### 9. Generate HTML Report
 
 After writing report.md, generate a `report.html` alongside it for visual preview.
 The HTML report should:

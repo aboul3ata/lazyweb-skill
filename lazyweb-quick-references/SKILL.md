@@ -56,7 +56,27 @@ to renew, then run `lazyweb auth <your-user-id>` to re-authenticate."
 
 ## Workflow
 
-### 1. Search Lazyweb
+### 1. Capture Current State (if applicable)
+
+If the user is looking for references for a specific page or app they're building
+(not a general topic), capture the current state:
+
+- **Running dev server or URL available:** Use preview/browse tools to screenshot it
+- **Mobile app:** Ask user to provide a screenshot
+- **No specific page:** Skip this step
+
+Save as `$REPORT_DIR/references/current-state.png` and include it in the report
+after the TL;DR as:
+
+```markdown
+## Current State
+![Current State](references/current-state.png)
+*{Brief description of what we're looking at}*
+```
+
+This grounds the collection — the reader sees what they have before seeing the references.
+
+### 2. Search Lazyweb
 
 Run 2-4 searches with different angles:
 
@@ -77,7 +97,7 @@ $LAZYWEB_CLI search "<more specific variant>" --limit 30 --json
 **Explore generously.** Don't stop at one search. Try 2-4 different phrasings to
 cast a wide net. More raw material = better grouping.
 
-### 2. Supplement with Web Research
+### 3. Supplement with Web Research
 
 **Always supplement**, especially for desktop/web requests. Lazyweb is primarily mobile.
 
@@ -88,7 +108,7 @@ cast a wide net. More raw material = better grouping.
 desktop/web references. Cross-platform inspiration is great (mobile → web transfers
 well) but the collection should reflect their target platform.
 
-### 3. Download References
+### 4. Download References
 
 ```bash
 REPORT_DIR="$(pwd)/.lazyweb/quick-references/{topic-slug}-{YYYY-MM-DD}"
@@ -106,7 +126,7 @@ $B goto <url>
 $B screenshot "$REPORT_DIR/references/{company}-{screen}.png"
 ```
 
-### 4. Write Reference Document
+### 5. Write Reference Document
 
 Write to `.lazyweb/quick-references/{topic-slug}-{YYYY-MM-DD}/report.md`
 
@@ -117,6 +137,11 @@ Write to `.lazyweb/quick-references/{topic-slug}-{YYYY-MM-DD}/report.md`
 
 ## TL;DR
 {1 sentence — what the collection shows and the dominant pattern}
+
+## Current State
+{Include ONLY if a current state screenshot was captured in step 1. Otherwise omit this section.}
+![Current State](references/current-state.png)
+*{Brief description of what we're looking at}*
 
 ## Patterns
 {What the best examples have in common — the key takeaway.
@@ -140,7 +165,28 @@ Put this FIRST so the user gets the answer immediately.}
 Group screenshots by visual or functional pattern. Don't just list them — show what connects them.
 Label each reference `[Lazyweb]` or `[Web]` for provenance.
 
-### 5. Generate HTML Report
+**ASCII mockups:** When describing patterns or suggesting how references apply to the user's
+project, include rough ASCII wireframe sketches. Keep them simple — box-drawing characters,
+just enough to communicate the layout idea. Example:
+
+```
+┌─────────────────────────────┐
+│  Logo            [Sign In]  │
+├─────────────────────────────┤
+│                             │
+│   ┌─────┐ ┌─────┐ ┌─────┐  │
+│   │ img │ │ img │ │ img │  │
+│   └──┬──┘ └──┬──┘ └──┬──┘  │
+│   Plan A   Plan B   Plan C  │
+│                             │
+│   [Get Started →]           │
+└─────────────────────────────┘
+```
+
+These sketches help the user visualize how a pattern could apply to their work
+without needing to open a design tool. They don't need to be pixel-perfect — just communicative.
+
+### 6. Generate HTML Report
 
 After writing report.md, generate a `report.html` alongside it for visual preview.
 The HTML report should:
@@ -153,7 +199,7 @@ The HTML report should:
 
 Tell the user where the report was saved.
 
-### 6. Follow-up Strategies
+### 7. Follow-up Strategies
 
 - **"More like this"** → `$LAZYWEB_CLI similar <screenshot-id> --limit 10 --json`
 - **"Same company"** → `$LAZYWEB_CLI search "<query>" --company "<name>" --json`
