@@ -130,6 +130,20 @@ $LAZYWEB_CLI search "<even more specific variant>" --limit 30 --json
 **Explore generously.** Run 3-5 searches minimum with different query angles. Cast a wide
 net — you can filter later. Don't stop at the first search.
 
+**HIGH BAR FOR REFERENCES:** Each Lazyweb result includes a `visionDescription` field —
+a text description of what's actually in the screenshot. Read it.
+
+**Rules for attaching references to the report:**
+1. Read `visionDescription` before using ANY screenshot
+2. The screenshot MUST directly illustrate the point you're making
+3. If `visionDescription` doesn't match your suggestion — DO NOT USE IT
+4. A report with 3 perfectly-matched references beats 10 loosely-related ones
+5. Better to have NO image than a mismatched one — describe the idea in text instead
+6. Never guess what's in a screenshot. If there's no visionDescription, skip it.
+7. Use `visionDescription` to write accurate captions — don't invent descriptions
+
+Mismatched references destroy user trust faster than anything else.
+
 ### 5. Web Research (REQUIRED — not optional)
 
 Lazyweb is strong for mobile app screenshots. But most design research also needs

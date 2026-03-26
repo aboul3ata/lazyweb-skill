@@ -142,6 +142,19 @@ Also try searching for the underlying FUNCTION rather than the screen name:
 **Explore generously.** Run 4-6 searches across different categories. Cast a very wide
 net — you can filter later. More raw material = better cross-pollination.
 
+**HIGH BAR FOR REFERENCES:** Each Lazyweb result includes a `visionDescription` field —
+a text description of what's actually in the screenshot. Read it.
+
+**Rules for attaching references to the brainstorm:**
+1. Read `visionDescription` before using ANY screenshot
+2. The screenshot MUST directly illustrate the cross-pollination idea you're proposing
+3. If `visionDescription` doesn't match your idea — DO NOT USE IT
+4. A brainstorm idea with no image but a great ASCII sketch beats one with a mismatched screenshot
+5. Never guess what's in a screenshot — use `visionDescription` for captions
+6. If there's no visionDescription, skip the screenshot
+
+Mismatched references destroy user trust faster than anything else.
+
 ### 5. Web Research (REQUIRED for balance)
 
 Lazyweb provides great mobile references for cross-pollination. But the brainstorm

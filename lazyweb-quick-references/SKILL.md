@@ -112,6 +112,19 @@ $LAZYWEB_CLI search "<more specific variant>" --limit 30 --json
 **Explore generously.** Don't stop at one search. Try 2-4 different phrasings to
 cast a wide net. More raw material = better grouping.
 
+**HIGH BAR FOR REFERENCES:** Each Lazyweb result includes a `visionDescription` field —
+a text description of what's actually in the screenshot. Read it.
+
+**Rules for attaching references:**
+1. Read `visionDescription` before using ANY screenshot
+2. The screenshot MUST directly illustrate the pattern you're grouping it under
+3. If `visionDescription` doesn't match — DO NOT USE IT
+4. Better to have fewer, perfectly-matched references than many loose ones
+5. Never guess what's in a screenshot — use `visionDescription` for captions
+6. If there's no visionDescription, skip the screenshot
+
+Mismatched references destroy user trust faster than anything else.
+
 ### 3. Supplement with Web Research
 
 **Always supplement**, especially for desktop/web requests. Lazyweb is primarily mobile.

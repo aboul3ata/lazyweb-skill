@@ -113,6 +113,19 @@ If you know the category, filter: `--category "<category>"`
 **Explore generously.** Run 3-5 searches to find the best references. More raw material
 means better improvement ideas.
 
+**HIGH BAR FOR REFERENCES:** Each Lazyweb result includes a `visionDescription` field —
+a text description of what's actually in the screenshot. Read it.
+
+**Rules for attaching references:**
+1. Read `visionDescription` before using ANY screenshot
+2. The screenshot MUST directly illustrate the improvement you're suggesting
+3. If `visionDescription` doesn't match your improvement idea — DO NOT USE IT
+4. A report with 3 perfectly-matched references beats 10 loosely-related ones
+5. Better to have NO image than a mismatched one — describe the idea with an ASCII sketch instead
+6. Never guess what's in a screenshot — use `visionDescription` for captions
+
+Mismatched references destroy user trust faster than anything else.
+
 ### 3. Web Research (REQUIRED for balance)
 
 **Always supplement with web research**, especially for desktop/web designs.
