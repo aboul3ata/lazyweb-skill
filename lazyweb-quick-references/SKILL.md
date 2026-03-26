@@ -69,14 +69,20 @@ requests, supplement with web research.
 
 ### 2. Download References
 
+Determine the absolute path for this report's directory:
 ```bash
-mkdir -p .lazyweb/quick-references/{topic-slug}-{YYYY-MM-DD}/references
+REPORT_DIR="$(pwd)/.lazyweb/quick-references/{topic-slug}-{YYYY-MM-DD}"
+mkdir -p "$REPORT_DIR/references"
 ```
 
 Download all results, cap at 20 images:
 ```bash
-curl -sL "{imageUrl}" -o .lazyweb/quick-references/{topic}/{references}/{company}-{screen}.png
+curl -sL "{imageUrl}" -o "$REPORT_DIR/references/{company}-{screen}.png"
 ```
+
+**IMPORTANT:** When writing image references in the report, always use ABSOLUTE paths
+so they render in any markdown viewer (VS Code, GitHub, etc.):
+`![Alt]($REPORT_DIR/references/company-screen.png)` — NOT relative `references/` paths.
 
 ### 3. Write Reference Document
 
@@ -91,10 +97,10 @@ Write to `.lazyweb/quick-references/{topic-slug}-{YYYY-MM-DD}/report.md`
 ## References
 
 ### Pattern A: {Name}
-![Company Screen](references/company-screen.png)
+![Company Screen](/absolute/path/to/references/company-screen.png)
 *{Company} — {What this screen shows, 1 line}*
 
-![Company2 Screen](references/company2-screen.png)
+![Company2 Screen](/absolute/path/to/references/company2-screen.png)
 *{Company2} — {What this screen shows}*
 
 {What these have in common — 1-2 sentences}

@@ -91,20 +91,24 @@ For gaps — especially desktop/web designs, recent apps, or niche categories:
 
 ### 5. Download References
 
-Create the output directory and download screenshots:
-
+Determine the absolute path for this report's directory:
 ```bash
-mkdir -p .lazyweb/design-research/{topic-slug}-{YYYY-MM-DD}/references
+REPORT_DIR="$(pwd)/.lazyweb/design-research/{topic-slug}-{YYYY-MM-DD}"
+mkdir -p "$REPORT_DIR/references"
 ```
 
 For each strong Lazyweb result, download the image:
 ```bash
-curl -sL "{imageUrl}" -o .lazyweb/design-research/{topic}/{references}/{company}-{screen-slug}.png
+curl -sL "{imageUrl}" -o "$REPORT_DIR/references/{company}-{screen-slug}.png"
 ```
 
 Cap at 20 images total. Name files descriptively: `stripe-pricing-page.png`, `linear-onboarding-step1.png`.
 
 For web-found examples, use the browse tool or screenshot tools if available to capture them. If not available, describe them in the report and note they couldn't be captured locally.
+
+**IMPORTANT:** When writing image references in the report, always use ABSOLUTE paths
+so they render in any markdown viewer (VS Code, GitHub, etc.):
+`![Alt]($REPORT_DIR/references/company-screen.png)` — NOT relative `references/` paths.
 
 ### 6. Write the Report
 
@@ -122,10 +126,10 @@ Write to `.lazyweb/design-research/{topic-slug}-{YYYY-MM-DD}/report.md`
 {Screenshot gallery — the visual centerpiece of the report.
 Each with company name, inline image, and 1-line description.}
 
-![Stripe Pricing](references/stripe-pricing-page.png)
+![Stripe Pricing](/absolute/path/to/references/stripe-pricing-page.png)
 *Stripe — Toggle between monthly/annual, social proof above pricing tiers*
 
-![Linear Onboarding](references/linear-onboarding.png)
+![Linear Onboarding](/absolute/path/to/references/linear-onboarding.png)
 *Linear — Single question per screen, progress bar, minimal UI*
 
 ## Findings

@@ -89,19 +89,25 @@ Search for best-in-class examples of this screen type:
 
 ### 4. Download References
 
+Determine the absolute path for this report's directory:
 ```bash
-mkdir -p .lazyweb/design-improve/{screen-slug}-{YYYY-MM-DD}/references
+REPORT_DIR="$(pwd)/.lazyweb/design-improve/{screen-slug}-{YYYY-MM-DD}"
+mkdir -p "$REPORT_DIR/references"
 ```
 
 Copy the current screenshot:
 ```bash
-cp <current-screenshot> .lazyweb/design-improve/{screen}/references/current.png
+cp <current-screenshot> "$REPORT_DIR/references/current.png"
 ```
 
 Download Lazyweb results (cap 20):
 ```bash
-curl -sL "{imageUrl}" -o .lazyweb/design-improve/{screen}/references/{company}-{screen}.png
+curl -sL "{imageUrl}" -o "$REPORT_DIR/references/{company}-{screen}.png"
 ```
+
+**IMPORTANT:** When writing image references in the report, always use ABSOLUTE paths
+so they render in any markdown viewer (VS Code, GitHub, etc.):
+`![Alt]($REPORT_DIR/references/company-screen.png)` — NOT relative `references/` paths.
 
 ### 5. Analyze and Generate Ideas
 
@@ -134,7 +140,7 @@ Write to `.lazyweb/design-improve/{screen-slug}-{YYYY-MM-DD}/report.md`
 {The single biggest opportunity — 1-2 sentences}
 
 ## Current State
-![Current Design](references/current.png)
+![Current Design](/absolute/path/to/references/current.png)
 
 ## What's Working
 {Be specific about what's good. Developers need to know what NOT to change.
@@ -146,7 +152,7 @@ List 2-4 concrete things that are done well.}
 {Clear description of what to change and why}
 
 **Inspired by:**
-![Reference](references/stripe-pricing.png)
+![Reference](/absolute/path/to/references/stripe-pricing.png)
 *{Company} — {What they do that inspired this idea}*
 
 **Why this works:** {What makes this pattern effective in the reference,

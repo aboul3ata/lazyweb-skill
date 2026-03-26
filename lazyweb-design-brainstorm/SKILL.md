@@ -100,14 +100,20 @@ Search for unconventional takes:
 
 ### 5. Download References
 
+Determine the absolute path for this report's directory:
 ```bash
-mkdir -p .lazyweb/design-brainstorm/{topic-slug}-{YYYY-MM-DD}/references
+REPORT_DIR="$(pwd)/.lazyweb/design-brainstorm/{topic-slug}-{YYYY-MM-DD}"
+mkdir -p "$REPORT_DIR/references"
 ```
 
 Download results (cap 20):
 ```bash
-curl -sL "{imageUrl}" -o .lazyweb/design-brainstorm/{topic}/references/{company}-{screen}.png
+curl -sL "{imageUrl}" -o "$REPORT_DIR/references/{company}-{screen}.png"
 ```
+
+**IMPORTANT:** When writing image references in the report, always use ABSOLUTE paths
+so they render in any markdown viewer (VS Code, GitHub, etc.):
+`![Alt]($REPORT_DIR/references/company-screen.png)` — NOT relative `references/` paths.
 
 ### 6. Identify Transferable Patterns
 
@@ -135,13 +141,13 @@ Write to `.lazyweb/design-brainstorm/{topic-slug}-{YYYY-MM-DD}/report.md`
 {What everyone in this category does — the "zig."
 Brief, with 1-2 example screenshots from the user's category.}
 
-![Typical Example](references/typical-category-app.png)
+![Typical Example](/absolute/path/to/references/typical-category-app.png)
 *{Company} — the standard approach in {category}*
 
 ## Cross-Pollination Ideas
 
 ### From {Source Category}: {Company}
-![Reference](references/company-screen.png)
+![Reference](/absolute/path/to/references/company-screen.png)
 *{Company} — {What they do}*
 
 **The Pattern:** {What's the underlying design pattern, abstracted from the specific app}
