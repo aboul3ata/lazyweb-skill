@@ -157,7 +157,33 @@ a text description of what's actually in the screenshot. Read it.
 
 Mismatched references destroy user trust faster than anything else.
 
-### 3. Web Research + Live Screenshot Capture
+### 3. Search Connected Inspiration Libraries
+
+Check if `~/.lazyweb/libraries.json` exists and has connected libraries:
+
+```bash
+cat ~/.lazyweb/libraries.json 2>/dev/null
+```
+
+If libraries are configured, search each one using the browse tool. For each library:
+
+1. Navigate to the library's search URL: `$LB goto "{searchUrl}"`
+2. Take a snapshot to understand the page: `$LB snapshot -i`
+3. Search for the topic: `$LB fill @eN "{query}"`
+4. Submit and wait for results: `$LB press Enter` then `$LB snapshot -i`
+5. Browse through results — screenshot the most relevant ones
+6. Save to: `$LB screenshot "$REPORT_DIR/references/{library}-{company}-{screen}.png"`
+
+**Keep it fast**: This is the quick-references skill. Don't deep-dive into every result.
+Grab the best 3-5 screenshots per library and move on.
+
+**If the library session has expired** (login wall, redirect to sign-in):
+- Tell the user: "Your {library} session has expired. Run `/lazyweb-add-inspo-source` to reconnect."
+- Skip this library and continue with other sources.
+
+Label all library-sourced references: `[Mobbin]`, `[Savee]`, etc.
+
+### 4. Web Research + Live Screenshot Capture
 
 **Always supplement** Lazyweb with live web captures for the most current examples.
 
@@ -178,7 +204,7 @@ If the browse tool is not available, describe web examples in the report without
 
 **Platform balance:** Aim for at least 50% same-platform references.
 
-### 4. Download References
+### 5. Download References
 
 ```bash
 REPORT_DIR="$(pwd)/.lazyweb/quick-references/{topic-slug}-{YYYY-MM-DD}"
@@ -198,7 +224,7 @@ if [ -x "$LB" ]; then
 fi
 ```
 
-### 5. Write Reference Document
+### 6. Write Reference Document
 
 Write to `.lazyweb/quick-references/{topic-slug}-{YYYY-MM-DD}/report.md`
 
@@ -258,7 +284,7 @@ just enough to communicate the layout idea. Example:
 These sketches help the user visualize how a pattern could apply to their work
 without needing to open a design tool. They don't need to be pixel-perfect — just communicative.
 
-### 6. Generate HTML Report
+### 7. Generate HTML Report
 
 After writing report.md, generate a `report.html` alongside it for visual preview.
 The HTML report should:
@@ -271,7 +297,7 @@ The HTML report should:
 
 Tell the user where the report was saved.
 
-### 7. Follow-up Strategies
+### 8. Follow-up Strategies
 
 - **"More like this"** → `$LAZYWEB_CLI similar <screenshot-id> --limit 10 --json`
 - **"Same company"** → `$LAZYWEB_CLI search "<query>" --company "<name>" --json`

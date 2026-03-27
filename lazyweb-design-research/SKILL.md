@@ -180,7 +180,35 @@ a text description of what's actually in the screenshot. Read it.
 
 Mismatched references destroy user trust faster than anything else.
 
-### 5. Web Research + Live Screenshot Capture (REQUIRED)
+### 5. Search Connected Inspiration Libraries
+
+Check if `~/.lazyweb/libraries.json` exists and has connected libraries:
+
+```bash
+cat ~/.lazyweb/libraries.json 2>/dev/null
+```
+
+If libraries are configured, search each one using the browse tool. For each library:
+
+1. Navigate to the library's search URL: `$LB goto "{searchUrl}"`
+2. Take a snapshot to understand the page: `$LB snapshot -i`
+3. Find the search input and type the research query: `$LB fill @eN "{query}"`
+4. Submit and wait for results: `$LB press Enter` then `$LB snapshot -i`
+5. Browse through results — click into the most relevant ones
+6. Screenshot the best results: `$LB screenshot "$REPORT_DIR/references/{library}-{company}-{screen}.png"`
+7. Note what's in each screenshot for accurate captions
+
+**Quality bar**: Same as Lazyweb — only use screenshots that directly illustrate a point
+in the report. A mismatched reference from Mobbin is just as bad as a mismatched one
+from Lazyweb.
+
+**If the library session has expired** (login wall, redirect to sign-in):
+- Tell the user: "Your {library} session has expired. Run `/lazyweb-add-inspo-source` to reconnect."
+- Skip this library and continue with the rest — don't block the research.
+
+Label all library-sourced references in the report with the library name: `[Mobbin]`, `[Savee]`, etc.
+
+### 6. Web Research + Live Screenshot Capture (REQUIRED)
 
 Lazyweb covers both mobile and desktop, but most research also needs recent trends,
 expert analysis, and live examples from competitors. **Always do web research alongside
@@ -215,7 +243,7 @@ you the latest, most current state of competitor sites.
 **Platform balance rule:** Use `--platform desktop` or `--platform mobile` to match the
 user's target platform. Aim for at least 50% same-platform references.
 
-### 6. Download References
+### 7. Download References
 
 Determine the absolute path for this report's directory:
 ```bash
@@ -241,7 +269,7 @@ Cap at 30 images total. Name files descriptively: `stripe-pricing-page.png`, `li
 Label each reference with its source in the report: `[Lazyweb]` or `[Web]` so the
 user knows the provenance.
 
-### 7. Write the Report
+### 8. Write the Report
 
 Write to `.lazyweb/design-research/{topic-slug}-{YYYY-MM-DD}/report.md`
 
@@ -322,7 +350,7 @@ What the research reveals about this problem space.}
 Web sources listed here with URLs.}
 ```
 
-### 8. Generate HTML Report
+### 9. Generate HTML Report
 
 After writing report.md, generate a `report.html` alongside it for visual preview.
 The HTML report should:

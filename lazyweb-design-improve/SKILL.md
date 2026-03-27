@@ -158,7 +158,35 @@ a text description of what's actually in the screenshot. Read it.
 
 Mismatched references destroy user trust faster than anything else.
 
-### 3. Web Research + Live Screenshot Capture (REQUIRED)
+### 3. Search Connected Inspiration Libraries
+
+Check if `~/.lazyweb/libraries.json` exists and has connected libraries:
+
+```bash
+cat ~/.lazyweb/libraries.json 2>/dev/null
+```
+
+If libraries are configured, search each one using the browse tool. For each library:
+
+1. Navigate to the library's search URL: `$LB goto "{searchUrl}"`
+2. Take a snapshot to understand the page: `$LB snapshot -i`
+3. Search for the same screen type the user is improving: `$LB fill @eN "{query}"`
+4. Submit and wait for results: `$LB press Enter` then `$LB snapshot -i`
+5. Browse through results — click into ones that look like strong alternatives to the current design
+6. Screenshot the best results: `$LB screenshot "$REPORT_DIR/references/{library}-{company}-{screen}.png"`
+7. Note what's in each screenshot for accurate captions
+
+**Quality bar**: Only use screenshots that directly illustrate an improvement idea.
+A reference from Mobbin that doesn't clearly show a better approach than the current
+design is useless — skip it.
+
+**If the library session has expired** (login wall, redirect to sign-in):
+- Tell the user: "Your {library} session has expired. Run `/lazyweb-add-inspo-source` to reconnect."
+- Skip this library and continue with other sources.
+
+Label all library-sourced references: `[Mobbin]`, `[Savee]`, etc.
+
+### 4. Web Research + Live Screenshot Capture (REQUIRED)
 
 **Always supplement** with live competitor screenshots and recent examples.
 
@@ -180,7 +208,7 @@ If no browse tool is available, describe web examples in the report without imag
 
 **Platform balance:** Aim for at least 50% same-platform references.
 
-### 4. Download References
+### 5. Download References
 
 ```bash
 REPORT_DIR="$(pwd)/.lazyweb/design-improve/{screen-slug}-{YYYY-MM-DD}"
@@ -205,7 +233,7 @@ if [ -x "$LB" ]; then
 fi
 ```
 
-### 5. Analyze and Generate Ideas
+### 6. Analyze and Generate Ideas
 
 Look at the current design alongside the references. Consider:
 - What's the user's product context? (audience, platform, goals)
@@ -225,7 +253,7 @@ Generate 1-5 concrete improvement ideas. Each must be:
 - Tied to a reference (which screenshot inspired this idea?)
 - Actionable (the user should be able to implement it)
 
-### 6. Write Improvement Report
+### 7. Write Improvement Report
 
 Write to `.lazyweb/design-improve/{screen-slug}-{YYYY-MM-DD}/report.md`
 
@@ -293,7 +321,7 @@ just enough to communicate the layout idea. Example:
 These sketches help the user visualize the improvement without needing to open a
 design tool. They don't need to be pixel-perfect — just communicative.
 
-### 7. Generate HTML Report
+### 8. Generate HTML Report
 
 After writing report.md, generate a `report.html` alongside it for visual preview.
 The HTML report should:

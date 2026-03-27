@@ -188,7 +188,35 @@ a text description of what's actually in the screenshot. Read it.
 
 Mismatched references destroy user trust faster than anything else.
 
-### 5. Web Research + Live Screenshot Capture (REQUIRED)
+### 5. Search Connected Inspiration Libraries
+
+Check if `~/.lazyweb/libraries.json` exists and has connected libraries:
+
+```bash
+cat ~/.lazyweb/libraries.json 2>/dev/null
+```
+
+If libraries are configured, search each one using the browse tool. For brainstorms,
+search BOTH the obvious category AND unrelated categories in each library:
+
+1. Navigate to the library's search URL: `$LB goto "{searchUrl}"`
+2. Take a snapshot to understand the page: `$LB snapshot -i`
+3. Search for the cross-pollination query: `$LB fill @eN "{query}"`
+4. Submit and wait for results: `$LB press Enter` then `$LB snapshot -i`
+5. Browse through results — look for the unexpected, the novel, the "wait, that's interesting"
+6. Screenshot the standout results: `$LB screenshot "$REPORT_DIR/references/{library}-{company}-{screen}.png"`
+7. Note what makes each one a genuine "zag"
+
+**Brainstorm-specific**: Libraries like Mobbin and Savee have category filters. Use them
+to deliberately search outside the user's category — that's the whole point of this skill.
+
+**If the library session has expired** (login wall, redirect to sign-in):
+- Tell the user: "Your {library} session has expired. Run `/lazyweb-add-inspo-source` to reconnect."
+- Skip this library and continue with other sources.
+
+Label all library-sourced references: `[Mobbin]`, `[Savee]`, etc.
+
+### 6. Web Research + Live Screenshot Capture (REQUIRED)
 
 Lazyweb gives you curated screenshots. But brainstorms need the UNEXPECTED — Awwwards
 winners, experimental sites, award-winning designs nobody in the user's space is looking at.
@@ -218,7 +246,7 @@ freedom than mobile.
 **Platform balance:** Also deliberately search the OTHER platform for cross-pollination.
 A novel web layout can inspire a fresh mobile approach and vice versa.
 
-### 6. Download References
+### 7. Download References
 
 ```bash
 REPORT_DIR="$(pwd)/.lazyweb/design-brainstorm/{topic-slug}-{YYYY-MM-DD}"
@@ -238,7 +266,7 @@ if [ -x "$LB" ]; then
 fi
 ```
 
-### 7. Identify Transferable Patterns
+### 8. Identify Transferable Patterns
 
 For each cross-category result, ask:
 - What pattern is this app using? (not what it looks like, but what it DOES)
@@ -250,7 +278,7 @@ For each cross-category result, ask:
 might be terrible. Filter for ideas where the UNDERLYING PATTERN transfers, even if
 the surface aesthetic doesn't.
 
-### 8. Write Brainstorm Document
+### 9. Write Brainstorm Document
 
 Write to `.lazyweb/design-brainstorm/{topic-slug}-{YYYY-MM-DD}/report.md`
 
@@ -325,7 +353,7 @@ considering. Flag the risk alongside the upside.}
 
 Label each reference `[Lazyweb]` or `[Web]` so the user knows where it came from.
 
-### 9. Generate HTML Report
+### 10. Generate HTML Report
 
 After writing report.md, generate a `report.html` alongside it for visual preview.
 The HTML report should:
