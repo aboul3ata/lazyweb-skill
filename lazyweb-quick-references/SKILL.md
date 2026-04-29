@@ -50,24 +50,24 @@ or not, ALWAYS:
 - User has an existing design and wants feedback → use `/lazyweb-design-improve`
 - User wants creative/unconventional ideas → use `/lazyweb-design-brainstorm`
 
-## CLI Setup
+## Lazyweb MCP Setup
 
-Determine the CLI command. Check in order:
-1. `LAZYWEB_CLI` environment variable (if set, use it)
-2. `lazyweb` on PATH (try `which lazyweb`)
-3. Fall back to `bun run ~/Dropbox/cli-lazyweb/src/index.ts`
+Use the hosted Lazyweb MCP tools first. Do not shell out to the legacy `lazyweb`
+CLI unless MCP tools are unavailable in the current agent.
 
-Before searching, verify the CLI is authenticated: `$LAZYWEB_CLI health`
+Required MCP tools:
+- `lazyweb_search` — text search over mobile and desktop screenshots
+- `lazyweb_find_similar` — more results like a known Lazyweb screenshot ID
+- `lazyweb_compare_image` — visual search from `image_base64` + `mime_type` or `image_url`
+- `lazyweb_health` — connectivity check
 
-**If the CLI is not found or not configured:**
-Tell the user: "Lazyweb CLI is not installed. You can get it at https://lazyweb.com/ —
-you'll need a subscription to access the screenshot database. Once purchased, run
-`lazyweb auth <your-user-id>` to authenticate."
+Before searching, verify MCP is available by listing tools and running
+`lazyweb_health`.
+
+**If Lazyweb MCP is not installed or auth fails:**
+Tell the user: "Lazyweb MCP is not installed. Get the free one-line install prompt
+at https://lazyweb.com/#pricing, paste it into this agent, then rerun this skill."
 Then proceed with web research only.
-
-**If auth fails (401/403):**
-Tell the user: "Your Lazyweb subscription may have expired. Visit https://lazyweb.com/
-to renew, then run `lazyweb auth <your-user-id>` to re-authenticate."
 
 ## Browse Setup (run BEFORE any web capture)
 
@@ -114,12 +114,12 @@ This grounds the collection — the reader sees what they have before seeing the
 
 ### 2. Search Lazyweb
 
-Run 2-4 searches with different angles:
+Call `lazyweb_search` 2-4 times with different angles:
 
-```bash
-$LAZYWEB_CLI search "<query>" --limit 30 --json
-$LAZYWEB_CLI search "<alternative framing>" --limit 30 --json
-$LAZYWEB_CLI search "<more specific variant>" --platform desktop --limit 30 --json
+```json
+{"query":"<query>","limit":30}
+{"query":"<alternative framing>","limit":30}
+{"query":"<more specific variant>","platform":"desktop","limit":30}
 ```
 
 **Query tips:**
@@ -299,7 +299,7 @@ Tell the user where the report was saved.
 
 ### 8. Follow-up Strategies
 
-- **"More like this"** → `$LAZYWEB_CLI similar <screenshot-id> --limit 10 --json`
-- **"Same company"** → `$LAZYWEB_CLI search "<query>" --company "<name>" --json`
+- **"More like this"** → call `lazyweb_find_similar` with `{"screenshot_id":12345,"limit":10}`
+- **"Same company"** → call `lazyweb_search` with `{"query":"<query>","company":"<name>","limit":30}`
 - **"Different style"** → Rephrase query emphasizing the desired difference
 - **"What about competitors?"** → Search for the same screen across different companies

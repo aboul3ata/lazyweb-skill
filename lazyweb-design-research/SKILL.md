@@ -52,24 +52,24 @@ or not, ALWAYS:
 - User has an existing design and wants improvement ideas → use `/lazyweb-design-improve`
 - User wants creative/unconventional ideas → use `/lazyweb-design-brainstorm`
 
-## CLI Setup
+## Lazyweb MCP Setup
 
-Determine the CLI command. Check in order:
-1. `LAZYWEB_CLI` environment variable (if set, use it)
-2. `lazyweb` on PATH (try `which lazyweb`)
-3. Fall back to `bun run ~/Dropbox/cli-lazyweb/src/index.ts`
+Use the hosted Lazyweb MCP tools first. Do not shell out to the legacy `lazyweb`
+CLI unless MCP tools are unavailable in the current agent.
 
-Before searching, verify the CLI is authenticated: `$LAZYWEB_CLI health`
+Required MCP tools:
+- `lazyweb_search` — text search over mobile and desktop screenshots
+- `lazyweb_find_similar` — more results like a known Lazyweb screenshot ID
+- `lazyweb_compare_image` — visual search from `image_base64` + `mime_type` or `image_url`
+- `lazyweb_health` — connectivity check
 
-**If the CLI is not found or not configured:**
-Tell the user: "Lazyweb CLI is not installed. You can get it at https://lazyweb.com/ —
-you'll need a subscription to access the screenshot database. Once purchased, run
-`lazyweb auth <your-user-id>` to authenticate."
+Before searching, verify MCP is available by listing tools and running
+`lazyweb_health`.
+
+**If Lazyweb MCP is not installed or auth fails:**
+Tell the user: "Lazyweb MCP is not installed. Get the free one-line install prompt
+at https://lazyweb.com/#pricing, paste it into this agent, then rerun this skill."
 Then proceed with web research only — the skill still works, just without Lazyweb's database.
-
-**If auth fails (401/403):**
-Tell the user: "Your Lazyweb subscription may have expired. Visit https://lazyweb.com/
-to renew, then run `lazyweb auth <your-user-id>` to re-authenticate."
 
 ## Browse Setup (run BEFORE any web capture)
 
@@ -129,25 +129,16 @@ Think about two groups:
 
 ### 4. Search Lazyweb
 
-Run multiple searches with different angles:
+Call `lazyweb_search` multiple times with different angles:
 
-```bash
-# Search by screen type
-$LAZYWEB_CLI search "<specific screen/component>" --limit 30 --json
-
-# Search by competitor
-$LAZYWEB_CLI search "<screen type>" --company "<competitor>" --json
-
-# Search with category filter
-$LAZYWEB_CLI search "<screen type>" --category "<category>" --json
-
-# Search a specific platform
-$LAZYWEB_CLI search "<screen type>" --platform desktop --limit 30 --json
-$LAZYWEB_CLI search "<screen type>" --platform mobile --limit 30 --json
-
-# Try alternative framings — explore widely
-$LAZYWEB_CLI search "<different description of same thing>" --limit 30 --json
-$LAZYWEB_CLI search "<even more specific variant>" --limit 30 --json
+```json
+{"query":"<specific screen/component>","limit":30}
+{"query":"<screen type>","company":"<competitor>","limit":30}
+{"query":"<screen type>","category":"<category>","limit":30}
+{"query":"<screen type>","platform":"desktop","limit":30}
+{"query":"<screen type>","platform":"mobile","limit":30}
+{"query":"<different description of same thing>","limit":30}
+{"query":"<even more specific variant>","limit":30}
 ```
 
 **Platform routing:** Lazyweb has both mobile app screenshots and desktop/web site screenshots.

@@ -16,11 +16,24 @@ Your agent searches before it designs. It finds real examples, downloads them lo
 
 **`/lazyweb-design-brainstorm`** — Cross-pollination brainstorm. Deliberately searches OUTSIDE your category to find novel patterns. If everyone in fintech copies each other, this skill looks at gaming, entertainment, and social apps for transferable ideas. The "zig when everyone zags" skill.
 
-## Install
+## Setup
 
-```bash
-npx skills add https://github.com/aboul3ata/lazyweb-skill
-```
+### 1. Generate a free install prompt
+
+Go to [lazyweb.com](https://lazyweb.com), press **Get Lazyweb MCP**, and copy the
+one-line install prompt.
+
+### 2. Paste it into your coding agent
+
+Paste the prompt into Claude Code, Codex, Cursor, or another MCP-capable coding
+agent. The prompt configures the hosted Lazyweb MCP server with your free token
+and installs/updates this skill pack.
+
+### 3. Manual MCP config, if needed
+
+Server URL: `https://cli-lazybackend.onrender.com/mcp`
+Header: `Authorization: Bearer <your-user-id-token>`
+Skill URL: `https://github.com/aboul3ata/lazyweb-skill`
 
 <details>
 <summary>Alternative: manual install</summary>
@@ -38,64 +51,25 @@ git clone https://github.com/aboul3ata/lazyweb-skill.git .cursor/skills/lazyweb-
 ```
 </details>
 
-## Prerequisites
+### 4. Verify
 
-These skills call the Lazyweb CLI, which talks to a local backend server that queries Lazyweb's database. You need:
+List MCP tools, run `lazyweb_health`, then run `lazyweb_search` with:
 
-1. **cli-lazybackend** — The search backend (runs locally)
-2. **cli-lazyweb** — The CLI that the skills invoke
-
-<details>
-<summary>Setup instructions</summary>
-
-### 1. Clone the repos
-
-```bash
-git clone https://github.com/aboul3ata/cli-lazybackend.git
-git clone https://github.com/aboul3ata/cli-lazyweb.git
+```json
+{"query":"pricing page","limit":3}
 ```
-
-### 2. Install dependencies
-
-```bash
-cd cli-lazybackend && bun install
-```
-
-### 3. Configure environment
-
-Copy `.env.example` to `.env` and fill in your API keys:
-
-```bash
-cp .env.example .env
-```
-
-See `.env.example` for the required API keys.
-
-### 4. Start the backend
-
-```bash
-cd cli-lazybackend && bun run dev
-```
-
-The backend runs on port 3456 by default.
-
-### 5. Test it
-
-```bash
-cd cli-lazyweb && bun run src/index.ts search "pricing page" --limit 3
-```
-</details>
 
 ## What your agent can do
 
-| Command | What it does |
+| MCP tool | What it does |
 |---------|-------------|
-| `lazyweb search "dark mode settings"` | Find screenshots matching a description |
-| `lazyweb search "pricing" --category Finance` | Filter by app category |
-| `lazyweb search "onboarding" --company linear` | Filter by company |
-| `lazyweb compare ./my-design.png` | Find screenshots visually similar to your image |
-| `lazyweb similar 12345` | Find screenshots similar to one you already found |
-| `lazyweb search "pricing" --fields high_design_bar` | Include rich metadata |
+| `lazyweb_search` | Find screenshots matching a description |
+| `lazyweb_search` with `category` | Filter by app category |
+| `lazyweb_search` with `company` | Filter by company |
+| `lazyweb_search` with `platform: "desktop"` | Search desktop/web screenshots only |
+| `lazyweb_search` with `platform: "mobile"` | Search mobile app screenshots only |
+| `lazyweb_compare_image` | Find screenshots visually similar to an image URL or base64 image |
+| `lazyweb_find_similar` | Find screenshots similar to one you already found |
 
 ## Output format
 
@@ -103,8 +77,8 @@ All skills produce a report with downloaded reference images:
 
 ```
 .lazyweb/{skill}/{topic}-{date}/
-├── report.md          ← Structured findings with inline images
-└── references/        ← Downloaded screenshots (persisted locally)
+├── report.md          <- Structured findings with inline images
+└── references/        <- Downloaded screenshots (persisted locally)
     ├── stripe-pricing-page.png
     ├── linear-onboarding.png
     └── ...
