@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 96" role="img" aria-label="Lazyweb">
+  <rect width="320" height="96" rx="18" fill="#111111"/>
+  <path d="M32 27h20v34h34v14H32V27Z" fill="#ffffff"/>
+  <path d="M92 27h21l-13 22 15 26H98L88 56l-8 12V51l12-24Z" fill="#7dd3fc"/>
+  <text x="128" y="62" fill="#ffffff" font-family="Inter, Arial, sans-serif" font-size="35" font-weight="700">Lazyweb</text>
+</svg>

@@ -26,6 +26,7 @@ Your agent searches before it designs. It finds real examples, downloads them lo
 
 This repo is packaged as a global Codex plugin with:
 
+- Plugin source in `plugins/lazyweb/`
 - Skills in `~/plugins/lazyweb/skills/`
 - MCP config in `~/plugins/lazyweb/.mcp.json`
 - Marketplace entry in `~/.agents/plugins/marketplace.json`

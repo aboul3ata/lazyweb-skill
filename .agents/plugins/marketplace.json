@@ -1,0 +1,20 @@
+{
+  "name": "lazyweb",
+  "interface": {
+    "displayName": "Lazyweb Plugins"
+  },
+  "plugins": [
+    {
+      "name": "lazyweb",
+      "source": {
+        "source": "local",
+        "path": "./plugins/lazyweb"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Design"
+    }
+  ]
+}

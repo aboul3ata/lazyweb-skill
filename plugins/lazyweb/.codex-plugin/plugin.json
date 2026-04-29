@@ -1,0 +1,46 @@
+{
+  "name": "lazyweb",
+  "version": "0.1.0",
+  "description": "Lazyweb design research skills backed by the hosted Lazyweb MCP server.",
+  "author": {
+    "name": "Lazyweb",
+    "email": "support@lazyweb.com",
+    "url": "https://lazyweb.com/"
+  },
+  "homepage": "https://lazyweb.com/",
+  "repository": "https://github.com/aboul3ata/lazyweb-skill",
+  "license": "MIT",
+  "keywords": [
+    "lazyweb",
+    "design",
+    "screenshots",
+    "mcp",
+    "ux-research"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Lazyweb",
+    "shortDescription": "Design with real product screenshots",
+    "longDescription": "Use Lazyweb MCP and bundled design skills to search real app and web screenshots, collect visual references, compare existing designs, and produce evidence-backed design research.",
+    "developerName": "Lazyweb",
+    "category": "Design",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://lazyweb.com/",
+    "privacyPolicyURL": "https://lazyweb.com/privacy",
+    "termsOfServiceURL": "https://lazyweb.com/terms",
+    "defaultPrompt": [
+      "Show me pricing page references",
+      "Research onboarding best practices",
+      "Improve this design with references"
+    ],
+    "brandColor": "#111111",
+    "composerIcon": "./assets/icon.svg",
+    "logo": "./assets/logo.svg",
+    "screenshots": []
+  }
+}

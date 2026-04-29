@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "lazyweb": {
+      "command": "sh",
+      "args": [
+        "-lc",
+        "exec npx -y mcp-remote https://cli-lazybackend.onrender.com/mcp --header \"Authorization: Bearer ${LAZYWEB_MCP_TOKEN:-$(cat ~/.codex/lazyweb_mcp_token 2>/dev/null)}\" --transport http-first --silent"
+      ]
+    }
+  }
+}
