@@ -54,8 +54,7 @@ or not, ALWAYS:
 
 ## Lazyweb MCP Setup
 
-Use the hosted Lazyweb MCP tools first. Do not shell out to the legacy `lazyweb`
-CLI unless MCP tools are unavailable in the current agent.
+Use the hosted Lazyweb MCP tools for all Lazyweb database access.
 
 Required MCP tools:
 - `lazyweb_search` — text search over mobile and desktop screenshots
@@ -67,8 +66,9 @@ Before searching, verify MCP is available by listing tools and running
 `lazyweb_health`.
 
 **If Lazyweb MCP is not installed or auth fails:**
-Tell the user: "Lazyweb MCP is not installed. Get the free one-line install prompt
-at https://lazyweb.com/#pricing, paste it into this agent, then rerun this skill."
+Tell the user: "Lazyweb MCP is not installed. Enable the global Lazyweb plugin or
+get the free one-line install prompt at https://lazyweb.com/#pricing, paste it
+into this agent, then rerun this skill."
 Then proceed with web research only — the skill still works, just without Lazyweb's database.
 
 ## Browse Setup (run BEFORE any web capture)

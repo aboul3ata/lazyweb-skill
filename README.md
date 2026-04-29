@@ -1,12 +1,12 @@
-# Lazyweb Skill
+# Lazyweb Plugin
 
 **Design with evidence, not vibes.**
 
-AI agents design from training data averages — generic layouts, safe colors, patterns you've seen a thousand times. This skill gives your agent access to Lazyweb's database of real app screenshots from thousands of the best mobile apps ever built.
+AI agents design from training data averages — generic layouts, safe colors, patterns you've seen a thousand times. This plugin gives your agent Lazyweb skills plus the hosted Lazyweb MCP server for real app and web screenshots.
 
 Your agent searches before it designs. It finds real examples, downloads them locally, and produces structured reports with inline images you can preview in any markdown viewer.
 
-## Four skills included
+## Skills included
 
 **`/lazyweb-design-research`** — Deep design research. Identifies competitors, searches Lazyweb + web, downloads reference screenshots, and produces a structured report with: TL;DR, Examples, Findings, Patterns, Anti-Patterns, Unique Angles, and Recommendations. Use for competitive analysis and best practices research.
 
@@ -16,42 +16,29 @@ Your agent searches before it designs. It finds real examples, downloads them lo
 
 **`/lazyweb-design-brainstorm`** — Cross-pollination brainstorm. Deliberately searches OUTSIDE your category to find novel patterns. If everyone in fintech copies each other, this skill looks at gaming, entertainment, and social apps for transferable ideas. The "zig when everyone zags" skill.
 
+**`/lazyweb-add-inspo-source`** — Connect external inspiration libraries so Lazyweb design skills can include them in research.
+
+**`/lazyweb-remove-inspo-source`** — Disconnect an external inspiration library.
+
 ## Setup
 
-### 1. Generate a free install prompt
+### Global Codex plugin
+
+This repo is packaged as a global Codex plugin with:
+
+- Skills in `~/plugins/lazyweb/skills/`
+- MCP config in `~/plugins/lazyweb/.mcp.json`
+- Marketplace entry in `~/.agents/plugins/marketplace.json`
+
+Set `LAZYWEB_MCP_TOKEN` or store the generated token at `~/.codex/lazyweb_mcp_token`.
+The plugin talks to `https://cli-lazybackend.onrender.com/mcp` through `mcp-remote`.
+
+### Generate a free token
 
 Go to [lazyweb.com](https://lazyweb.com), press **Get Lazyweb MCP**, and copy the
-one-line install prompt.
+one-line install prompt. The token in that prompt is the bearer token for MCP.
 
-### 2. Paste it into your coding agent
-
-Paste the prompt into Claude Code, Codex, Cursor, or another MCP-capable coding
-agent. The prompt configures the hosted Lazyweb MCP server with your free token
-and installs/updates this skill pack.
-
-### 3. Manual MCP config, if needed
-
-Server URL: `https://cli-lazybackend.onrender.com/mcp`
-Header: `Authorization: Bearer <your-user-id-token>`
-Skill URL: `https://github.com/aboul3ata/lazyweb-skill`
-
-<details>
-<summary>Alternative: manual install</summary>
-
-Clone into your skills directory:
-
-**Claude Code:**
-```bash
-git clone https://github.com/aboul3ata/lazyweb-skill.git ~/.claude/skills/lazyweb-skill
-```
-
-**Cursor:**
-```bash
-git clone https://github.com/aboul3ata/lazyweb-skill.git .cursor/skills/lazyweb-skill
-```
-</details>
-
-### 4. Verify
+### Verify
 
 List MCP tools, run `lazyweb_health`, then run `lazyweb_search` with:
 
@@ -70,6 +57,8 @@ List MCP tools, run `lazyweb_health`, then run `lazyweb_search` with:
 | `lazyweb_search` with `platform: "mobile"` | Search mobile app screenshots only |
 | `lazyweb_compare_image` | Find screenshots visually similar to an image URL or base64 image |
 | `lazyweb_find_similar` | Find screenshots similar to one you already found |
+
+Use MCP tools for all Lazyweb database access.
 
 ## Output format
 
