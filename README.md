@@ -20,6 +20,8 @@ Your agent searches before it designs. It finds real examples, downloads them lo
 
 **`/lazyweb-remove-inspo-source`** — Disconnect an external inspiration library.
 
+**`/lazyweb`** — Top-level entrypoint that routes to the right Lazyweb design skill and verifies the hosted MCP tools.
+
 ## Setup
 
 ### Global Codex plugin
