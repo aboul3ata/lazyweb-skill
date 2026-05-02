@@ -22,22 +22,45 @@ Your agent searches before it designs. It finds real examples, downloads them lo
 
 ## Setup
 
-### Global Codex plugin
+### Codex plugin
 
-This repo is packaged as a global Codex plugin with:
+This repo is packaged as a Codex plugin with:
 
 - Plugin source in `plugins/lazyweb/`
 - Skills in `~/plugins/lazyweb/skills/`
 - MCP config in `~/plugins/lazyweb/.mcp.json`
 - Marketplace entry in `~/.agents/plugins/marketplace.json`
 
-Set `LAZYWEB_MCP_TOKEN` or store the generated token at `~/.codex/lazyweb_mcp_token`.
-The plugin talks to `https://cli-lazybackend.onrender.com/mcp` through `mcp-remote`.
+Set `LAZYWEB_MCP_TOKEN` or store the generated token at `~/.lazyweb/lazyweb_mcp_token`.
+The plugin also checks the legacy `~/.codex/lazyweb_mcp_token` path for existing installs.
+The plugin talks to `https://www.lazyweb.com/mcp` through `mcp-remote`.
+
+### Claude Code plugin
+
+This repo is also a Claude Code plugin marketplace. Add the marketplace, then install the plugin:
+
+```bash
+claude plugin marketplace add https://github.com/aboul3ata/lazyweb-skill
+claude plugin install lazyweb@lazyweb
+```
+
+Claude Code skills are namespaced as `/lazyweb:<skill-name>`, for example
+`/lazyweb:lazyweb-quick-references`.
 
 ### Generate a free token
 
-Go to [lazyweb.com](https://lazyweb.com), press **Get Lazyweb MCP**, and copy the
-one-line install prompt. The token in that prompt is the bearer token for MCP.
+Run the no-login token endpoint:
+
+```bash
+mkdir -p ~/.lazyweb
+curl -sS -X POST https://www.lazyweb.com/api/mcp/install-token \
+  -H "content-type: application/json" \
+  -d '{}' | node -e "let s='';process.stdin.on('data',d=>s+=d);process.stdin.on('end',()=>require('fs').writeFileSync(process.env.HOME+'/.lazyweb/lazyweb_mcp_token', JSON.parse(s).token))"
+```
+
+Lazyweb is free. This bearer token only authorizes Lazyweb MCP reference tools;
+it does not grant purchases, paid spend, private user data, or destructive
+actions. It is okay in ignored local config, but do not commit it to public git.
 
 ### Verify
 
@@ -58,6 +81,10 @@ List MCP tools, run `lazyweb_health`, then run `lazyweb_search` with:
 | `lazyweb_search` with `platform: "mobile"` | Search mobile app screenshots only |
 | `lazyweb_compare_image` | Find screenshots visually similar to an image URL or base64 image |
 | `lazyweb_find_similar` | Find screenshots similar to one you already found |
+
+These public `lazyweb_*` tool names are compatibility aliases on `https://www.lazyweb.com/mcp`.
+They map to the current canonical MCP tools such as `search_screenshots`,
+`list_filters`, `vision_screenshots`, and `metadata_screenshots`.
 
 Use MCP tools for all Lazyweb database access.
 

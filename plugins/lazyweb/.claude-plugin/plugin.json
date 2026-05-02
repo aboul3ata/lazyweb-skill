@@ -1,0 +1,13 @@
+{
+  "name": "lazyweb",
+  "description": "Lazyweb design research skills backed by the hosted Lazyweb MCP server.",
+  "version": "0.1.1",
+  "author": {
+    "name": "Lazyweb",
+    "email": "support@lazyweb.com",
+    "url": "https://lazyweb.com/"
+  },
+  "homepage": "https://lazyweb.com/",
+  "repository": "https://github.com/aboul3ata/lazyweb-skill",
+  "license": "MIT"
+}

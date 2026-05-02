@@ -1,0 +1,21 @@
+{
+  "name": "lazyweb",
+  "owner": {
+    "name": "Lazyweb",
+    "email": "support@lazyweb.com"
+  },
+  "metadata": {
+    "description": "Lazyweb Claude Code plugins for UI research with real product screenshots and MCP tools."
+  },
+  "plugins": [
+    {
+      "name": "lazyweb",
+      "source": "./plugins/lazyweb",
+      "description": "Adds namespaced Lazyweb design research skills and the hosted Lazyweb MCP server.",
+      "author": {
+        "name": "Lazyweb",
+        "email": "support@lazyweb.com"
+      }
+    }
+  ]
+}

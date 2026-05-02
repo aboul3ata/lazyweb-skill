@@ -52,7 +52,7 @@ or not, ALWAYS:
 
 ## Lazyweb MCP Setup
 
-Use the hosted Lazyweb MCP tools for all Lazyweb database access.
+Use the hosted Lazyweb MCP tools at `https://www.lazyweb.com/mcp` for all Lazyweb database access.
 
 Required MCP tools:
 - `lazyweb_search` — text search over mobile and desktop screenshots
@@ -60,13 +60,18 @@ Required MCP tools:
 - `lazyweb_compare_image` — visual search from `image_base64` + `mime_type` or `image_url`
 - `lazyweb_health` — connectivity check
 
+These are stable public compatibility aliases. The server may also expose canonical
+tools such as `search_screenshots`, `list_filters`, `vision_screenshots`, and
+`metadata_screenshots`; prefer the `lazyweb_*` names in this skill.
+
 Before searching, verify MCP is available by listing tools and running
 `lazyweb_health`.
 
 **If Lazyweb MCP is not installed or auth fails:**
 Tell the user: "Lazyweb MCP is not installed. Enable the global Lazyweb plugin or
-get the free one-line install prompt at https://lazyweb.com/#pricing, paste it
-into this agent, then rerun this skill."
+get the free setup instructions at https://www.lazyweb.com/mcp-install, paste
+them into this agent, then rerun this skill. Lazyweb is free; the bearer token is
+only for no-billing UI reference tools and is okay in ignored local config."
 Then proceed with web research only.
 
 ## Browse Setup (run BEFORE any web capture)

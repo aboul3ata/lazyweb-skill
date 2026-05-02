@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "test": "node scripts/validate-plugin.mjs"
+  }
+}
