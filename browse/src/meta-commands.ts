@@ -299,7 +299,7 @@ export async function handleMetaCommand(
     }
 
     case 'resume': {
-      bm.resume();
+      await bm.resume();
       // Re-snapshot to capture current page state after human interaction
       const snapshot = await handleSnapshot(['-i'], bm);
       return `RESUMED\n${snapshot}`;
