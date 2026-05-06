@@ -169,36 +169,57 @@ export class BrowserManager {
       console.log(`[browse] Extensions loaded from: ${extensionsDir}`);
     }
 
-    this.browser = await chromium.launch({
+    // Use a persistent profile dir on disk (shared with handoff/launchHeaded).
+    // Cookies, localStorage, sessionStorage, AND IndexedDB all survive across
+    // server restarts and headed↔headless swaps. Critical for Supabase/Firebase
+    // auth (Mobbin etc.) which stores bearer tokens in IndexedDB.
+    const fs = require('fs');
+    const path = require('path');
+    const userDataDir = path.join(process.env.HOME || '/tmp', '.gstack', 'chromium-profile');
+    fs.mkdirSync(userDataDir, { recursive: true });
+
+    const persistentOptions: Parameters<typeof chromium.launchPersistentContext>[1] = {
       headless: useHeadless,
       // On Windows, Chromium's sandbox fails when the server is spawned through
       // the Bun→Node process chain (GitHub #276). Disable it — local daemon
       // browsing user-specified URLs has marginal sandbox benefit.
       chromiumSandbox: process.platform !== 'win32',
-      ...(launchArgs.length > 0 ? { args: launchArgs } : {}),
-    });
-
-    // Chromium crash → exit with clear message
-    this.browser.on('disconnected', () => {
-      console.error('[browse] FATAL: Chromium process crashed or was killed. Server exiting.');
-      console.error('[browse] Console/network logs flushed to .gstack/browse-*.log');
-      process.exit(1);
-    });
-
-    const contextOptions: BrowserContextOptions = {
       viewport: { width: 1280, height: 720 },
+      ...(launchArgs.length > 0 ? { args: launchArgs } : {}),
     };
     if (this.customUserAgent) {
-      contextOptions.userAgent = this.customUserAgent;
+      persistentOptions.userAgent = this.customUserAgent;
     }
-    this.context = await this.browser.newContext(contextOptions);
+
+    this.context = await chromium.launchPersistentContext(userDataDir, persistentOptions);
+    this.browser = this.context.browser();
+
+    // Chromium crash → exit with clear message
+    if (this.browser) {
+      this.browser.on('disconnected', () => {
+        if (this.intentionalDisconnect) return;
+        console.error('[browse] FATAL: Chromium process crashed or was killed. Server exiting.');
+        console.error('[browse] Console/network logs flushed to .gstack/browse-*.log');
+        process.exit(1);
+      });
+    }
 
     if (Object.keys(this.extraHeaders).length > 0) {
       await this.context.setExtraHTTPHeaders(this.extraHeaders);
     }
 
-    // Create first tab
-    await this.newTab();
+    // launchPersistentContext creates a default blank tab — adopt it instead
+    // of opening a new one (avoids an empty extra tab).
+    const initialPages = this.context.pages();
+    if (initialPages.length > 0) {
+      const firstPage = initialPages[0];
+      const id = this.nextTabId++;
+      this.pages.set(id, firstPage);
+      this.activeTabId = id;
+      this.wirePageEvents(firstPage);
+    } else {
+      await this.newTab();
+    }
   }
 
   // ─── Headed Mode ─────────────────────────────────────────────
@@ -736,12 +757,20 @@ export class BrowserManager {
       throw new Error('Browser not launched');
     }
 
-    // 1. Save state from current browser
-    const state = await this.saveState();
     const currentUrl = this.getCurrentUrl();
+    const oldBrowser = this.browser;
+    const oldContext = this.context;
 
-    // 2. Launch new headed browser with extension (same as launchHeaded)
-    //    Uses launchPersistentContext so the extension auto-loads.
+    // Both headless and headed share the same userDataDir, so the headless
+    // context MUST close before headed opens (Chromium profile is single-writer).
+    // Cookies/localStorage/sessionStorage/IndexedDB are all on disk in the
+    // profile dir — they transfer automatically. No save/restore needed.
+    this.intentionalDisconnect = true;
+    oldBrowser.removeAllListeners('disconnected');
+    try { await oldContext.close(); } catch {}
+    try { await oldBrowser.close(); } catch {}
+
+    // Launch headed browser against the same persistent profile.
     let newContext: BrowserContext;
     try {
       const fs = require('fs');
@@ -771,62 +800,102 @@ export class BrowserManager {
       });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      return `ERROR: Cannot open headed browser — ${msg}. Headless browser still running.`;
+      return `ERROR: Cannot open headed browser — ${msg}. The headless context was already closed; rerun your last command to relaunch headless mode.`;
     }
 
-    // 3. Restore state into new headed browser
-    try {
-      // Swap to new browser/context before restoreState (it uses this.context)
-      const oldBrowser = this.browser;
+    this.context = newContext;
+    this.browser = newContext.browser();
+    this.pages.clear();
+    this.refMap.clear();
+    this.nextTabId = 1;
+    this.connectionMode = 'headed';
+    this.isHeaded = true;
+    this.dialogAutoAccept = false;  // User controls dialogs in headed mode
+    this.intentionalDisconnect = false;
 
-      this.context = newContext;
-      this.browser = newContext.browser();
-      this.pages.clear();
-      this.connectionMode = 'headed';
-
-      if (Object.keys(this.extraHeaders).length > 0) {
-        await newContext.setExtraHTTPHeaders(this.extraHeaders);
-      }
-
-      // Register crash handler on new browser
-      if (this.browser) {
-        this.browser.on('disconnected', () => {
-          if (this.intentionalDisconnect) return;
-          console.error('[browse] FATAL: Chromium process crashed or was killed. Server exiting.');
-          process.exit(1);
-        });
-      }
-
-      await this.restoreState(state);
-      this.isHeaded = true;
-      this.dialogAutoAccept = false;  // User controls dialogs in headed mode
-
-      // 4. Close old headless browser (fire-and-forget)
-      oldBrowser.removeAllListeners('disconnected');
-      oldBrowser.close().catch(() => {});
-
-      return [
-        `HANDOFF: Browser opened at ${currentUrl}`,
-        `MESSAGE: ${message}`,
-        `STATUS: Waiting for user. Run 'resume' when done.`,
-      ].join('\n');
-    } catch (err: unknown) {
-      // Restore failed — close the new context, keep old state
-      await newContext.close().catch(() => {});
-      const msg = err instanceof Error ? err.message : String(err);
-      return `ERROR: Handoff failed during state restore — ${msg}. Headless browser still running.`;
+    if (Object.keys(this.extraHeaders).length > 0) {
+      await newContext.setExtraHTTPHeaders(this.extraHeaders);
     }
+
+    // Register crash handler on new browser
+    if (this.browser) {
+      this.browser.on('disconnected', () => {
+        if (this.intentionalDisconnect) return;
+        console.error('[browse] FATAL: Chromium process crashed or was killed. Server exiting.');
+        process.exit(1);
+      });
+    }
+
+    // Adopt the auto-created blank page; navigate to where we left off.
+    const initialPages = newContext.pages();
+    let firstPage: Page;
+    if (initialPages.length > 0) {
+      firstPage = initialPages[0];
+      const id = this.nextTabId++;
+      this.pages.set(id, firstPage);
+      this.activeTabId = id;
+      this.wirePageEvents(firstPage);
+    } else {
+      await this.newTab();
+      firstPage = this.pages.get(this.activeTabId)!;
+    }
+    if (currentUrl && currentUrl !== 'about:blank') {
+      await firstPage.goto(currentUrl, { waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {});
+    }
+
+    return [
+      `HANDOFF: Browser opened at ${currentUrl}`,
+      `MESSAGE: ${message}`,
+      `STATUS: Waiting for user. Run 'resume' when done.`,
+    ].join('\n');
   }
 
   /**
-   * Resume AI control after user handoff.
-   * Clears stale refs and resets failure counter.
-   * The meta-command handler calls handleSnapshot() after this.
+   * Resume AI control after user handoff: swap the visible Chrome back to a
+   * fresh headless context against the same persistent profile. Auth state
+   * (cookies, localStorage, IndexedDB) survives because both modes share the
+   * profile dir on disk.
+   *
+   * If we're not currently headed, this is just a ref/failure reset — keeps
+   * backward compatibility with callers that invoke resume after no swap.
    */
-  resume(): void {
+  async resume(): Promise<void> {
     this.clearRefs();
     this.resetFailures();
     this.activeFrame = null;
+
+    if (!this.isHeaded || !this.browser || !this.context) return;
+
+    const currentUrl = this.getCurrentUrl();
+    const oldBrowser = this.browser;
+    const oldContext = this.context;
+
+    // Close headed (releases the userDataDir lock) before opening headless.
+    this.intentionalDisconnect = true;
+    oldBrowser.removeAllListeners('disconnected');
+    try { await oldContext.close(); } catch {}
+    try { await oldBrowser.close(); } catch {}
+
+    // Reset state for the relaunch
+    this.pages.clear();
+    this.refMap.clear();
+    this.nextTabId = 1;
+    this.activeTabId = 0;
+    this.isHeaded = false;
+    this.connectionMode = 'headless';
+    this.dialogAutoAccept = true;
+    this.intentionalDisconnect = false;
+
+    // Re-run the standard launch flow against the same profile dir.
+    await this.launch();
+
+    // Restore the page the user was on when they ran 'resume'.
+    if (currentUrl && currentUrl !== 'about:blank') {
+      const page = this.pages.get(this.activeTabId);
+      if (page) {
+        await page.goto(currentUrl, { waitUntil: 'domcontentloaded', timeout: 15000 }).catch(() => {});
+      }
+    }
   }
 
   getIsHeaded(): boolean {

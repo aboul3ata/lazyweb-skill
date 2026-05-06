@@ -7,3 +7,4 @@ browse/dist/bun-polyfill.cjs
 browse/dist/.version
 browse/node_modules/
 bun.lock
+.gstack/
