@@ -4,7 +4,7 @@
       "command": "sh",
       "args": [
         "-lc",
-        "TOKEN=\"${LAZYWEB_MCP_TOKEN:-}\"; if [ -z \"$TOKEN\" ] && [ -f \"$HOME/.lazyweb/lazyweb_mcp_token\" ]; then TOKEN=\"$(cat \"$HOME/.lazyweb/lazyweb_mcp_token\")\"; fi; if [ -z \"$TOKEN\" ] && [ -f \"$HOME/.codex/lazyweb_mcp_token\" ]; then TOKEN=\"$(cat \"$HOME/.codex/lazyweb_mcp_token\")\"; fi; exec npx -y mcp-remote https://www.lazyweb.com/mcp --header \"Authorization: Bearer $TOKEN\" --transport http-first --silent"
+        "TOKEN=\"${LAZYWEB_MCP_TOKEN:-}\"; if [ -z \"$TOKEN\" ] && [ -f \"$HOME/.lazyweb/lazyweb_mcp_token\" ]; then TOKEN=\"$(cat \"$HOME/.lazyweb/lazyweb_mcp_token\")\"; fi; if [ -z \"$TOKEN\" ] && [ -f \"$HOME/.codex/lazyweb_mcp_token\" ]; then TOKEN=\"$(cat \"$HOME/.codex/lazyweb_mcp_token\")\"; fi; exec npx -y mcp-remote https://www.lazyweb.com/mcp --header \"Authorization: Bearer $TOKEN\" --transport http-first"
       ]
     }
   }
