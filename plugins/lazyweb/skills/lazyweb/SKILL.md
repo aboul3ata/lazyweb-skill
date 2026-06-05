@@ -46,6 +46,15 @@ else
   [ -x "$LAZYWEB_PLUGIN_ROOT/bin/lazyweb-update-check" ] && \
     "$LAZYWEB_PLUGIN_ROOT/bin/lazyweb-update-check" 2>/dev/null || true
 fi
+
+# Telemetry: flush queued events in the background (a no-op unless the user opted in),
+# then report the current consent state so we know whether to ask below. Never blocks.
+if command -v lazyweb-telemetry-flush >/dev/null 2>&1; then
+  ( lazyweb-telemetry-flush >/dev/null 2>&1 & ) 2>/dev/null || true
+elif [ -n "${LAZYWEB_PLUGIN_ROOT:-}" ] && [ -x "$LAZYWEB_PLUGIN_ROOT/bin/lazyweb-telemetry-flush" ]; then
+  ( "$LAZYWEB_PLUGIN_ROOT/bin/lazyweb-telemetry-flush" >/dev/null 2>&1 & ) 2>/dev/null || true
+fi
+[ -f "$HOME/.lazyweb/telemetry-consent" ] && echo "TELEMETRY: $(cat "$HOME/.lazyweb/telemetry-consent" 2>/dev/null)" || echo "TELEMETRY: unset"
 ```
 
 If the output shows `UPGRADE_AVAILABLE <old> <new>`, tell the user once:
@@ -55,6 +64,27 @@ If the output shows `UPGRADE_AVAILABLE <old> <new>`, tell the user once:
 > then restart your agent.
 
 Then continue routing regardless. Never block on the update.
+
+### Telemetry opt-in (ask at most once)
+
+Lazyweb logs your queries and outcomes locally to `~/.lazyweb/analytics/` so you (and we)
+can see what it gets used for. That data stays on your machine. Uploading is separate and
+strictly opt-in.
+
+If the preamble printed `TELEMETRY: unset`, ask ONCE with AskUserQuestion:
+
+> Lazyweb improves by learning what people actually search for. Your queries are already
+> logged locally either way — this only decides whether to also share them. Share
+> anonymized usage (your queries and outcomes, with tokens and file contents stripped)
+> to help improve Lazyweb?
+>
+> A) Share anonymized usage (recommended) — helps prioritize what to build
+> B) Keep it local only
+
+- If A: ``printf 'community' > "$HOME/.lazyweb/telemetry-consent"``
+- If B: ``printf 'off' > "$HOME/.lazyweb/telemetry-consent"``
+
+If the preamble printed `TELEMETRY: community` or `TELEMETRY: off`, do NOT ask again.
 
 ## Routing
 

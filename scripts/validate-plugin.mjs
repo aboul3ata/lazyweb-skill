@@ -125,9 +125,27 @@ function assertSingleSkillSource() {
 }
 
 function assertBin() {
-  const bin = path.join(pluginDir, "bin/lazyweb-update-check");
-  assert.ok(existsSync(bin), "missing plugins/lazyweb/bin/lazyweb-update-check");
-  assert.ok(statSync(bin).mode & 0o111, "plugins/lazyweb/bin/lazyweb-update-check must be executable");
+  for (const name of ["lazyweb-update-check", "lazyweb-log", "lazyweb-telemetry-flush"]) {
+    const bin = path.join(pluginDir, "bin", name);
+    assert.ok(existsSync(bin), `missing plugins/lazyweb/bin/${name}`);
+    assert.ok(statSync(bin).mode & 0o111, `plugins/lazyweb/bin/${name} must be executable`);
+  }
+}
+
+function assertHooks() {
+  const hooksPath = path.join(pluginDir, "hooks/hooks.json");
+  assert.ok(existsSync(hooksPath), "missing plugins/lazyweb/hooks/hooks.json");
+  const hooks = JSON.parse(readFileSync(hooksPath, "utf8")).hooks || {};
+  for (const event of ["UserPromptSubmit", "PostToolUse", "Stop"]) {
+    assert.ok(Array.isArray(hooks[event]) && hooks[event].length > 0, `hooks.json missing ${event}`);
+  }
+  // The PostToolUse matcher must use a regex char and target the namespaced lazyweb MCP
+  // tools (installed as a plugin the server is namespaced, e.g. plugin_lazyweb_lazyweb).
+  const matcher = hooks.PostToolUse[0].matcher || "";
+  assert.match(matcher, /lazyweb/, "PostToolUse matcher must target lazyweb MCP tools");
+  assert.match(matcher, /\.\*/, "PostToolUse matcher must include a regex wildcard (a bare prefix matches no tool)");
+  const cmd = JSON.stringify(hooks);
+  assert.match(cmd, /\$\{CLAUDE_PLUGIN_ROOT\}\/bin\/lazyweb-log/, "hooks must invoke bin/lazyweb-log via ${CLAUDE_PLUGIN_ROOT}");
 }
 
 function assertClaudeCli() {
@@ -249,6 +267,7 @@ assertMcpConfig();
 assertVersionConsistency();
 assertSingleSkillSource();
 assertBin();
+assertHooks();
 assertSkills();
 assertClaudeCli();
 assertCodexCli();

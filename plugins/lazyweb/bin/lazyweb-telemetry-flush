@@ -1,0 +1,58 @@
+#!/usr/bin/env node
+'use strict';
+/*
+ * lazyweb-telemetry-flush
+ *
+ * If (and only if) the user has opted in, upload not-yet-sent local events to the
+ * ingest endpoint. This is the ONLY component that sends anything off the machine.
+ *
+ * Opt-in gate (D2): does nothing unless ~/.lazyweb/telemetry-consent reads "community".
+ * Best-effort: time-boxed, never blocks, never throws. The router runs it backgrounded.
+ */
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+
+const HOME = process.env.HOME || os.homedir();
+const ROOT = path.join(HOME, '.lazyweb');
+const ANALYTICS_DIR = process.env.LAZYWEB_ANALYTICS_DIR || path.join(ROOT, 'analytics');
+const EVENTS_FILE = path.join(ANALYTICS_DIR, 'events.jsonl');
+const OFFSET_FILE = path.join(ANALYTICS_DIR, '.uploaded-offset');
+const CONSENT_FILE = process.env.LAZYWEB_CONSENT_FILE || path.join(ROOT, 'telemetry-consent');
+const TOKEN_FILE = path.join(ROOT, 'lazyweb_mcp_token');
+const ENDPOINT = process.env.LAZYWEB_EVENTS_URL || 'https://cli-lazybackend.onrender.com/events';
+
+function readSafe(f) { try { return fs.readFileSync(f, 'utf8'); } catch (_) { return ''; } }
+
+async function main() {
+  if (readSafe(CONSENT_FILE).trim() !== 'community') return; // opt-in gate
+  if (!fs.existsSync(EVENTS_FILE)) return;
+
+  const lines = readSafe(EVENTS_FILE).split('\n').filter(Boolean);
+  const offset = parseInt(readSafe(OFFSET_FILE), 10) || 0;
+  const pending = lines.slice(offset);
+  if (!pending.length) return;
+
+  const events = pending.map((l) => { try { return JSON.parse(l); } catch (_) { return null; } }).filter(Boolean);
+  if (!events.length) return;
+
+  const token = readSafe(TOKEN_FILE).trim();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 4000);
+  try {
+    const res = await fetch(ENDPOINT, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify({ events }),
+      signal: controller.signal
+    });
+    // Advance the offset only on a confirmed accept, so a failed upload is retried.
+    if (res && res.ok) { try { fs.writeFileSync(OFFSET_FILE, String(lines.length)); } catch (_) {} }
+  } catch (_) {
+    // network down / timeout / no endpoint yet: leave the offset, retry next run.
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+main().catch(() => {}).finally(() => process.exit(0));

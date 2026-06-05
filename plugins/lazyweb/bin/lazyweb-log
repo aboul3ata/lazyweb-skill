@@ -1,0 +1,112 @@
+#!/usr/bin/env node
+'use strict';
+/*
+ * lazyweb-log <query|tool|stop>
+ *
+ * Deterministic telemetry capture, invoked by Claude Code hooks (and Codex hooks where
+ * supported). Reads the hook's JSON payload on stdin and appends a redacted event to
+ * ~/.lazyweb/analytics/events.jsonl.
+ *
+ * Local-first (D2): this script ONLY writes locally. Uploading is a separate, opt-in
+ * step (lazyweb-telemetry-flush). It never throws and always exits 0 so a failure here
+ * can never break the user's turn.
+ *
+ * node is a safe dependency: the Lazyweb MCP itself runs via `npx mcp-remote`, so any
+ * environment with the MCP working already has node.
+ */
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
+
+const KIND = process.argv[2] || '';
+const HOME = process.env.HOME || os.homedir();
+const ANALYTICS_DIR = process.env.LAZYWEB_ANALYTICS_DIR || path.join(HOME, '.lazyweb', 'analytics');
+const EVENTS_FILE = path.join(ANALYTICS_DIR, 'events.jsonl');
+
+// Keys whose values are always secret-bearing and must never be logged.
+const SECRET_KEYS = /^(authorization|token|.*_token|api[_-]?key|image_base64|base64|mime_type)$/i;
+
+function readStdin() {
+  try { return fs.readFileSync(0, 'utf8'); } catch (_) { return ''; }
+}
+
+function redact(value, key) {
+  if (value == null) return value;
+  if (typeof value === 'string') {
+    if (key && SECRET_KEYS.test(key)) return '[redacted]';
+    // Long base64-ish blob (e.g. an inlined screenshot): drop it, keep its size.
+    if (value.length > 512 && /^[A-Za-z0-9+/=\s]+$/.test(value)) return `[redacted:${value.length}b]`;
+    // Inline bearer tokens.
+    let v = value.replace(/Bearer\s+[A-Za-z0-9._-]+/gi, 'Bearer [redacted]');
+    return v.length > 2000 ? v.slice(0, 2000) + '…' : v;
+  }
+  if (Array.isArray(value)) return value.map((v) => redact(v));
+  if (typeof value === 'object') {
+    const out = {};
+    for (const k of Object.keys(value)) out[k] = SECRET_KEYS.test(k) ? '[redacted]' : redact(value[k], k);
+    return out;
+  }
+  return value;
+}
+
+// Per-session turn counter. A new user prompt (query) advances the turn; tool and stop
+// events within that turn read the current value, so query/tool/self_eval correlate.
+function turnFor(sessionId, advance) {
+  const safe = String(sessionId || 'unknown').replace(/[^A-Za-z0-9_-]/g, '_');
+  const f = path.join(ANALYTICS_DIR, `.turn-${safe}`);
+  let n = 0;
+  try { n = parseInt(fs.readFileSync(f, 'utf8'), 10) || 0; } catch (_) {}
+  if (advance) { n += 1; try { fs.writeFileSync(f, String(n)); } catch (_) {} }
+  return n;
+}
+
+function append(event) {
+  try {
+    fs.mkdirSync(ANALYTICS_DIR, { recursive: true });
+    fs.appendFileSync(EVENTS_FILE, JSON.stringify(event) + '\n');
+  } catch (_) {}
+}
+
+function main() {
+  let payload = {};
+  try { payload = JSON.parse(readStdin() || '{}'); } catch (_) { payload = {}; }
+  const session = payload.session_id || 'unknown';
+  const base = { v: 1, ts: new Date().toISOString(), session_id: session };
+
+  if (KIND === 'query') {
+    const turn = turnFor(session, true);
+    append({ ...base, turn, event: 'query', data: {
+      prompt: typeof payload.prompt === 'string' ? payload.prompt.slice(0, 4000) : '',
+      cwd: payload.cwd || '',
+      permission_mode: payload.permission_mode || ''
+    } });
+  } else if (KIND === 'tool') {
+    const turn = turnFor(session, false);
+    const resp = payload.tool_response;
+    const ok = resp == null ? null : !(resp && (resp.error || resp.is_error || resp.isError));
+    append({ ...base, turn, event: 'tool', data: {
+      tool: payload.tool_name || '',
+      ok,
+      input: redact(payload.tool_input || {})
+    } });
+  } else if (KIND === 'stop') {
+    const turn = turnFor(session, false);
+    append({ ...base, turn, event: 'turn_end', data: { stop_hook_active: !!payload.stop_hook_active } });
+    const msg = typeof payload.last_assistant_message === 'string' ? payload.last_assistant_message : '';
+    const m = msg.match(/<lazyweb-eval>([\s\S]*?)<\/lazyweb-eval>/);
+    if (m) {
+      let ev = null;
+      try { ev = JSON.parse(m[1].trim()); } catch (_) {}
+      if (ev && typeof ev === 'object') {
+        append({ ...base, turn, event: 'self_eval', data: {
+          got_stuck: typeof ev.got_stuck === 'boolean' ? ev.got_stuck : (ev.got_stuck ?? null),
+          unmet_need: typeof ev.unmet_need === 'string' ? ev.unmet_need.slice(0, 500) : null,
+          quality: typeof ev.quality === 'number' ? ev.quality : null
+        } });
+      }
+    }
+  }
+}
+
+try { main(); } catch (_) {}
+process.exit(0);
