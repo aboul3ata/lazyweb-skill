@@ -1,0 +1,67 @@
+#!/usr/bin/env node
+'use strict';
+/*
+ * lazyweb-context-detect: best-effort read of the user's current project so a skill
+ * can ground its searches in what they are actually building (the "understand user
+ * context" goal) and decide whether it still needs to ask about platform.
+ *
+ * Read-only. Never throws. Prints two lines:
+ *   CONTEXT: project=<name> platform=<mobile|desktop|unknown> stack=<a,b,c>
+ *   <one human sentence>
+ */
+const fs = require('fs');
+const path = require('path');
+
+const cwd = process.env.LAZYWEB_CONTEXT_CWD || process.cwd();
+
+function readJson(p) { try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch (_) { return null; } }
+function exists(p) { try { fs.accessSync(p); return true; } catch (_) { return false; } }
+function listdir(p) { try { return fs.readdirSync(p); } catch (_) { return []; } }
+
+let platform = 'unknown';
+const stack = [];
+const signals = [];
+
+const pkg = readJson(path.join(cwd, 'package.json'));
+if (pkg) {
+  signals.push('package.json');
+  const deps = { ...(pkg.dependencies || {}), ...(pkg.devDependencies || {}) };
+  const has = (n) => Object.prototype.hasOwnProperty.call(deps, n);
+  if (has('react-native') || has('expo')) { platform = 'mobile'; stack.push(has('expo') ? 'expo' : 'react-native'); }
+  else if (has('next')) { platform = 'desktop'; stack.push('next.js'); }
+  else if (has('nuxt')) { platform = 'desktop'; stack.push('nuxt'); }
+  else if (has('@sveltejs/kit') || has('svelte')) { platform = 'desktop'; stack.push('svelte'); }
+  else if (has('vue')) { platform = 'desktop'; stack.push('vue'); }
+  else if (has('react') || has('vite')) { platform = 'desktop'; stack.push(has('react') ? 'react' : 'vite'); }
+  if (has('tailwindcss')) stack.push('tailwind');
+}
+
+// Native / other ecosystems.
+if (exists(path.join(cwd, 'pubspec.yaml'))) { platform = 'mobile'; stack.push('flutter'); signals.push('pubspec.yaml'); }
+if (exists(path.join(cwd, 'Podfile')) || exists(path.join(cwd, 'ios'))) { if (platform === 'unknown') platform = 'mobile'; if (!stack.includes('ios')) stack.push('ios'); signals.push('ios'); }
+if (exists(path.join(cwd, 'android')) && platform === 'unknown') { platform = 'mobile'; stack.push('android'); signals.push('android'); }
+if (listdir(cwd).some((f) => f.endsWith('.xcodeproj') || f.endsWith('.xcworkspace'))) { platform = 'mobile'; if (!stack.includes('swift')) stack.push('swift'); signals.push('xcode'); }
+if (exists(path.join(cwd, 'Cargo.toml'))) { stack.push('rust'); signals.push('Cargo.toml'); }
+if (exists(path.join(cwd, 'go.mod'))) { stack.push('go'); signals.push('go.mod'); }
+
+let project = path.basename(cwd);
+try {
+  // Prefer the git toplevel name if we're inside a repo.
+  let d = cwd;
+  for (let i = 0; i < 12; i++) {
+    if (exists(path.join(d, '.git'))) { project = path.basename(d); break; }
+    const parent = path.dirname(d);
+    if (parent === d) break;
+    d = parent;
+  }
+} catch (_) {}
+
+const stackStr = stack.length ? [...new Set(stack)].join(',') : 'unknown';
+process.stdout.write(`CONTEXT: project=${project} platform=${platform} stack=${stackStr}\n`);
+if (platform === 'unknown' && stackStr === 'unknown') {
+  process.stdout.write(`No project signals found in ${cwd}; ask the user what they're building and which platform.\n`);
+} else {
+  const where = platform === 'mobile' ? 'a mobile app' : platform === 'desktop' ? 'a desktop/web product' : 'a project';
+  process.stdout.write(`Looks like ${where} (${stackStr}). Bias searches to platform=${platform === 'unknown' ? 'ask the user' : platform}.\n`);
+}
+process.exit(0);

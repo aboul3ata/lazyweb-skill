@@ -38,6 +38,14 @@ or not, ALWAYS:
 8. Suggest next steps: "You can now use these references to inform your design,
    run `/lazyweb-design-research` for deeper analysis, or start building."
 
+## Ground the search (run first)
+
+Before searching, ground the work in what the user is building, and avoid guessing when a wrong guess wastes a search:
+
+1. **Detect context.** Run `lazyweb-context-detect` (on `PATH` when installed as a plugin; otherwise `<plugin-root>/bin/lazyweb-context-detect`). It prints the project, platform (mobile/desktop), and stack. Use it to bias the `platform` filter and to caption references accurately.
+2. **Clarify only what's missing.** If it reports `platform=unknown`, or you can't tell the product/screen from the request, ask ONE AskUserQuestion to pin down product/screen, mobile vs desktop, and the specific outcome. Skip anything the context already answered; don't interrogate when the request is already clear.
+3. **Search from multiple angles.** Cast 3-5 `lazyweb_search` queries with different wordings and filters (by screen, by competitor `company`, by `category`, by `platform`) instead of one, and read each result's `visionDescription` before using it.
+
 ## When to Use This
 
 - User wants to see a specific type of screen ("show me pricing pages")

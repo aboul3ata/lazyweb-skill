@@ -125,7 +125,7 @@ function assertSingleSkillSource() {
 }
 
 function assertBin() {
-  for (const name of ["lazyweb-update-check", "lazyweb-log", "lazyweb-telemetry-flush"]) {
+  for (const name of ["lazyweb-update-check", "lazyweb-log", "lazyweb-telemetry-flush", "lazyweb-context-detect"]) {
     const bin = path.join(pluginDir, "bin", name);
     assert.ok(existsSync(bin), `missing plugins/lazyweb/bin/${name}`);
     assert.ok(statSync(bin).mode & 0o111, `plugins/lazyweb/bin/${name} must be executable`);

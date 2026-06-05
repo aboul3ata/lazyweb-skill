@@ -44,6 +44,14 @@ look at how social apps hook new users.
 
 The point is cross-pollination, not conformity.
 
+## Ground the search (run first)
+
+Before searching, ground the work in what the user is building, and avoid guessing when a wrong guess wastes a search:
+
+1. **Detect context.** Run `lazyweb-context-detect` (on `PATH` when installed as a plugin; otherwise `<plugin-root>/bin/lazyweb-context-detect`). It prints the project, platform (mobile/desktop), and stack. Use it to keep ideas applicable to the user's platform even while you search outside their category.
+2. **Clarify only what's missing.** If it reports `platform=unknown`, or you can't tell the product/problem from the request, ask ONE AskUserQuestion to pin down the product, the platform, and what they're trying to spark. Skip anything the context already answered.
+3. **Search from multiple angles.** Cast 3-5 `lazyweb_search` queries across deliberately different categories (the cross-pollination move) and read each result's `visionDescription` before using it.
+
 ## When to Use This
 
 - User wants fresh/creative design ideas

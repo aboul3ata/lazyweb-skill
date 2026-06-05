@@ -99,6 +99,13 @@ run: `cd ~/.claude/skills/lazyweb-skill/browse && ./setup`
 
 ## Workflow
 
+### 0. Ground the search (run first)
+
+Before searching, ground the work in what the user is building, and avoid guessing when a wrong guess wastes a search:
+
+1. **Detect context.** Run `lazyweb-context-detect` (on `PATH` when installed as a plugin; otherwise `<plugin-root>/bin/lazyweb-context-detect`). It prints the project, platform (mobile/desktop), and stack. Use it to bias the `platform` filter and to caption references accurately.
+2. **Clarify only what's missing.** If it reports `platform=unknown`, or the product/screen is unclear from the request, ask ONE AskUserQuestion to pin down product/screen, mobile vs desktop, and the specific outcome. Skip anything the context already answered.
+
 ### 1. Understand the Research Question
 
 Before searching, clarify:
