@@ -96,6 +96,7 @@ Pick the one sub-skill that matches the user's request and hand off to it.
 | Just a few screenshots / references, fast — no full report | `lazyweb-quick-references` |
 | Improvement ideas for a design they already have | `lazyweb-design-improve` |
 | Creative, cross-category ideas ("zig when everyone zags") | `lazyweb-design-brainstorm` |
+| A real multi-screen flow (onboarding, checkout, paywall) step by step | `lazyweb-flows` |
 | Connect an external inspiration library (Mobbin, Savee, Dribbble…) | `lazyweb-add-inspo-source` |
 | Disconnect an inspiration library | `lazyweb-remove-inspo-source` |
 

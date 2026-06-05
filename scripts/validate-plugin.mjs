@@ -12,6 +12,7 @@ const publicTools = new Set([
   "lazyweb_search",
   "lazyweb_find_similar",
   "lazyweb_compare_image",
+  "lazyweb_get_flows",
   "search_screenshots",
   "list_filters",
   "list_all_filters",
