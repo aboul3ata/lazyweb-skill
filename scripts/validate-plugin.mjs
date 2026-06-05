@@ -254,7 +254,11 @@ async function assertLiveMcpToolNamesWhenRequested() {
   }
 
   const liveTools = await listLiveMcpTools();
-  for (const tool of ["lazyweb_health", "lazyweb_search", "lazyweb_find_similar", "lazyweb_compare_image"]) {
+  // These lazyweb_* tools must be explicitly listed: the canonical-tool loop below
+  // skips every entry starting with "lazyweb_", so adding one to publicTools alone
+  // does NOT make the live check require it. lazyweb_get_flows is gated here so a
+  // server that hasn't deployed the flows gateway fails this check (intended).
+  for (const tool of ["lazyweb_health", "lazyweb_search", "lazyweb_find_similar", "lazyweb_compare_image", "lazyweb_get_flows"]) {
     assert.ok(liveTools.has(tool), `live MCP missing compatibility tool ${tool}`);
   }
   for (const tool of publicTools) {
