@@ -8,6 +8,8 @@ Your agent searches before it designs. It finds real examples, downloads them lo
 
 ## Skills included
 
+**`/lazyweb`** — The entry point. One command that routes you to the right Lazyweb skill. Say what you want ("research onboarding", "improve this screen", "show me pricing references") and it hands off to the matching skill below, or asks which one you meant when it's ambiguous. It also runs a non-blocking update check so you know when a newer plugin is available. Installed as a plugin, it is namespaced `/lazyweb:lazyweb`; you can also just describe your goal and the agent will route through it.
+
 **`/lazyweb-design-research`** — Deep design research. Identifies competitors, searches Lazyweb + web, downloads reference screenshots, and produces a structured report with: TL;DR, Examples, Findings, Patterns, Anti-Patterns, Unique Angles, and Recommendations. Use for competitive analysis and best practices research.
 
 **`/lazyweb-quick-references`** — Find screenshots fast. Searches Lazyweb, downloads results, groups by pattern. Lighter than design-research — just find, group, show. Use when you need visual references, not a full report.

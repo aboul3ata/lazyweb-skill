@@ -1,5 +1,7 @@
 {
   "scripts": {
-    "test": "node scripts/validate-plugin.mjs"
+    "test": "node --test test/*.test.mjs && node scripts/validate-plugin.mjs",
+    "test:unit": "node --test test/*.test.mjs",
+    "test:validate": "node scripts/validate-plugin.mjs"
   }
 }

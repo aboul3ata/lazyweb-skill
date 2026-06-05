@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -97,6 +97,37 @@ function assertSkills() {
   for (const tool of mentionedTools) {
     assert.ok(publicTools.has(tool), `skill docs mention an unknown Lazyweb MCP tool: ${tool}`);
   }
+}
+
+function assertVersionConsistency() {
+  const repoVersion = readFileSync(path.join(root, "VERSION"), "utf8").trim();
+  assert.match(repoVersion, /^\d+\.\d+\.\d+(\.\d+)?$/, `VERSION malformed: ${repoVersion}`);
+  const checks = [
+    ["plugins/lazyweb/VERSION", readFileSync(path.join(root, "plugins/lazyweb/VERSION"), "utf8").trim()],
+    [".claude-plugin/plugin.json", readJson("plugins/lazyweb/.claude-plugin/plugin.json").version],
+    [".codex-plugin/plugin.json", readJson("plugins/lazyweb/.codex-plugin/plugin.json").version]
+  ];
+  for (const [label, value] of checks) {
+    assert.equal(value, repoVersion, `version drift: ${label} is "${value}", expected "${repoVersion}" (from top-level VERSION)`);
+  }
+}
+
+function assertSingleSkillSource() {
+  // Single source of truth for skills is plugins/lazyweb/skills/. Root-level
+  // lazyweb-*/ skill dirs drifted historically; fail the build if they return.
+  const strays = run("sh", ["-lc", `ls -d ${JSON.stringify(root)}/lazyweb-*/ 2>/dev/null || true`])
+    .stdout.trim().split("\n").filter(Boolean);
+  assert.equal(strays.length, 0, `root-level lazyweb-* skill dirs must not exist (use plugins/lazyweb/skills/). Found: ${strays.join(", ")}`);
+
+  const router = path.join(pluginDir, "skills/lazyweb/SKILL.md");
+  assert.ok(existsSync(router), "router skill missing: plugins/lazyweb/skills/lazyweb/SKILL.md");
+  assert.match(readFileSync(router, "utf8"), /^name:\s*lazyweb\s*$/m, "router skill must declare name: lazyweb");
+}
+
+function assertBin() {
+  const bin = path.join(pluginDir, "bin/lazyweb-update-check");
+  assert.ok(existsSync(bin), "missing plugins/lazyweb/bin/lazyweb-update-check");
+  assert.ok(statSync(bin).mode & 0o111, "plugins/lazyweb/bin/lazyweb-update-check must be executable");
 }
 
 function assertClaudeCli() {
@@ -215,6 +246,9 @@ async function assertLiveMcpToolNamesWhenRequested() {
 
 assertManifest();
 assertMcpConfig();
+assertVersionConsistency();
+assertSingleSkillSource();
+assertBin();
 assertSkills();
 assertClaudeCli();
 assertCodexCli();

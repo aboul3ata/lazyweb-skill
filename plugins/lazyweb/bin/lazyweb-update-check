@@ -1,0 +1,55 @@
+#!/bin/sh
+# lazyweb-update-check: compare the installed plugin VERSION to the published VERSION
+# on the repo's main branch. Prints "UPGRADE_AVAILABLE <local> <remote>" when a newer
+# version exists, otherwise prints nothing.
+#
+# Contract: NEVER blocks and NEVER errors out. Network is time-boxed (3s), the result is
+# cached for 24h, and every failure path exits 0 silently. Safe to call on every run.
+set -u
+
+REPO_RAW="${LAZYWEB_VERSION_URL:-https://raw.githubusercontent.com/aboul3ata/lazyweb-skill/main/VERSION}"
+CACHE_DIR="${HOME}/.lazyweb"
+CACHE_FILE="${CACHE_DIR}/.update-check"
+TTL=86400
+
+# Resolve the local VERSION. Prefer the plugin root the router exports; fall back to
+# this script's own location so it also works when run directly from a checkout.
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" 2>/dev/null && pwd)
+LOCAL_VERSION=""
+for f in "${LAZYWEB_SKILL_ROOT:-}/VERSION" "${SCRIPT_DIR%/}/../VERSION" "${SCRIPT_DIR%/}/../../VERSION"; do
+  [ -n "$f" ] && [ -f "$f" ] || continue
+  LOCAL_VERSION=$(tr -d '[:space:]' < "$f" 2>/dev/null)
+  [ -n "$LOCAL_VERSION" ] && break
+done
+[ -z "$LOCAL_VERSION" ] && exit 0
+
+# Test/debug seam: a caller can supply the remote version directly, which skips both
+# the cache and the network entirely. Used by the unit tests to exercise comparison.
+now=$(date +%s 2>/dev/null || echo 0)
+REMOTE_VERSION="${LAZYWEB_UPDATE_CHECK_REMOTE:-}"
+
+# Serve a fresh cached remote value if we have one (avoids a network call per run).
+if [ -z "$REMOTE_VERSION" ] && [ -f "$CACHE_FILE" ]; then
+  cached_ts=$(sed -n '1p' "$CACHE_FILE" 2>/dev/null)
+  cached_remote=$(sed -n '2p' "$CACHE_FILE" 2>/dev/null)
+  case "$cached_ts" in ''|*[!0-9]*) cached_ts=0 ;; esac
+  if [ -n "$cached_remote" ] && [ "$((now - cached_ts))" -lt "$TTL" ]; then
+    REMOTE_VERSION="$cached_remote"
+  fi
+fi
+
+# Otherwise fetch (time-boxed) and refresh the cache.
+if [ -z "$REMOTE_VERSION" ]; then
+  REMOTE_VERSION=$(curl -fsS --max-time 3 "$REPO_RAW" 2>/dev/null | tr -d '[:space:]')
+  [ -z "$REMOTE_VERSION" ] && exit 0
+  mkdir -p "$CACHE_DIR" 2>/dev/null || true
+  printf '%s\n%s\n' "$now" "$REMOTE_VERSION" > "$CACHE_FILE" 2>/dev/null || true
+fi
+
+# Print only when the remote version is strictly greater (numeric, dot-separated,
+# up to 4 segments: MAJOR.MINOR.PATCH.BUILD).
+[ "$REMOTE_VERSION" = "$LOCAL_VERSION" ] && exit 0
+higher=$(printf '%s\n%s\n' "$LOCAL_VERSION" "$REMOTE_VERSION" \
+  | sort -t. -k1,1n -k2,2n -k3,3n -k4,4n 2>/dev/null | tail -1)
+[ "$higher" = "$REMOTE_VERSION" ] && printf 'UPGRADE_AVAILABLE %s %s\n' "$LOCAL_VERSION" "$REMOTE_VERSION"
+exit 0
