@@ -73,6 +73,33 @@ The public A/B wrapper is paid. If `lazyweb_ab_test_research` returns
 continue with free Lazyweb visual references and clearly label the report as
 reference-grounded but not experiment-backed.
 
+### Locked-evidence rendering (when paid access is missing)
+
+When `lazyweb_ab_test_research` returns `ab_test_subscription_required` — OR when
+no Pro entitlement is available — **still emit the full HTML report**. Do NOT
+skip sections or refuse to write the file. Instead, render a locked placeholder
+(`.locked-ref`, defined in HTML / styling below) in EVERY image slot **except**
+the user's Current paywall screenshot. That means:
+
+- **Unblurred (1 image only):** the Current/target paywall under "Target
+  paywall read" — this is the user's own screen, never gate it.
+- **Locked (every other image):** all Lazyweb reference deck figures, every
+  hypothesis card evidence carousel, all control/variant `.flip` pairs, every
+  `.rec-proof` proof image, every evidence-summary card. Replace the `<img>`
+  with a `<a class="locked-ref" href="https://www.lazyweb.com/monetization"
+  target="_blank" rel="noopener">` block, sized to the SAME dimensions as the
+  Current screenshot (or the natural container slot it would occupy).
+- The locked tile shows a centered lock icon + "Upgrade to Lazyweb Pro to
+  unlock this skill" caption and links to
+  `https://www.lazyweb.com/monetization` on click.
+- Captions, deck navigation, prevalence chips, and verdict badges still render
+  underneath the locked tile. Hypotheses, recommendations, and prose still
+  render in full — only the evidence VISUALS are blurred-locked.
+
+When in locked-evidence mode, prepend the report (right after Agent
+Instructions) with a `.lock-banner` strip explaining the state in one line and
+linking to the same upgrade URL.
+
 ## Ground the Paywall
 
 Before searching, establish the target:
@@ -211,6 +238,25 @@ table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid 
 .ai-block{white-space:pre-wrap;word-break:break-word;background:#fff;border:1px solid var(--line);border-radius:6px;padding:12px 13px;margin:0;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--ink);user-select:all}
 .mock{margin:14px 0}.mock .frame{border:1px solid var(--line);border-radius:14px;background:#fff;overflow:hidden}.mock.mobile .frame{max-width:300px;border-radius:26px;border:8px solid #1f2328}.mock.desktop .frame{max-width:760px}
 .mock .body{padding:14px;display:flex;flex-direction:column;gap:10px}.mock .box{background:var(--soft);border:1px dashed #b9c7d6;border-radius:8px;min-height:34px;display:flex;align-items:center;justify-content:center;color:#4a5a6a;font-size:12px;padding:8px}.mock .box.cta{background:var(--accent);border:0;color:#fff;font-weight:600}.mock .row{display:flex;gap:10px}.mock .row>.box{flex:1}.mock .cap{font-size:12px;color:var(--mut);margin-top:6px;text-align:center}
+/* Locked-evidence tile + banner — render when paid access is missing. */
+.lock-banner{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#0d1117 0%,#1f2933 100%);color:#fff;border-radius:10px;padding:12px 16px;margin:14px 0;text-decoration:none}
+.lock-banner .lb-ico{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.12);flex:0 0 30px}
+.lock-banner .lb-txt{font-size:13.5px;line-height:1.4;flex:1}.lock-banner .lb-txt b{color:#7dc4ff}
+.lock-banner .lb-cta{font:700 12px/1 inherit;color:#0d1117;background:#7dc4ff;border-radius:6px;padding:8px 12px;white-space:nowrap}
+.lock-banner:hover .lb-cta{background:#a4d6ff}
+.locked-ref{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;min-height:200px;background:#0d1117;border:1px solid var(--line);border-radius:10px;overflow:hidden;text-decoration:none;color:#fff;cursor:pointer;padding:24px 18px;text-align:center;box-sizing:border-box}
+.locked-ref-blur{position:absolute;inset:0;background:repeating-linear-gradient(135deg,#1f2328 0,#1f2328 8px,#2a3138 8px,#2a3138 16px,#384149 16px,#384149 24px,#2a3138 24px,#2a3138 32px);filter:blur(10px) saturate(.55);opacity:.55;z-index:0}
+.locked-ref-lock{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);margin-bottom:10px;backdrop-filter:blur(6px)}
+.locked-ref-cta{position:relative;z-index:1;font:700 13px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#fff;letter-spacing:.01em;text-shadow:0 1px 4px rgba(0,0,0,.4);max-width:230px;margin:0 0 4px}
+.locked-ref-sub{position:relative;z-index:1;font:500 11px/1.4 inherit;color:#a7c5e3;letter-spacing:.02em}
+.locked-ref:hover .locked-ref-cta{color:#7dc4ff}
+.locked-ref:hover .locked-ref-lock{background:rgba(125,196,255,.18);border-color:rgba(125,196,255,.4)}
+/* Make locked tiles inherit the host frame's aspect — deck figure, flip card, rec-proof. */
+.deck>figure.locked-figure{aspect-ratio:9/16;padding:0;background:#0d1117}
+.deck>figure.locked-figure .locked-ref{border:0;border-radius:0;min-height:100%}
+.flip>figure.locked-figure .locked-ref{aspect-ratio:9/16}
+.rec-proof.locked-proof{padding:0}
+.rec-proof.locked-proof .locked-ref{min-height:100%;border:0;border-radius:0}
 ```
 
 
@@ -503,6 +549,75 @@ Emit a `.legend` (one `.legend-row` per rec, in rank order — the whole ranking
 <!-- inline proof pair inside a ranked recommendation row -->
 <td class="rec-thumb"><a href="#exp-fae32674"><img src="{control.imageUrl or control.image_url}" alt="control"><img src="{variant.imageUrl or variant.image_url}" alt="variant"></a></td>
 ```
+
+<!-- Locked-evidence rendering (paid access missing) — drop in wherever an evidence/hypothesis image would go.
+     The .locked-ref tile fills its container (deck figure / .flip card / .rec-proof frame), so dimensions
+     automatically match the slot that would have held a real screenshot. The UNBLURRED "Current" paywall
+     img above the report uses a normal <img>; every other reference / experiment / hypothesis card uses
+     the locked tile below.  Click any tile → https://www.lazyweb.com/monetization -->
+```html
+<!-- One-line banner immediately after Agent Instructions when in locked mode -->
+<a class="lock-banner" href="https://www.lazyweb.com/monetization" target="_blank" rel="noopener">
+  <span class="lb-ico" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+  </span>
+  <span class="lb-txt"><b>Lazyweb Pro is locked.</b> The hypotheses and the prose below are intact, but every evidence screenshot is hidden until you upgrade. Your current paywall stays visible at the top.</span>
+  <span class="lb-cta">Upgrade →</span>
+</a>
+
+<!-- Locked deck figure (replaces a real reference <img> inside a .deck) -->
+<figure class="locked-figure">
+  <a class="locked-ref" href="https://www.lazyweb.com/monetization" target="_blank" rel="noopener" aria-label="Upgrade to Lazyweb Pro to unlock this evidence">
+    <span class="locked-ref-blur" aria-hidden="true"></span>
+    <span class="locked-ref-lock" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+    </span>
+    <p class="locked-ref-cta">Upgrade to Lazyweb Pro to unlock this skill</p>
+    <span class="locked-ref-sub">Tap to upgrade</span>
+  </a>
+  <figcaption class="cap"><span class="src">[Lazyweb]</span> <b>Reference locked</b> — upgrade to view this evidence.</figcaption>
+</figure>
+
+<!-- Locked control/variant pair (replaces both <img> tags inside a .flip) -->
+<div class="flip">
+  <figure class="locked-figure">
+    <a class="locked-ref" href="https://www.lazyweb.com/monetization" target="_blank" rel="noopener" aria-label="Upgrade to unlock control screenshot">
+      <span class="locked-ref-blur" aria-hidden="true"></span>
+      <span class="locked-ref-lock" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>
+      <p class="locked-ref-cta">Upgrade to Lazyweb Pro to unlock this skill</p>
+    </a>
+    <figcaption><span class="side c">CONTROL</span><span class="vd">{control.vision_description}</span></figcaption>
+  </figure>
+  <figure class="locked-figure">
+    <a class="locked-ref" href="https://www.lazyweb.com/monetization" target="_blank" rel="noopener" aria-label="Upgrade to unlock variant screenshot">
+      <span class="locked-ref-blur" aria-hidden="true"></span>
+      <span class="locked-ref-lock" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>
+      <p class="locked-ref-cta">Upgrade to Lazyweb Pro to unlock this skill</p>
+    </a>
+    <figcaption><span class="side v">VARIANT</span><span class="vd">{variant.vision_description}</span></figcaption>
+  </figure>
+</div>
+
+<!-- Locked .rec-proof inside a recommendation card -->
+<div class="rec-proof locked-proof">
+  <a class="frame locked-ref" href="https://www.lazyweb.com/monetization" target="_blank" rel="noopener" aria-label="Upgrade to unlock proof imagery">
+    <span class="locked-ref-blur" aria-hidden="true"></span>
+    <span class="locked-ref-lock" aria-hidden="true"><svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>
+    <p class="locked-ref-cta">Upgrade to Lazyweb Pro to unlock this skill</p>
+    <span class="locked-ref-sub">Tap to upgrade</span>
+  </a>
+</div>
+```
+
+**Rules when paid access is missing** (drop the locked tile EVERY place the report would otherwise embed an evidence image; the Current paywall is the single exception):
+- Render the `.lock-banner` once, right after Agent Instructions.
+- Every `.deck > figure` → use `<figure class="locked-figure">` with the `.locked-ref` tile inside it.
+- Every `.flip` control/variant pair → both figures use `.locked-ref`.
+- Every `.rec-proof` → wrap with `.rec-proof.locked-proof` and put the `.locked-ref` in the `.frame`.
+- Evidence-summary cards, divergent-option proofs, anti-pattern thumbnails → same `.locked-ref` substitution.
+- Keep ALL captions, prevalence chips (`.prev`), verdict badges (`.verdict`), evidence badges (`.ebadge`), hypothesis prose, and convention tables EXACTLY as they would render under paid access.
+- The user's Current paywall screenshot (the single "Target paywall read" image) is the ONLY real image — render it from the `target_image_url` the user supplied.
+- Every locked tile must link to `https://www.lazyweb.com/monetization`.
 
 ### Report footer (REQUIRED — the very last element of the report)
 
