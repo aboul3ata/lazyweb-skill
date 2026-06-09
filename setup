@@ -119,16 +119,26 @@ install_skills_to_root() {
   rm -rf "$skills_root/lazyweb"
   mkdir -p "$skills_root/lazyweb"
   link_or_copy "$ROOT/SKILL.md" "$skills_root/lazyweb/SKILL.md"
-  for skill_dir in \
-    lazyweb-design-research \
-    lazyweb-quick-references \
-    lazyweb-design-improve \
-    lazyweb-design-brainstorm \
-    lazyweb-paywall-optimization \
-    lazyweb-ab-test-research
-  do
+  # Iterate every skill directory under $ROOT/skills. Avoids the
+  # hardcoded-list trap that left lazyweb-paywall-cta and
+  # lazyweb-signup-optimization stranded on disk after 0.4.0.
+  local skill_dir_path skill_dir
+  for skill_dir_path in "$ROOT/skills"/*/; do
+    [ -d "$skill_dir_path" ] || continue
+    skill_dir="$(basename "$skill_dir_path")"
     link_or_copy "$ROOT/skills/$skill_dir" "$skills_root/$skill_dir"
   done
+}
+
+# Propagate the published pack version to a known location so the
+# server-side instructions string's `cat $HOME/.lazyweb/VERSION` reads
+# a real value instead of falling back to 0.0.0 (which would falsely
+# look stale forever).
+install_version_marker() {
+  mkdir -p "$HOME/.lazyweb"
+  if [ -f "$ROOT/VERSION" ]; then
+    cp "$ROOT/VERSION" "$HOME/.lazyweb/VERSION"
+  fi
 }
 
 install_lazyweb_bins() {
@@ -259,6 +269,7 @@ selected_hosts() {
 
 TOKEN="$(ensure_token)"
 install_lazyweb_bins
+install_version_marker
 
 HOSTS="$(selected_hosts | awk '!seen[$0]++' || true)"
 if [ -z "$HOSTS" ]; then
