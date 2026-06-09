@@ -94,18 +94,22 @@ in EVERY image slot **except** the user's Current paywall screenshot:
 - **Locked (every other image):** every CTA reference deck figure, every
   example brand-own card, every divergent/outlier example, every Strongest
   Match before/after pair, every recommendation card proof. Replace the
-  `<img>` with a `<a class="locked-ref" href="https://www.lazyweb.com/monetization"
-  target="_blank" rel="noopener">` tile sized to the SAME dimensions as the
-  Current screenshot's slot (the `.locked-ref` rules in `<style>` already
-  make it fill any deck figure / flip card / rec-proof frame).
-- The locked tile shows a centered lock icon + "Upgrade to Lazyweb Pro to
-  unlock this skill" and links to `https://www.lazyweb.com/monetization`.
+  `<img>` with a `<a class="locked-ref" href="...">` tile (see markup below
+  for the full href with UTMs). The `.locked-ref` rules in `<style>` already
+  make it fill any deck figure / flip card / rec-proof frame.
+- The locked tile shows a centered lock icon + a **per-slot caption** + a
+  "Get access" button, and links to `lazyweb.com/monetization` with UTM
+  attribution. Pick the caption that matches the slot:
+  - `.ba-col` / `.flip` Strongest Matches BEFORE/AFTER → "Unlock this A/B test evidence"
+  - `.deck` references, `.divergent-imgwrap` / `.divergent-card` → "Unlock this reference"
 - Captions, deck navigation, prevalence chips (`.prev`), verdict badges
   (`.verdict`), and evidence badges (`.ebadge`) all still render underneath
   the locked tile. Hypotheses, ranked CTAs, convention tables, and prose
   render in full — only the evidence VISUALS are blurred-locked.
 - Prepend the report (right after Agent Instructions) with a `.lock-banner`
-  strip explaining the locked state and linking to the same upgrade URL.
+  strip carrying the aspirational lead ("Your paywall, redesigned by 20k+
+  A/B tests.") and a "Get access" CTA linking to the same UTM-attributed
+  upgrade URL.
 
 ## Read the paywall first
 
@@ -271,15 +275,16 @@ table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid 
 .lock-banner{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#0d1117 0%,#1f2933 100%);color:#fff;border-radius:10px;padding:12px 16px;margin:14px 0;text-decoration:none}
 .lock-banner .lb-ico{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.12);flex:0 0 30px}
 .lock-banner .lb-txt{font-size:13.5px;line-height:1.4;flex:1}.lock-banner .lb-txt b{color:#7dc4ff}
-.lock-banner .lb-cta{font:700 12px/1 inherit;color:#0d1117;background:#7dc4ff;border-radius:6px;padding:8px 12px;white-space:nowrap}
+.lock-banner .lb-cta{font:700 12px/1 inherit;color:#0d1117;background:#7dc4ff;border-radius:6px;padding:9px 14px;white-space:nowrap;letter-spacing:.03em}
 .lock-banner:hover .lb-cta{background:#a4d6ff}
 .locked-ref{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;min-height:200px;background:#0d1117;border:1px solid var(--line);border-radius:10px;overflow:hidden;text-decoration:none;color:#fff;cursor:pointer;padding:24px 18px;text-align:center;box-sizing:border-box}
 .locked-ref-blur{position:absolute;inset:0;background:repeating-linear-gradient(135deg,#1f2328 0,#1f2328 8px,#2a3138 8px,#2a3138 16px,#384149 16px,#384149 24px,#2a3138 24px,#2a3138 32px);filter:blur(10px) saturate(.55);opacity:.55;z-index:0}
 .locked-ref-lock{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);margin-bottom:10px;backdrop-filter:blur(6px)}
-.locked-ref-cta{position:relative;z-index:1;font:700 13px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#fff;letter-spacing:.01em;text-shadow:0 1px 4px rgba(0,0,0,.4);max-width:230px;margin:0 0 4px}
-.locked-ref-sub{position:relative;z-index:1;font:500 11px/1.4 inherit;color:#a7c5e3;letter-spacing:.02em}
+.locked-ref-cta{position:relative;z-index:1;font:700 13.5px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#fff;letter-spacing:.01em;text-shadow:0 1px 4px rgba(0,0,0,.4);max-width:230px;margin:0 0 8px}
+.locked-ref-btn{position:relative;z-index:1;display:inline-flex;align-items:center;justify-content:center;font:700 12.5px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#0d1117;background:#7dc4ff;border:1px solid #7dc4ff;border-radius:6px;padding:8px 14px;letter-spacing:.03em;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:background .12s,border-color .12s,color .12s}
 .locked-ref:hover .locked-ref-cta{color:#7dc4ff}
 .locked-ref:hover .locked-ref-lock{background:rgba(125,196,255,.18);border-color:rgba(125,196,255,.4)}
+.locked-ref:hover .locked-ref-btn{background:#a4d6ff;border-color:#a4d6ff}
 .deck>figure.locked-figure{aspect-ratio:9/16;padding:0;background:#0d1117}
 .deck>figure.locked-figure .locked-ref{border:0;border-radius:0;min-height:100%}
 .flip>figure.locked-figure .locked-ref{aspect-ratio:9/16}
@@ -291,40 +296,61 @@ table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid 
 
 ### Locked-evidence markup patterns
 
+**UTM convention (BAKE INTO EVERY HREF — these are how we attribute free→Pro
+clicks per skill).** Replace `<base_url>` below with this string verbatim:
+`https://www.lazyweb.com/monetization?utm_source=lazyweb-paywall-cta&utm_campaign=free-to-pro`
+
+Per-tile, append `&utm_medium=locked-tile&utm_content=<slot_kind>` where
+`<slot_kind>` is one of:
+- `variant` — for variant mockups (rare in the CTA report; usually only the .mock-cta button hero, no img)
+- `ab_test` — for every Strongest Matches `.flip` BEFORE/AFTER pair, every recommendation card proof
+- `reference` — for `.divergent-imgwrap` / `.divergent-card` (corpus reference cards)
+- `evidence` — for any other corpus image slot
+
+For the top banner click, use `&utm_medium=lock-banner&utm_content=banner`.
+
+**Per-slot caption convention.** Use the caption that matches the slot:
+- `.mockup-col` (variant mockup) → "Unlock this variant"
+- `.ba-col` / `.flip` BEFORE/AFTER / Strongest Matches pair → "Unlock this A/B test evidence"
+- `.divergent-imgwrap` / `.divergent-card` → "Unlock this reference"
+- Anything else / general → "Upgrade to Lazyweb Pro"
+
 ```html
 <!-- Lock banner — render once, right after Agent Instructions, ONLY when ab_test_subscription_required -->
-<a class="lock-banner" href="https://www.lazyweb.com/monetization" target="_blank" rel="noopener">
+<a class="lock-banner" href="https://www.lazyweb.com/monetization?utm_source=lazyweb-paywall-cta&utm_medium=lock-banner&utm_campaign=free-to-pro&utm_content=banner" target="_blank" rel="noopener">
   <span class="lb-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>
-  <span class="lb-txt"><b>Lazyweb Pro is locked.</b> The CTA candidates and critique below are intact; every evidence screenshot is hidden until you upgrade. Your current paywall stays visible at the top.</span>
-  <span class="lb-cta">Upgrade →</span>
+  <span class="lb-txt"><b>Your paywall, redesigned by 20k+ A/B tests.</b> The CTA candidates and critique below are intact; every evidence screenshot is hidden until you upgrade. Your current paywall stays visible at the top.</span>
+  <span class="lb-cta">Get access</span>
 </a>
 
-<!-- Locked deck figure — drop in place of any <img> inside a .deck -->
+<!-- Locked deck figure (reference card) — drop in place of any <img> inside a .deck -->
 <figure class="locked-figure">
-  <a class="locked-ref" href="https://www.lazyweb.com/monetization" target="_blank" rel="noopener" aria-label="Upgrade to Lazyweb Pro to unlock this CTA reference">
+  <a class="locked-ref" href="https://www.lazyweb.com/monetization?utm_source=lazyweb-paywall-cta&utm_medium=locked-tile&utm_campaign=free-to-pro&utm_content=reference" target="_blank" rel="noopener" aria-label="Unlock this reference">
     <span class="locked-ref-blur" aria-hidden="true"></span>
     <span class="locked-ref-lock" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>
-    <p class="locked-ref-cta">Upgrade to Lazyweb Pro to unlock this skill</p>
-    <span class="locked-ref-sub">Tap to upgrade</span>
+    <p class="locked-ref-cta">Unlock this reference</p>
+    <span class="locked-ref-btn">Get access</span>
   </a>
   <figcaption class="cap"><span class="src">[Lazyweb]</span> <b>CTA reference locked</b> — upgrade to view this evidence.</figcaption>
 </figure>
 
-<!-- Locked before/after pair — drop in place of an experiment .flip pair -->
+<!-- Locked before/after pair (Strongest Matches A/B) — drop in place of an experiment .flip pair -->
 <div class="flip">
   <figure class="locked-figure">
-    <a class="locked-ref" href="https://www.lazyweb.com/monetization" target="_blank" rel="noopener" aria-label="Upgrade to unlock BEFORE screenshot">
+    <a class="locked-ref" href="https://www.lazyweb.com/monetization?utm_source=lazyweb-paywall-cta&utm_medium=locked-tile&utm_campaign=free-to-pro&utm_content=ab_test" target="_blank" rel="noopener" aria-label="Unlock this A/B test evidence">
       <span class="locked-ref-blur" aria-hidden="true"></span>
       <span class="locked-ref-lock" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>
-      <p class="locked-ref-cta">Upgrade to Lazyweb Pro to unlock this skill</p>
+      <p class="locked-ref-cta">Unlock this A/B test evidence</p>
+      <span class="locked-ref-btn">Get access</span>
     </a>
     <figcaption><span class="side c">BEFORE</span><span class="vd">{before_cta_text} — visual locked</span></figcaption>
   </figure>
   <figure class="locked-figure">
-    <a class="locked-ref" href="https://www.lazyweb.com/monetization" target="_blank" rel="noopener" aria-label="Upgrade to unlock AFTER screenshot">
+    <a class="locked-ref" href="https://www.lazyweb.com/monetization?utm_source=lazyweb-paywall-cta&utm_medium=locked-tile&utm_campaign=free-to-pro&utm_content=ab_test" target="_blank" rel="noopener" aria-label="Unlock this A/B test evidence">
       <span class="locked-ref-blur" aria-hidden="true"></span>
       <span class="locked-ref-lock" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg></span>
-      <p class="locked-ref-cta">Upgrade to Lazyweb Pro to unlock this skill</p>
+      <p class="locked-ref-cta">Unlock this A/B test evidence</p>
+      <span class="locked-ref-btn">Get access</span>
     </a>
     <figcaption><span class="side v">AFTER</span><span class="vd">{after_cta_text} — visual locked</span></figcaption>
   </figure>
