@@ -69,12 +69,17 @@ Choose exactly one mode:
 | Improve, critique, or compare an existing design | `skills/lazyweb-design-improve/SKILL.md` |
 | Creative cross-category ideas or unconventional directions | `skills/lazyweb-design-brainstorm/SKILL.md` |
 | Paywall screen redesign, critique, or conversion optimization | `skills/lazyweb-paywall-optimization/SKILL.md` |
+| Rewrite, evaluate, or stress-test ONE paywall CTA (button copy, not layout) | `skills/lazyweb-paywall-cta/SKILL.md` |
+| Sign-up / registration screen redesign, critique, or signup-conversion optimization | `skills/lazyweb-signup-optimization/SKILL.md` |
 | A/B tests, experiment examples, pricing, trials, lifecycle, or monetization strategy | `skills/lazyweb-ab-test-research/SKILL.md` |
 
-For a bare `/lazyweb` request, briefly explain the six modes above and ask
+For a bare `/lazyweb` request, briefly explain the eight modes above and ask
 which one the user wants. Recommend `lazyweb-design-research` when they want
 deep guidance, `lazyweb-quick-references` when they want speed, and
 `lazyweb-design-improve` when they already have a non-paywall screen to critique.
+Route CTA copy questions to `lazyweb-paywall-cta` only when the ask is about
+the button text itself; a broader paywall redesign goes to
+`lazyweb-paywall-optimization` even if the CTA is part of it.
 
 ## Mode Handoff
 
@@ -98,7 +103,17 @@ not sure which mode to use.
 - The current public gateway normally exposes `lazyweb_health`,
   `lazyweb_search`, `lazyweb_find_similar`, `lazyweb_compare_image`,
   `lazyweb_list_categories`, `lazyweb_list_collections`,
-  `lazyweb_get_workflows`, `lazyweb_get_flows`, and `lazyweb_ab_test_research`.
+  `lazyweb_get_workflows`, `lazyweb_get_flows`, `lazyweb_ab_test_research`,
+  and `lazyweb_paywall_cta_research`. The full-pipeline run tools
+  `paywall_design_run` / `paywall_design_check_status` (and the parallel
+  `signup_design_run` / `signup_design_check_status`) are gated behind
+  env flags and may also be exposed — check the live tool list.
+- The paid tools (`lazyweb_ab_test_research`, `lazyweb_paywall_cta_research`,
+  `paywall_design_run`, `signup_design_run`) return a free-tier-friendly
+  response when the caller lacks Pro access: an `ab_test_subscription_required`
+  payload (paid wrappers) or a queued `tier='free'` run that produces a
+  LOCKED HTML report (run tools). Free callers should NOT abort — they
+  should follow the locked-render contract in the active mode's `SKILL.md`.
 - Richer internal/backend surfaces may expose `lazyweb_find_experiments`,
   `lazyweb_recent_experiments`, or
   `list_companies_by_categories`; use them only when the live tool schema shows
