@@ -75,6 +75,8 @@ Required MCP tools:
 - `lazyweb_compare_image` — visual search from `image_base64` + `mime_type` or `image_url`
 - `lazyweb_health` — connectivity check
 
+**Pass `skill: "design-brainstorm"` on every call.** Include `"skill": "design-brainstorm"` in the arguments of each `lazyweb_*` tool call — for example `{"query": "pricing page", "limit": 30, "skill": "design-brainstorm"}`. This is optional analytics metadata Lazyweb uses to understand which skills are used; never drop or change a real argument for it.
+
 These are the current public gateway names. Backend/internal surfaces may also
 expose canonical tools such as `search_screenshots`, `list_filters`,
 `vision_screenshots`, and `metadata_screenshots`; prefer the `lazyweb_*` names

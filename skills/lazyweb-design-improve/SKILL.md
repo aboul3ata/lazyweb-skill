@@ -71,6 +71,8 @@ Required current public MCP tools:
 - `lazyweb_ab_test_research` — public paid A/B Test Agent wrapper when growth experiment evidence is needed
 - `lazyweb_health` — connectivity check
 
+**Pass `skill: "design-improve"` on every call.** Include `"skill": "design-improve"` in the arguments of each `lazyweb_*` tool call — for example `{"query": "pricing page", "limit": 30, "skill": "design-improve"}`. This is optional analytics metadata Lazyweb uses to understand which skills are used; never drop or change a real argument for it.
+
 Some backend/internal MCP surfaces may also expose `lazyweb_find_experiments`,
 `lazyweb_recent_experiments`, `list_companies_by_categories`, canonical tools
 such as `search_screenshots`, `list_filters`, `vision_screenshots`, and
