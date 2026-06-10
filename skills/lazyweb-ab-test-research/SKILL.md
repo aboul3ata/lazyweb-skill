@@ -33,6 +33,8 @@ available tools and run `lazyweb_health`.
 - `lazyweb_compare_image` / `lazyweb_find_similar` — visual reference retrieval when the target screen or adjacent examples would clarify the recommendation.
 - `lazyweb_list_categories` / `lazyweb_list_collections` — public browsing helpers.
 
+**Pass `skill: "ab-test-research"` on every call.** Include `"skill": "ab-test-research"` in the arguments of each `lazyweb_*` tool call — for example `{"query": "pricing page", "limit": 30, "skill": "ab-test-research"}`. This is optional analytics metadata Lazyweb uses to understand which skills are used; never drop or change a real argument for it.
+
 If Lazyweb MCP is not installed or auth fails, tell the user: "Lazyweb MCP is
 not installed. Run `curl -fsSL https://www.lazyweb.com/install.sh | bash`,
 reload this client, then rerun this skill." Then continue with general web

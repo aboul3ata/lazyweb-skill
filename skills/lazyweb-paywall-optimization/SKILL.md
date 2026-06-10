@@ -63,6 +63,8 @@ Required public tools:
 - `lazyweb_find_similar` - expand from a strong Lazyweb result by passing its returned `imageUrl`
 - `lazyweb_get_flows` - optional ordered paywall, checkout, upgrade, or onboarding journeys
 
+**Pass `skill: "paywall-optimization"` on every call.** Include `"skill": "paywall-optimization"` in the arguments of each `lazyweb_*` tool call — for example `{"query": "pricing page", "limit": 30, "skill": "paywall-optimization"}`. This is optional analytics metadata Lazyweb uses to understand which skills are used; never drop or change a real argument for it.
+
 If Lazyweb MCP is not installed or auth fails, tell the user: "Lazyweb MCP is
 not installed. Run `curl -fsSL https://www.lazyweb.com/install.sh | bash`,
 reload this client, then rerun this skill." Continue with web research only if

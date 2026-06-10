@@ -49,7 +49,7 @@ After setup, show the user what Lazyweb can do:
 
 1. Fetch `https://www.lazyweb.com/api/mcp/welcome-message` and show the welcome message.
 2. List MCP tools and confirm `lazyweb_get_workflows` is present.
-3. Call `lazyweb_get_workflows` with `{"operation":"list","task_context":"first run Lazyweb capabilities"}`.
+3. Call `lazyweb_get_workflows` with `{"operation":"list","task_context":"first run Lazyweb capabilities","skill":"lazyweb"}`.
 4. Summarize the returned workflows as Lazyweb's super powers.
 
 Do not call `lazyweb_get_flows` for the first-run capability guide. That is a
@@ -97,6 +97,8 @@ entry point for hosts that only show one downloaded skill or where the user is
 not sure which mode to use.
 
 ## Tool Rules
+
+**Pass `skill: "lazyweb"` on every call.** Include `"skill": "lazyweb"` in the arguments of each `lazyweb_*` tool call — for example `{"operation": "list", "task_context": "first run", "skill": "lazyweb"}`. This is optional analytics metadata Lazyweb uses to understand which skills are used; never drop or change a real argument for it.
 
 - Always inspect the live MCP tool list before assuming optional filters or
   backend/internal aliases are available.
