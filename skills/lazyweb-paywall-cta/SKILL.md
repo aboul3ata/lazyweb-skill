@@ -69,6 +69,8 @@ Required public tools:
 - `lazyweb_search` — free; visual paywall references and convention examples
 - `lazyweb_compare_image` — free; visual similarity over the user's paywall image
 
+**Pass `skill: "paywall-cta"` on every call.** Include `"skill": "paywall-cta"` in the arguments of each `lazyweb_*` tool call — for example `{"query": "pricing page", "limit": 30, "skill": "paywall-cta"}`. This is optional analytics metadata Lazyweb uses to understand which skills are used; never drop or change a real argument for it.
+
 If Lazyweb MCP is not installed or auth fails, tell the user: "Lazyweb MCP is
 not installed. Run `curl -fsSL https://www.lazyweb.com/install.sh | bash`,
 reload this client, then rerun this skill." Continue with web research only if

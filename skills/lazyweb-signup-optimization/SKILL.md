@@ -83,6 +83,8 @@ Required public tools:
 - `lazyweb_ab_test_research` — paid; broader A/B evidence (signup
   experiments, lifecycle, activation)
 
+**Pass `skill: "signup-optimization"` on every call.** Include `"skill": "signup-optimization"` in the arguments of each `lazyweb_*` tool call — for example `{"query": "pricing page", "limit": 30, "skill": "signup-optimization"}`. This is optional analytics metadata Lazyweb uses to understand which skills are used; never drop or change a real argument for it.
+
 If Lazyweb MCP is not installed or auth fails, tell the user: "Lazyweb MCP
 is not installed. Run `curl -fsSL https://www.lazyweb.com/install.sh | bash`,
 reload this client, then rerun this skill."
