@@ -15,6 +15,20 @@ const visibleModeSkillDirs = readdirSync(path.join(root, "skills"), { withFileTy
 
 assert.ok(visibleModeSkillDirs.length > 0, "no mode skills found under skills/");
 
+// Shared includes (skills/_shared/*.md) hold content extracted out of the
+// per-skill SKILL.md files (operating principles, evidence components, browse
+// setup). They have no SKILL.md so they are not mode skills, but their text
+// must stay under the same content checks (tool mentions, stale patterns) as
+// the skills that reference them — otherwise extracting a block silently drops
+// it out of validation coverage.
+const sharedDir = path.join(root, "skills", "_shared");
+const sharedIncludeFiles = existsSync(sharedDir)
+  ? readdirSync(sharedDir, { withFileTypes: true })
+      .filter((entry) => entry.isFile() && entry.name.endsWith(".md") && entry.name !== "README.md")
+      .map((entry) => `skills/_shared/${entry.name}`)
+      .sort()
+  : [];
+
 const removedPluginPaths = [
   "plugins",
   "lazyweb",
@@ -81,10 +95,10 @@ for (const dir of visibleModeSkillDirs) {
   assert.match(text, /https:\/\/www\.lazyweb\.com\/install\.sh/, `${dir} should point to standalone installer`);
 }
 
-const allSkillText = ["SKILL.md", ...visibleModeSkillDirs.map((dir) => `${dir}/SKILL.md`)]
+const allSkillText = ["SKILL.md", ...visibleModeSkillDirs.map((dir) => `${dir}/SKILL.md`), ...sharedIncludeFiles]
   .map((relativePath) => read(relativePath))
   .join("\n");
-const allInstructionText = ["README.md", "AGENTS.md", "CLAUDE.md", "SKILL.md", ...visibleModeSkillDirs.map((dir) => `${dir}/SKILL.md`)]
+const allInstructionText = ["README.md", "AGENTS.md", "CLAUDE.md", "SKILL.md", ...visibleModeSkillDirs.map((dir) => `${dir}/SKILL.md`), ...sharedIncludeFiles]
   .map((relativePath) => read(relativePath))
   .join("\n");
 for (const match of allSkillText.matchAll(/\b(?:lazyweb_(?:health|search|find_similar|compare_image|list_categories|list_collections|ab_test_research|paywall_cta_research|get_workflows|get_flows|find_experiments|recent_experiments)|search_screenshots|list_filters|list_all_filters|vision_screenshots|metadata_screenshots|get_company_details|list_companies_by_categories)\b/g)) {
