@@ -262,7 +262,7 @@ const FILL_DATA = {
     index_on: "i", dont_index: "d", dive: "v", evidence_basis: "19 refs" },
   bets: [
     { name: "Founder's Letter", slug: "fl", recommended: true,
-      img: "references/prototype-fl.png", alt: "letter with 'quotes'",
+      img: "references/prototype-fl.png", alt: "letter with </script>\n'quotes'",
       what: "Letter replaces hero.", why: "Trust via voice.",
       deck: [
         { src: "https://i/1.png", alt: "1", source: "Lazyweb", company: "Beta<Co>", detail: "letter hero. 0 of 19." },
@@ -287,6 +287,8 @@ test("fill-report: produces a gate-passing report with correct escaping", async 
   const body = html.slice(html.indexOf("<body>"));
   const art1 = body.slice(body.indexOf("<article"), body.indexOf("</article>"));
   assert.ok(art1.includes("deck-nav"), "3-figure mini deck carries nav");
+  assert.ok(!html.slice(html.indexOf("var _vars="), html.indexOf("</script>")).includes("</script>"),
+    "raw data must not be able to close the generated script");
   // run the real publish gate from SKILL.md against the output
   const skill = readFileSync(path.join(root, "skills/lazyweb-deep-design-research/SKILL.md"), "utf8");
   const gatePy = skill.match(/<<'REPORT_CONTRACT_EOF'\n([\s\S]*?)\nREPORT_CONTRACT_EOF/)[1];

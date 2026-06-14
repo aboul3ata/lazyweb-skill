@@ -51,7 +51,16 @@ def esc(s):
 
 
 def jesc(s):
-    return str(s if s is not None else "").replace("\\", "\\\\").replace("'", "\\'")
+    return (
+        str(s if s is not None else "")
+        .replace("\\", "\\\\")
+        .replace("'", "\\'")
+        .replace("\n", "\\n")
+        .replace("\r", "\\r")
+        .replace("\u2028", "\\u2028")
+        .replace("\u2029", "\\u2029")
+        .replace("<", "\\u003c")
+    )
 
 
 def die(msg):
