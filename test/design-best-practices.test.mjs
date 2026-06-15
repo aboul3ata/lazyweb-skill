@@ -30,8 +30,8 @@ const pointerUrls = [...new Set(
 // Pointers route through the Lazyweb resolver, which 302-redirects to the
 // canonical raw URL carried in its `u=` param (so we get routing analytics on
 // the fetch the agent already makes). Tests validate the wrapper AND the
-// decoded destination; live fetches hit the destination directly so they don't
-// depend on the resolver being deployed.
+// decoded destination. Live fetches hit the production pointer URLs with
+// redirects followed because that is what agents fetch at runtime.
 const RESOLVER = "https://www.lazyweb.com/r";
 function canonicalOf(pointer) {
   const url = new URL(pointer);
@@ -99,7 +99,7 @@ test(
   "every pointer URL resolves to real instruction content",
   { skip: process.env.LAZYWEB_SKIP_NETWORK_TESTS ? "LAZYWEB_SKIP_NETWORK_TESTS set" : false },
   async () => {
-    const results = await Promise.all(canonicalUrls.map(async (url) => {
+    const results = await Promise.all(pointerUrls.map(async (url) => {
       try {
         const res = await fetch(url, { signal: AbortSignal.timeout(20000), redirect: "follow" });
         const body = res.ok ? await res.text() : "";
@@ -109,7 +109,7 @@ test(
       }
     }));
     const broken = results.filter((r) => r.status !== 200);
-    assert.deepEqual(broken, [], `broken pointer URLs (re-run the Refresh protocol for their topics): ${JSON.stringify(broken, null, 2)}`);
+    assert.deepEqual(broken, [], `broken pointer URLs or resolver redirects (re-run the Refresh protocol for their topics): ${JSON.stringify(broken, null, 2)}`);
     // A 200 that returns a stub/empty file is still rot.
     const thin = results.filter((r) => r.length < 500);
     assert.deepEqual(thin, [], `pointer URLs returned suspiciously thin content: ${JSON.stringify(thin, null, 2)}`);
