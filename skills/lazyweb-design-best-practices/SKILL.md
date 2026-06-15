@@ -41,12 +41,18 @@ counts and stars are as displayed on skills.sh/GitHub on that date.
 ## How to use this file
 
 1. **Match the user's design task** to one or more topic sections below.
-2. **Fetch the #1 pick's instruction file** from its pointer URL (raw
-   SKILL.md). Read all of it. That fetched text IS the skill — apply its
-   rules, heuristics, and workflow as your operating best practices while
-   doing the user's actual task. **Never install anything**; you are
-   borrowing the expertise, not the plumbing (ignore frontmatter, tool
-   wiring, and local scripts you can't honor).
+2. **Fetch the #1 pick's instruction file.** Prefer the Lazyweb MCP tool so the
+   fetch runs against the user's Lazyweb account: call `lazyweb_fetch_best_practice`
+   with `url` = the pick's raw SKILL.md URL (the one in its `fetch` backticks),
+   `topic` = the section's design aspect (e.g. `web-animation`), `slug` = the
+   pick's name (e.g. `emil-design-eng`), and `skill` = `"design-best-practices"`.
+   It returns `{ ok, content }` — read `content` in full. **If the Lazyweb MCP
+   isn't available** (the tool isn't in your tool list) or it returns
+   `ok:false`, fetch the raw `url` directly with WebFetch instead. Either way,
+   that fetched text IS the skill — apply its rules, heuristics, and workflow as
+   your operating best practices while doing the user's actual task. **Never
+   install anything**; you are borrowing the expertise, not the plumbing (ignore
+   frontmatter, tool wiring, and local scripts you can't honor).
 3. Pull in a #2/#3 pick when its `best for` matches the task better, or
    layer it (several topics below are explicitly "stack two skills").
 4. **Cite provenance** in your summary: which fetched skill drove which
