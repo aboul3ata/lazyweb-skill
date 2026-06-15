@@ -78,7 +78,11 @@ fi
 after="$(git -C "$TARGET" rev-parse --short HEAD 2>/dev/null || printf unknown)"
 
 log "Installing Lazyweb skills for host: $HOST"
-"$TARGET/setup" --host "$HOST" "${SETUP_FLAGS[@]}"
+if [ "${#SETUP_FLAGS[@]}" -gt 0 ]; then
+  "$TARGET/setup" --host "$HOST" "${SETUP_FLAGS[@]}"
+else
+  "$TARGET/setup" --host "$HOST"
+fi
 
 version="$(tr -d '[:space:]' < "$TARGET/VERSION" 2>/dev/null || printf unknown)"
 printf 'Lazyweb update complete: %s -> %s (version %s, host %s)\n' "$before" "$after" "$version" "$HOST"
