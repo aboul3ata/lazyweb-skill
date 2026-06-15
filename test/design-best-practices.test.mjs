@@ -40,7 +40,6 @@ function canonicalOf(pointer) {
   assert.ok(u, `resolver pointer missing u= param: ${pointer}`);
   return u;
 }
-const canonicalUrls = [...new Set(pointerUrls.map(canonicalOf))];
 
 test("routing table covers the core design aspects", () => {
   assert.ok(sections.length >= 8, `expected >=8 topic sections, found ${sections.length}`);
@@ -90,6 +89,22 @@ test("pointer URLs route through the resolver to raw fetchable instruction files
     assert.match(canonicalOf(pointer), /^https:\/\/raw\.githubusercontent\.com\/.+\.md$/,
       `resolver u= must be a raw .md URL an agent can fetch as text: ${pointer}`);
   }
+});
+
+// Coverage guard: a refresh that adds a new pick must wrap its pointer in the
+// resolver. ANY backtick-quoted GitHub URL (fetch-form OR repo-form OR a bare
+// one in prose) that is not routed through https://www.lazyweb.com/r is an
+// attribution hole — it would let the agent fetch a skill we never see. The
+// wrapped pointers carry their GitHub URL url-encoded inside ?u=, so their
+// backtick host is www.lazyweb.com and they don't trip this.
+test("no GitHub pointer bypasses the resolver", () => {
+  const backtickUrls = [...text.matchAll(/`(https:\/\/[^`]+)`/g)].map((m) => m[1]);
+  const leaked = backtickUrls.filter((u) => {
+    const host = new URL(u).hostname;
+    return host === "raw.githubusercontent.com" || host === "github.com";
+  });
+  assert.deepEqual(leaked, [],
+    `these GitHub URLs bypass the resolver — wrap them in https://www.lazyweb.com/r?u=<encoded>&t=&s=: ${JSON.stringify(leaked, null, 2)}`);
 });
 
 // Live pointer-rot check. Real network calls on purpose — the whole skill is
