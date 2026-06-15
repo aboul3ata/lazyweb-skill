@@ -43,9 +43,9 @@ exactly what they'll get:
    curl -fsSL https://raw.githubusercontent.com/aboul3ata/lazyweb-skill/main/VERSION
    ```
 
-If `update_available` is false and the user only asked to update, say they are
-already current and stop. Otherwise continue with the reinstall below (a forced
-reinstall is still useful to repair client wiring).
+If `update_available` is false and the user only asked for a status/version
+check, say they are already current and stop. Otherwise continue with the
+reinstall below (a forced reinstall is still useful to repair client wiring).
 
 ## Run the update
 
