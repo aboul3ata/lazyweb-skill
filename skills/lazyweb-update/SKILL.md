@@ -43,9 +43,16 @@ exactly what they'll get:
    curl -fsSL https://raw.githubusercontent.com/aboul3ata/lazyweb-skill/main/VERSION
    ```
 
-If `update_available` is false and the user only asked to update, say they are
-already current and stop. Otherwise continue with the reinstall below (a forced
-reinstall is still useful to repair client wiring).
+`update_available` tells the user what's new, but it does **not** gate the
+reinstall. The updater below reruns setup with `--host all`, which also repairs
+broken, stale, or newly-added client skill roots — a current `VERSION` does not
+mean those are in sync. So:
+
+- If the user asked to **update, reinstall, or sync** Lazyweb (the normal case):
+  run the updater below **regardless of `update_available`**. Even when already
+  current, the reinstall brings every client skill root back in sync.
+- Only if the user asked **purely for a status check** (e.g. "is there a Lazyweb
+  update?"): report installed vs latest and stop without reinstalling.
 
 ## Run the update
 
