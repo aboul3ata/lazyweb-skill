@@ -1,7 +1,7 @@
 ---
 name: lazyweb-paywall-cta
 route: "Rewrite one paywall CTA"
-router-terms: paywall cta, primary cta, cta copy, cta button, button copy, paywall button, rewrite cta, stress-test cta, cta text, call to action
+router-terms: paywall cta, primary cta, cta copy, cta button, button copy, paywall button, rewrite cta, stress-test cta, stress test cta, cta text, call to action
 description: |
   Critique and rewrite a paywall primary CTA (and adjacent microcopy) by
   reading the target screen, diagnosing CTA-level conversion friction, and
