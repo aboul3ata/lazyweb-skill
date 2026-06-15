@@ -27,6 +27,21 @@ const pointerUrls = [...new Set(
   [...text.matchAll(/fetch `(https:\/\/[^`]+)`/g)].map((m) => m[1])
 )];
 
+// Pointers route through the Lazyweb resolver, which 302-redirects to the
+// canonical raw URL carried in its `u=` param (so we get routing analytics on
+// the fetch the agent already makes). Tests validate the wrapper AND the
+// decoded destination; live fetches hit the destination directly so they don't
+// depend on the resolver being deployed.
+const RESOLVER = "https://www.lazyweb.com/r";
+function canonicalOf(pointer) {
+  const url = new URL(pointer);
+  assert.equal(url.origin + url.pathname, RESOLVER, `pointer must route through the resolver: ${pointer}`);
+  const u = url.searchParams.get("u");
+  assert.ok(u, `resolver pointer missing u= param: ${pointer}`);
+  return u;
+}
+const canonicalUrls = [...new Set(pointerUrls.map(canonicalOf))];
+
 test("routing table covers the core design aspects", () => {
   assert.ok(sections.length >= 8, `expected >=8 topic sections, found ${sections.length}`);
   for (const expected of ["web animation", "frontend", "landing pages", "typography", "color", "design systems", "accessibility", "mobile"]) {
@@ -66,11 +81,14 @@ test("every pick carries an evidence-strength label and the file carries a resea
   }
 });
 
-test("pointer URLs are raw fetchable instruction files, not web pages", () => {
+test("pointer URLs route through the resolver to raw fetchable instruction files", () => {
   assert.ok(pointerUrls.length >= 15, `expected >=15 pointer URLs, found ${pointerUrls.length}`);
-  for (const url of pointerUrls) {
-    assert.match(url, /^https:\/\/raw\.githubusercontent\.com\/.+\.md$/,
-      `pointer must be a raw .md URL an agent can fetch as text: ${url}`);
+  for (const pointer of pointerUrls) {
+    const params = new URL(pointer).searchParams;
+    assert.ok(params.get("t"), `pointer missing topic (t=): ${pointer}`);
+    assert.ok(params.get("s"), `pointer missing skill (s=): ${pointer}`);
+    assert.match(canonicalOf(pointer), /^https:\/\/raw\.githubusercontent\.com\/.+\.md$/,
+      `resolver u= must be a raw .md URL an agent can fetch as text: ${pointer}`);
   }
 });
 
@@ -81,7 +99,7 @@ test(
   "every pointer URL resolves to real instruction content",
   { skip: process.env.LAZYWEB_SKIP_NETWORK_TESTS ? "LAZYWEB_SKIP_NETWORK_TESTS set" : false },
   async () => {
-    const results = await Promise.all(pointerUrls.map(async (url) => {
+    const results = await Promise.all(canonicalUrls.map(async (url) => {
       try {
         const res = await fetch(url, { signal: AbortSignal.timeout(20000), redirect: "follow" });
         const body = res.ok ? await res.text() : "";
