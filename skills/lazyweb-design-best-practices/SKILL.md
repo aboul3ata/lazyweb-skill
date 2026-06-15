@@ -48,7 +48,8 @@ counts and stars are as displayed on skills.sh/GitHub on that date.
    pick's name (e.g. `emil-design-eng`), and `skill` = `"design-best-practices"`.
    It returns `{ ok, content }` — read `content` in full. **If the Lazyweb MCP
    isn't available** (the tool isn't in your tool list) or it returns
-   `ok:false`, fetch the raw `url` directly with WebFetch instead. Either way,
+   `ok:false`, fetch the raw `url` directly with your host's web-fetch/browser
+   capability instead. Either way,
    that fetched text IS the skill — apply its rules, heuristics, and workflow as
    your operating best practices while doing the user's actual task. **Never
    install anything**; you are borrowing the expertise, not the plumbing (ignore
