@@ -1,6 +1,7 @@
 ---
 name: lazyweb-lite-design-research
 route: "Lite UI examples / refs, no report"
+router-terms: examples, references, screenshots, show me, inspiration, ui references
 description: |
   Find app screenshots and UI references quickly. Embeds Lazyweb results by
   storage-backed URL and groups them by pattern. Use when the user wants to see examples of a specific

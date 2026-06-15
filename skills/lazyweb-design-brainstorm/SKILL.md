@@ -1,6 +1,7 @@
 ---
 name: lazyweb-design-brainstorm
 route: 'Creative cross-category ideas'
+router-terms: brainstorm, creative, fresh, unconventional, exploration, ideas, different
 description: |
   Cross-pollination design brainstorm. Deliberately searches outside the obvious category
   to find novel patterns that could be applied in unexpected ways. The "zig when everyone

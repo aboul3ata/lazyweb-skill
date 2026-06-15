@@ -1,6 +1,7 @@
 ---
 name: lazyweb-ab-test-research
 route: "A/B tests and monetization"
+router-terms: a/b, a/b test, ab test, experiment, test idea, test ideas, test examples, experiment examples, monetization research, lifecycle
 description: |
   Research mobile growth, monetization, onboarding, checkout, paywall,
   cancellation, pricing, activation, or other product A/B tests using Lazyweb experiment

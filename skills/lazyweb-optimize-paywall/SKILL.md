@@ -1,6 +1,7 @@
 ---
 name: lazyweb-optimize-paywall
 route: "Optimize paywall conversion"
+router-terms: paywall, paywall design, paywall redesign, optimize paywall, improve paywall, critique paywall, conversion rate, paid conversion, trial start, annual plan, upgrade screen
 description: |
   Optimize a mobile or web paywall by reading the target screen, diagnosing
   conversion friction, and producing 2-4 falsifiable redesign hypotheses backed

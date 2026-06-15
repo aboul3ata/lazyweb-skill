@@ -1,6 +1,7 @@
 ---
 name: lazyweb-optimize-sign-up
 route: 'Optimize sign-up conversion'
+router-terms: signup, sign-up, sign up, registration, account creation, create account, email capture, signup completion, registration screen, signup screen
 description: |
   Optimize a sign-up / registration screen by reading the target screen,
   diagnosing signup friction, and producing 2-4 falsifiable redesign

@@ -1,6 +1,7 @@
 ---
 name: lazyweb-design-improve
 route: "Improve or critique existing UI"
+router-terms: improve, critique, feedback, review, make this better, current design, existing screen
 description: |
   Capture a screenshot of the user's current design, find similar screens in Lazyweb,
   and generate concrete improvement ideas backed by real references. Use when the user

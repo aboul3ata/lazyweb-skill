@@ -1,6 +1,7 @@
 ---
 name: lazyweb-deep-design-research
 route: "Deep UI research / competitive analysis"
+router-terms: research, competitive, competitor, what do top apps, how should, full report, deep research
 description: |
   Deep design research combining Lazyweb's screenshot database with web research.
   Produces a prototype-first HTML report with side-by-side prototypes and a clustered inspo map.

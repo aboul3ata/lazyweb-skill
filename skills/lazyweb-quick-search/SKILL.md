@@ -1,6 +1,7 @@
 ---
 name: lazyweb-quick-search
 route: "Quick MCP search before design"
+router-terms: quick search, search lazyweb, preflight, quick check, search before designing, industry references
 description: |
   Use the Lazyweb search MCP tool directly for quick industry references before
   designing or changing UI. Does not generate a report. Use when the agent needs

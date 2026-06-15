@@ -1,6 +1,7 @@
 ---
 name: lazyweb-design-best-practices
 route: "Design craft best practices"
+router-terms: best practices, best skill, best way, what's the best, the best designers, design craft, design best practices for
 description: |
   Lazyweb's curated router to the best design skills in the world — used as
   context, never installed. 19 design aspects (web animation, frontend

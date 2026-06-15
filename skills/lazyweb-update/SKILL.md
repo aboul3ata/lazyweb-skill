@@ -1,6 +1,7 @@
 ---
 name: lazyweb-update
 route: 'Updating local Lazyweb skills, reinstalling Lazyweb, or syncing Lazyweb into agentic IDEs'
+router-terms: update lazyweb, lazyweb update, reinstall lazyweb, refresh lazyweb, sync lazyweb, stale slash, stale command, slash command, local skills, agentic ide
 router-exclude: true
 description: |
   Update the local Lazyweb skill pack from GitHub and reinstall Lazyweb skills
