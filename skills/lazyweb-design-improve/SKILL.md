@@ -202,7 +202,9 @@ Before searching, verify MCP is available by listing tools and running
 **If Lazyweb MCP is not installed or auth fails:**
 Tell the user: "Lazyweb MCP is not installed. Run `curl -fsSL https://www.lazyweb.com/install.sh | bash`, reload this client, then rerun this skill. Lazyweb is free; the bearer token is
 only for no-billing UI reference tools and is okay in ignored local config."
-Then proceed with web research only — the skill still works, just without Lazyweb's database.
+Stop there. This skill's deliverable is the hosted report returned by
+`lazyweb_render_report`, so it cannot complete without Lazyweb MCP. Do not
+produce a local HTML/Markdown fallback.
 
 ## Browse Setup (run BEFORE any web capture)
 
@@ -492,4 +494,3 @@ was inferred from a URL/vision description in its `detail` ("brand inferred —
 verify"). Back absence claims with evidence-of-search (queries run × screens
 reviewed + the closest near-miss). Never invent a reference, a metric, or a
 company name.
-
