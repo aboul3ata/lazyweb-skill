@@ -36,13 +36,12 @@ clutter, no legend tables, no explanatory paragraphs next to the proof.
 **This skill produces FILES, not a plan.** Regardless of whether you are in plan mode
 or not, ALWAYS:
 
-1. Write the HTML report to `.lazyweb/deep-design-research/{topic}-{date}/report.html`
+1. Author the report content as `.lazyweb/deep-design-research/{topic}-{date}/work/report-data.json` (structured content, NOT HTML)
 2. Embed Lazyweb references directly with their returned `imageUrl`/`image_url`; save only current-state and web-captured screenshots under `.lazyweb/deep-design-research/{topic}-{date}/references/`
-3. Do NOT create `report.md` or any other Markdown report artifact
+3. Do NOT create `report.md`, `report.html`, or any other report artifact by hand — the server renders the report
 4. Do NOT write research content into a plan file
-5. Publish a shareable link (see "Publish a Shareable Link" below) - automatic, non-blocking
-6. After saving, show the user a concise summary, the recommended bet, the exact
-   report path, and the shareable link if publishing succeeded
+5. Render and host the report with `lazyweb_render_report` (see "Render and host the report" below) — this single call IS the deliverable; producing the report and hosting it are the same action, so there is nothing to skip
+6. After the render call returns, show the user a concise summary, the recommended bet, and the shareable link (the report lives only at that URL)
 7. Ask the user if the research looks good
 8. If in plan mode, exit plan mode after the user confirms - the research is done
 9. Suggest next steps: "You can now use this research to inform your implementation,
@@ -68,127 +67,43 @@ when the user asks for implementation-ready code. Generate prototype images in
 parallel at medium effort by default, or low effort when the user asks for
 speed/exploration.
 
-## Publish a Shareable Link (always, right after writing report.html)
+## Render and host the report (the single deliverable)
 
-Every report is auto-published to lazyweb.com so the user can share it with
-teammates — ONCE, when it is complete. Never publish partial, skeleton, or
-in-progress states; the user sees a report only when it is done. Before publishing, run this contract gate with `$REPORT_DIR` set to
-`.lazyweb/deep-design-research/{topic}-{date}`:
+The report is rendered and hosted **server-side**. You author the report
+content as `work/report-data.json`, then call `lazyweb_render_report` ONCE.
+That call fills the canonical template on the server, validates it, hosts it at
+`https://www.lazyweb.com/report/lazyweb/{id}/`, and returns the shareable link.
+There is no local `report.html` to write, no separate publish step, and no
+token to read — producing the report and hosting it are the same action, so a
+finished report is always a shared report.
 
-```bash
-REPORT_HTML="$REPORT_DIR/report.html"
-python3 - "$REPORT_HTML" <<'REPORT_CONTRACT_EOF'
-import pathlib, re, sys
+Call it once `work/report-data.json` and every `references/` image exist. The
+report dir is `$REPORT_DIR = .lazyweb/deep-design-research/{topic-slug}-{YYYY-MM-DD}`.
 
-path = pathlib.Path(sys.argv[1])
-html = path.read_text(encoding="utf-8")
-# Forbidden-content checks run on RENDERED content only — HTML comments
-# (including the template's own instruction comments) don't render.
-rendered = re.sub(r"<!--[\s\S]*?-->", "", html)
-required_groups = {
-    "Agent Instructions copy block": [
-        r'class=["\'][^"\']*\bagent-instructions\b',
-        r'FOR THE CODING AGENT',
-    ],
-    "Recommendation option deck": [
-        r'class=["\'][^"\']*\boption-deck\b',
-        r'class=["\'][^"\']*\bprototype-option\b',
-        r'Recommended',
-    ],
-}
-missing = []
-for label, patterns in required_groups.items():
-    for pattern in patterns:
-        if not re.search(pattern, html, re.I):
-            missing.append(f"{label}: missing {pattern}")
+Arguments:
+- `report_data`: the parsed `work/report-data.json` object (see "Author report-data.json" below).
+- `assets`: every file in `$REPORT_DIR/references/` as `{ "name": <filename>, "b64": <base64 of the bytes> }` — the control screenshot and each generated prototype image the report points at via `references/{name}`. Lazyweb references embedded by absolute `imageUrl` are NOT assets; only locally saved files.
+- `report_skill`: `"deep-design-research"`.
+- `idempotency_key`: the report dir slug, e.g. `deep-design-research/{topic-slug}-{YYYY-MM-DD}`. Send the SAME value on every call for this report so a retry returns the same link instead of a duplicate.
+- `version`: the value you read from `~/.lazyweb/VERSION` at skill start.
 
-if re.search(r'<h2[^>]*>\s*Inspo\s*</h2>', html, re.I) and not re.search(r'class=["\'][^"\']*\binspo-map\b', html, re.I):
-    missing.append("Inspo section must use .inspo-map")
+Handle the result:
+- `{ ok: true, url }` — the report is live. Show "Shareable link: {url} (unlisted - anyone with the link can view)", then `open "{url}"` in the user's browser (skip `open` in a headless/CI/no-GUI environment and just print the link).
+- `{ ok: false, code: "REPORT_RENDER_ERROR", detail }` — `detail` names the missing or invalid `report_data` field (e.g. `missing data.topic`, `bets must have 2-4 entries`). Fix that field in `work/report-data.json` and call ONCE more.
+- `{ ok: false, code: "REPORT_TOO_LARGE" }` — the embedded screenshots are too large. Reduce their number/size and retry once.
+- any other `{ ok: false }` — tell the user hosting failed and why (the `error` field). There is no local copy, so they need the link or the reason.
 
-for label, pattern in {
-    "old tabbed recommendation UI": r'class=["\'][^"\']*\boption-tabs\b|class=["\'][^"\']*\boption-panel\b',
-    "old axis/bubble inspo UI": r'class=["\'][^"\']*\baxis\b|class=["\'][^"\']*\bbubble\b',
-    "old prototype wrapper": r'class=["\'][^"\']*\bprototype-image\b',
-    "old evidence sections": r'Reference Evidence|Source Notes|Key Examples|<h2[^>]*>\s*Findings\s*</h2>|<h2[^>]*>\s*Sources\s*</h2>',
-    "removed patterns section": r'class=["\'][^"\']*\bpattern-shot\b|class=["\'][^"\']*\bpatterns-grid\b|<h2[^>]*>\s*Interesting Patterns\s*</h2>',
-    "in-progress leftovers (reports publish only when complete)": r'class=["\'][^"\']*\b(?:genbar|pending-ref|pending-strip)\b|http-equiv=["\']refresh["\']|lazyweb-report-state',
-    "unfilled template example content": r'EXAMPLE-|picsum\.photos|placehold\.co|\bdata-ex=|\{\{[A-Z0-9_]+\}\}',
-}.items():
-    if re.search(pattern, rendered, re.I):
-        missing.append(f"Forbidden {label}: {pattern}")
+The server fills a fixed, render-tested template and rejects an incomplete
+`report_data` (missing fields → `REPORT_RENDER_ERROR`), so a partial or skeleton
+report can never be hosted — that replaces the old client-side contract gate.
+Never hand-render HTML or fall back to a local file.
 
-if missing:
-    print("REPORT_CONTRACT_FAILED")
-    for item in missing:
-        print(f"- {item}")
-    raise SystemExit(1)
+### Image references in report-data.json
 
-print("REPORT_CONTRACT_OK")
-REPORT_CONTRACT_EOF
-```
-
-Only proceed when stdout contains `REPORT_CONTRACT_OK`. If it fails, rewrite
-the report once against the "Report v3 Contract" below and rerun this gate.
-Never publish a `lazyweb-deep-design-research` report that fails this gate.
-
-Then run this with the same `$REPORT_DIR`:
-
-```bash
-IDEMPOTENCY_KEY="${REPORT_DIR##*.lazyweb/}"   # stable per-report key (e.g. deep-design-research/{topic}-{date}) — works for absolute and relative $REPORT_DIR; send the SAME value every attempt so retries dedupe to one link
-LAZYWEB_TOKEN=$(cat "$HOME/.lazyweb/lazyweb_mcp_token" 2>/dev/null || true)
-if [ -n "$LAZYWEB_TOKEN" ]; then
-  # Tier 1 - local install: direct POST (idempotency_key dedupes a re-run)
-  python3 - "$REPORT_DIR" "$LAZYWEB_TOKEN" "deep-design-research" "$IDEMPOTENCY_KEY" <<'PUBLISH_EOF'
-import base64, json, pathlib, sys, urllib.error, urllib.request
-report_dir, token, skill, idem = pathlib.Path(sys.argv[1]), sys.argv[2], sys.argv[3], sys.argv[4]
-version_file = pathlib.Path.home() / ".lazyweb" / "VERSION"
-version = version_file.read_text().strip() if version_file.exists() else "0.0.0"
-html = (report_dir / "report.html").read_text(encoding="utf-8")
-refs = report_dir / "references"
-assets = [
-    {"name": p.name, "b64": base64.b64encode(p.read_bytes()).decode()}
-    for p in (sorted(refs.iterdir()) if refs.is_dir() else [])
-    if p.is_file() and not p.name.startswith(".")
-]
-body = json.dumps({"skill": skill, "version": version, "html": html, "assets": assets, "idempotency_key": idem}).encode()
-req = urllib.request.Request(
-    "https://www.lazyweb.com/api/reports",
-    data=body,
-    headers={"Content-Type": "application/json", "Authorization": f"Bearer {token}"},
-)
-try:
-    resp = json.loads(urllib.request.urlopen(req, timeout=90).read())
-    print(f"SHAREABLE_URL: {resp['url']}")
-except urllib.error.HTTPError as exc:
-    print(f"PUBLISH_FAILED: {exc.code} {exc.read().decode()[:500]}")
-except Exception as exc:
-    print(f"PUBLISH_SKIPPED: {exc}")
-PUBLISH_EOF
-else
-  # Tier 2 - no local token (hosted/cloud agent): publish via the MCP tool (see below)
-  echo "PUBLISH_VIA_MCP_TOOL idempotency_key=$IDEMPOTENCY_KEY report_dir=$REPORT_DIR"
-fi
-```
-
-**Exactly one tier runs - never both.**
-
-- Tier 1 `SHAREABLE_URL:` - include the link: "Shareable link: {url} (unlisted - anyone with the link can view)".
-- Tier 1 `PUBLISH_FAILED: 400 ...` - the body names what is unhostable (e.g. `missing_assets`). Fix the report and re-run the publish ONCE.
-- Tier 1 `PUBLISH_SKIPPED:` - say nothing; the local report stands (the user has the file).
-- Tier 2 `PUBLISH_VIA_MCP_TOOL ...` - you have no local token (hosted session), so publish with the Lazyweb MCP tool instead:
-  1. Size-check first: if `report.html` plus the `references/` files together exceed ~7MB, do NOT call the tool - tell the user the report was too large to publish from a hosted session (it is saved locally) and stop.
-  2. Otherwise call `lazyweb_publish_report` with: `html` = the contents of `report.html`; `assets` = each `references/` file as `{"name": <filename>, "b64": <base64 of the bytes>}`; `report_skill` = "deep-design-research"; `idempotency_key` = the value printed after `idempotency_key=`.
-  3. On `{ ok: true, url }` -> show "Shareable link: {url} (unlisted - anyone with the link can view)".
-  4. On `{ ok: false }` -> tell the user publishing failed and why (the `error` field); the report is saved locally. If `code` is `REPORT_VALIDATION_ERROR` and `detail` names missing assets, fix and call ONCE more; otherwise do not retry.
-  Unlike Tier 1, do NOT stay silent on a Tier-2 failure - a hosted user has no local file to fall back on, so they need the link or the reason.
-
-### Hosting-safe HTML (the template already complies - keep it that way)
-
-The hosted copy is served byte-for-byte, so the report must only use:
-- inline CSS and inline `<script>` - never an external `<script src=...>`
-- images via the absolute `imageUrl`/`image_url` URLs Lazyweb returns, or
-  relative `references/{filename}` paths for locally saved screenshots
-- no `file://` URLs and no absolute local paths (`/Users/...`, `C:\...`)
+You never write HTML — you only choose image `src` values in `report-data.json`:
+- Lazyweb references: the absolute `imageUrl`/`image_url` URL Lazyweb returns.
+- Locally saved screenshots (current-state, web captures, generated prototypes): a relative `references/{filename}` path, with that file uploaded as an `asset` in the render call.
+- Never use `file://` URLs or absolute local paths (`/Users/...`, `C:\...`).
 
 ## When to Use This
 
@@ -212,10 +127,10 @@ Required MCP tools:
 - `lazyweb_find_similar` - more results like a returned Lazyweb `imageUrl` or image payload
 - `lazyweb_compare_image` - visual search from `image_base64` + `mime_type` or `image_url`
 - `lazyweb_health` - connectivity check
+- `lazyweb_render_report` - render + host the finished report from `report_data` + reference images, returns the shareable link (the deliverable; see "Render and host the report" above)
 
 Optional MCP tools:
 - `lazyweb_search_ab_tests` - mobile-only supporting experiment evidence for pricing, paywall, checkout, onboarding, and other growth/monetization screens when the live schema exposes it
-- `lazyweb_publish_report` - hosted-session publish path (see Tier 2 above)
 
 **Pass `skill: "deep-design-research"` on every Lazyweb call.** Include `"skill": "deep-design-research"` in the arguments of each `lazyweb_*` tool call - for example `{"query": "pricing page", "limit": 30, "skill": "deep-design-research"}`. This is optional analytics metadata; never drop or change a real argument for it.
 
@@ -601,10 +516,10 @@ URL, omit the image and rely on `visionDescription` plus text.
 For web-captured examples, save descriptive filenames such as
 `stripe-pricing-page.png` or `linear-onboarding-step1.png`.
 
-**Keep `references/` publish-clean:** the publish step uploads every file in
-`references/`. Only files actually referenced by `report.html` belong there;
-working files (full-page originals, base64 payloads, untrimmed captures,
-search logs) live in `$REPORT_DIR/work/`, which is never uploaded.
+**Keep `references/` clean:** the render call uploads every file in
+`references/` as an asset. Only files actually referenced by `report-data.json`
+belong there; working files (full-page originals, base64 payloads, untrimmed
+captures, search logs) live in `$REPORT_DIR/work/`, which is never uploaded.
 
 ## Hypothesis Engine (the core of the Recommendation)
 
@@ -902,8 +817,8 @@ with fidelity rationale.
 
 ## Report v3 Contract
 
-Write directly to `.lazyweb/deep-design-research/{topic-slug}-{YYYY-MM-DD}/report.html`.
-Do not create a Markdown version.
+Author the report content as `.lazyweb/deep-design-research/{topic-slug}-{YYYY-MM-DD}/work/report-data.json`;
+the server renders and hosts it. Do not hand-write `report.html` or a Markdown version.
 
 The report should make the recommendation faster to parse than prose ever
 could. Lead with the answer, keep copy minimal, and let large legible visuals
@@ -940,7 +855,7 @@ hover/expansion reveals the whole screen). This rule exists because a
 {One short sentence restating the target outcome.}
 
 ## Recommendation
-{What+why intro line (why bolded); side-by-side Control × Recommended with a ◀ ▶ variant switcher; "The 'why' behind the recommendations" title; options carousel with bolded What/Why/Proof/Skip-if bullets. No legend table.}
+{What+why intro line (why bolded); side-by-side Control × Recommended with a ◀ ▶ variant switcher; "The 'why' behind the recommendations" title; options carousel with two bolded What/Why bullets per card. No legend table.}
 
 ## Inspo
 {Optional clustered 2x2 reference map, 8-16 points. Omit below 8 comparable references.}
@@ -970,7 +885,7 @@ CODING AGENT:
   </div>
   <p class="ai-human">{one human sentence: the recommended bet, stated as the thing to build first}</p>
   <pre class="ai-block">LAZYWEB REPORT — AGENT HANDOFF
-Use the report at {REPORT_PATH} as a starting point for {TASK}.
+Use this report as a starting point for {TASK}.
 
 TOP RECOMMENDATIONS (do first):
 1. {recommended bet, one imperative line}
@@ -1105,83 +1020,41 @@ Rules:
   this category", "measured: +12% in one experiment") — not as badge chips.
 - Never fabricate a reference, metric, company name, or screenshot content.
 
-### HTML requirements
+### Author report-data.json (the report content)
 
-The `report.html` file should:
+You author the report as **content**, not HTML. Write
+`$REPORT_DIR/work/report-data.json`; the server fills the canonical,
+render-tested template from it and hosts the result (see "Render and host the
+report" above). You never read or write the template, never write fill/render
+code, and never open a local report file — the deliverable is the hosted URL.
 
-- Be a single HTML file with inline CSS and small inline JS only for the copy
-  button, deck/carousel nav, variant switcher, scalebar, and lightbox; the
-  report must still be fully understandable with JS disabled.
-- Use the existing Lazyweb tokens:
-  `--ink:#1f2328; --mut:#57606a; --line:#d0d7de; --soft:#eef4fb; --accent:#0969da`.
-- Use absolute Lazyweb `imageUrl`/`image_url` values for Lazyweb references;
-  relative `references/{filename}` paths only for current-state, web-captured,
-  and generated prototype images saved locally.
-- Every generated prototype carries accurate `alt` text and a collapsed
-  `.build-prompt` with the exact implementation brief, because generated images
-  may mangle small text.
-- **Escape every interpolated string.** Bet names, captions, alt text,
-  provenance, and URLs come from corpus data and WILL contain quotes. In HTML
-  attributes (`alt`, `data-source`) and caption text escape `"` `<` `>` as
-  `&quot;` `&lt;` `&gt;`. Inside the `_vars` JS string literals escape
-  apostrophes (`\'`) and backslashes — one unescaped apostrophe in a bet name
-  is a SyntaxError that kills the lightbox, switcher, and scalebar together.
-- Avoid horizontal page overflow at every scale setting and viewport width.
-- Open the HTML file in the user's browser: `open "$REPORT_DIR/report.html"` —
-  skip this in a headless/CI/no-GUI environment and just report the path.
-  Similarly, when you cannot ask the user (an unattended or non-interactive
-  run), make the closest reasonable assumption and state it in the handoff
-  block.
-
-### Report template (REQUIRED starting point — do not hand-write the skeleton)
-
-A canonical, render-tested template ships next to this skill:
-`report-template.html` in the same directory as this SKILL.md (resolve via the
-skill's base directory). It is a **living demo** — filled with realistic
-example content so its full shape and interactivity render when opened
-directly in a browser. **Copy it to `$REPORT_DIR/report.html` and replace the
-example content with real run data — never generate the skeleton, CSS, or JS
-from scratch.**
+The full `report-data.json` schema (topic, goal, rec_intro {what, why}, control,
+optional corpus_banner, handoff block, 2-4 bets with deck refs and
+build_prompts, inspo map or null) is documented in the filler's docstring:
 
 ```bash
-cp "{skill-base-dir}/report-template.html" "$REPORT_DIR/report.html"
+head -60 "{skill-base-dir}/fill-report.py"
 ```
 
-Fill it with `fill-report.py` — **never read the template and never write
-fill code.** Author `work/report-data.json` (content only: topic, goal,
-rec_intro {what, why}, control, optional corpus_banner, handoff block, 2-4
-bets with deck refs and build_prompts, inspo map or null — the full schema is
-in the script's docstring: `head -60 "{skill-base-dir}/fill-report.py"`),
-then:
+Rules for `report-data.json`:
 
-```bash
-python3 "{skill-base-dir}/fill-report.py"   --data "$REPORT_DIR/work/report-data.json"   --template "{skill-base-dir}/report-template.html"   --out "$REPORT_DIR/report.html"
-```
-
-Rules:
-
-- All strings in `report-data.json` are RAW — the script does every bit of
-  HTML-attribute and JS-string escaping. Never pre-escape.
+- All strings are RAW — the server does every bit of HTML-attribute and
+  JS-string escaping (quotes, `<`, apostrophes in bet names). Never pre-escape.
 - The recommended bet is `bets[0]` with `"recommended": true`; prevalence or
   whitespace counts go in the FIRST deck entry's `detail`.
+- Image `src` values: absolute Lazyweb `imageUrl`/`image_url` for Lazyweb
+  references; relative `references/{filename}` for locally saved current-state,
+  web-capture, and generated prototype images (each uploaded as an `asset` in
+  the render call).
+- Every generated prototype carries accurate `alt` text and a `build_prompt`
+  with the exact implementation brief, because generated images may mangle text.
 - `"inspo": null` omits the section (fewer than 8 comparable references).
-- On `FILL_FAILED: missing <field>`, fix the data file and re-run — never
-  hand-edit the generated HTML.
-- The demo example content in the template never enters your context and
-  cannot leak; the publish gate still verifies the output.
-- **Verification is the contract gate, nothing more.** Do not browse-load,
-  screenshot, or vision-inspect the finished report. Run the gate, fix what
-  it names, publish.
-- Open the HTML file in the user's browser: `open "$REPORT_DIR/report.html"` —
-  skip this in a headless/CI/no-GUI environment and just report the path.
-  Similarly, when the run is unattended or the host cannot ask the user a
-  clarifying question, make the closest reasonable assumption and state it
-  in the handoff block.
-
-CSS gotcha (if you must add a style): never write `font:700 10px/1 inherit` —
-`inherit` is not a valid font-family inside the `font` shorthand and browsers
-drop the whole declaration. Use longhands; font-family inherits by default
-(declare `font-family:inherit` only on button/form elements).
+- Omit `handoff.report_path` — there is no local report file in this flow; the
+  server defaults the handoff text to "this report".
+- A missing or invalid required field comes back from `lazyweb_render_report`
+  as `{ ok:false, code:"REPORT_RENDER_ERROR", detail:"missing <field>" }` — fix
+  that field in `report-data.json` and call once more. Do not browse-load,
+  screenshot, or vision-inspect anything; the server validates the report.
 
 ## Operating principles & evidence components (REQUIRED - overrides convenience)
 
