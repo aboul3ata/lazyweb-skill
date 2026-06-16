@@ -193,11 +193,10 @@ for (const relativePath of ["README.md", "SKILL.md", ...visibleModeSkillDirs.map
 }
 
 const designResearchText = read("skills/lazyweb-deep-design-research/SKILL.md");
-// The render-tested report skeleton/CSS/JS lives in the template file the
-// skill instructs agents to copy; component assertions check both.
+// The render-tested report skeleton/CSS/JS is mirrored in the local template
+// for contract checks; agents no longer copy or publish this file directly.
 const designResearchTemplate = read("skills/lazyweb-deep-design-research/report-template.html");
 const designResearchAll = designResearchText + "\n" + designResearchTemplate;
-assert.match(designResearchText, /report-template\.html/, "design-research skill must reference its report template");
 for (const scriptName of ["fetch-evidence.py", "generate-prototypes.py", "fill-report.py"]) {
   const sp = path.join(root, "skills/lazyweb-deep-design-research", scriptName);
   assert.ok(existsSync(sp), `missing skills/lazyweb-deep-design-research/${scriptName}`);
@@ -208,10 +207,15 @@ for (const removedSkeletonToken of [/genbar/, /pending-ref/, /pending-strip/, /l
   assert.doesNotMatch(designResearchTemplate, removedSkeletonToken, `removed skeleton-publish markup must not reappear in the template: ${removedSkeletonToken}`);
 }
 assert.doesNotMatch(designResearchText, /Skeleton publish|publish a SKELETON/i, "skeleton-publish instructions must not reappear in the skill");
-assert.match(designResearchText, /in-progress leftovers/, "publish gate must reject in-progress markers in final reports");
-assert.match(designResearchText, /ONCE, when it is complete/, "publish section must state reports publish only when complete");
-assert.match(designResearchText, /unfilled template example content/, "publish gate must block unfilled template example content");
-assert.match(designResearchText, /picsum\\\.photos|picsum\.photos/, "publish gate must name picsum.photos as forbidden in final reports");
+assert.match(designResearchText, /lazyweb_render_report/, "design-research skill must render and host via lazyweb_render_report");
+assert.match(designResearchText, /work\/report-data\.json/, "design-research skill must author structured report-data.json");
+assert.match(designResearchText, /report_data/, "render call must pass parsed report_data");
+assert.match(designResearchText, /assets/, "render call must pass local reference assets");
+assert.match(designResearchText, /REPORT_RENDER_ERROR/, "server render validation errors must be handled");
+assert.match(designResearchText, /Never hand-render HTML or fall back to a local file/, "local HTML report fallback must stay forbidden");
+assert.match(designResearchText, /web-only fallback cannot produce the deliverable/, "missing MCP must stop because the renderer is an MCP tool");
+assert.doesNotMatch(designResearchText, /REPORT_CONTRACT_(?:OK|FAILED|EOF)/, "deleted local publish gate markers must not reappear");
+assert.doesNotMatch(designResearchText, /proceed with web research only|user wants a web-only fallback/i, "server-rendered design research must not promise a web-only fallback");
 for (const templatePattern of [
   /data-ex=/,
   /picsum\.photos/,
@@ -284,13 +288,6 @@ for (const pattern of [
   /medium effort/i,
   /low effort/i,
   /Normal skill execution must not run full `npm test`/,
-  /REPORT_CONTRACT_OK/,
-  /REPORT_CONTRACT_FAILED/,
-  /option-tabs/,
-  /option-panel/,
-  /Reference Evidence/,
-  /Source Notes/,
-  /Never publish a `lazyweb-deep-design-research` report that fails this gate/,
   /Provider priority order/,
   /Capability probe/,
   /imagegen-capability\.json/,

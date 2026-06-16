@@ -149,7 +149,8 @@ Before searching, verify MCP is available by listing tools and running
 
 **If Lazyweb MCP is not installed or auth fails:**
 Tell the user: "Lazyweb MCP is not installed. Run `curl -fsSL https://www.lazyweb.com/install.sh | bash`, reload this client, then rerun this skill. Lazyweb is free; the bearer token is only for no-billing UI reference tools and is okay in ignored local config."
-Then proceed with web research only - the skill still works, just without Lazyweb's database.
+Then stop. This skill requires `lazyweb_render_report` to render and host the
+final report, so a web-only fallback cannot produce the deliverable.
 
 ## Browse Setup (run BEFORE any web capture)
 
@@ -439,7 +440,8 @@ If a library session has expired, tell the user and skip it. Do not block the ru
 ### 7. Web research and live screenshot capture
 
 Lazyweb gives curated screenshots. Web captures give the latest competitor state.
-Do both unless MCP is unavailable and the user wants a web-only fallback.
+Do both. If MCP is unavailable, stop as described above; web captures alone
+cannot produce the hosted report.
 
 Find URLs via WebSearch — cover both the median and the edges:
 - Search for "[topic] UX best practices [current year]"
