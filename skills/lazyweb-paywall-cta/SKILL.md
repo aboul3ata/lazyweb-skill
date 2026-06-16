@@ -27,20 +27,18 @@ alternatives, not generic copy advice.
 
 ## CRITICAL: Output Behavior
 
-**This skill produces FILES, not a plan.** Regardless of whether you are in plan
-mode or not, ALWAYS:
+**This skill produces a hosted report, not a plan.** Regardless of whether you
+are in plan mode or not, ALWAYS:
 
-1. Write the HTML report to `.lazyweb/paywall-cta/{topic}-{date}/report.html`
-2. Embed Lazyweb references directly with returned `imageUrl` / `image_url`;
-   save only the current-state screenshot under
-   `.lazyweb/paywall-cta/{topic}-{date}/references/`
-3. Do NOT create `report.md` or any other Markdown report artifact
+1. Author the report content as `.lazyweb/paywall-cta/{topic}-{date}/work/report-data.json` (structured content, NOT HTML)
+2. Embed Lazyweb references directly with their returned `imageUrl` / `image_url`; save only the current-state screenshot under `.lazyweb/paywall-cta/{topic}-{date}/references/`
+3. Do NOT create `report.html`, `report.md`, or any other report artifact by hand — the server renders the report
 4. Do NOT write the CTA content into a plan file
-5. After saving, summarize the top recommended CTA + 3-5 ranked alternatives and
-   tell the user where the report is
-6. Ask the user which direction looks right
-7. If in plan mode, exit plan mode after the user confirms
-8. Suggest next steps: "Ship the strongest candidate as an A/B test against the
+5. Render and host the report with `lazyweb_render_report` (see "Render and host the report" below) — this single call IS the deliverable; producing the report and hosting it are the same action, so there is nothing to skip
+6. After the render call returns, summarize the top recommended CTA + 3-5 ranked alternatives and give the user the shareable link (the report lives only at that URL)
+7. Ask the user which direction looks right
+8. If in plan mode, exit plan mode after the user confirms
+9. Suggest next steps: "Ship the strongest candidate as an A/B test against the
    current CTA, or ask `/lazyweb-optimize-paywall` for a full paywall
    redesign, or `/lazyweb-ab-test-research` for deeper experiment mining."
 
@@ -70,6 +68,7 @@ Required public tools:
 - `lazyweb_search_ab_tests` — mobile-only broader paywall A/B evidence when the user asks "what experiments have shipped on this?"
 - `lazyweb_search` — visual paywall references and convention examples
 - `lazyweb_compare_image` — visual similarity over the user's paywall image
+- `lazyweb_render_report` — render + host the finished report from `report_data` + reference images, returns the shareable link (the deliverable; see "Render and host the report" below)
 
 **Search discipline:** never repeat an identical `lazyweb_search` query — results are deterministic; page deeper with `offset` and follow `pagination.next_offset`. On `no_matches`/`low_coverage` warnings, use the closest result or note the coverage gap — don't rephrase the same concept in a loop. On `company_not_in_library`, use a suggested company or drop the filter.
 
@@ -158,102 +157,123 @@ Hard rules:
 - Do not claim measured lift unless the experiment evidence explicitly provides it.
 - Treat experiment learning text as directional unless the tool returns validated performance data.
 
-## HTML Report Contract
+## Render and host the report (the single deliverable)
 
-Create a polished, scannable, LIGHT-themed HTML report in this section order:
+The report is rendered and hosted **server-side**. Author the report content as
+`work/report-data.json` (schema below), then call `lazyweb_render_report` ONCE.
+That call fills the Lazyweb report template on the server, validates it, hosts it
+at `https://www.lazyweb.com/report/lazyweb/{id}/`, and returns the shareable
+link. There is no local `report.html`, no separate publish step, and no token to
+read — producing the report and hosting it are the same action, so a finished
+report is always a hosted report.
 
-1. **Agent Instructions** (section #1 — see Report essentials).
-2. **Read the paywall:** screenshot of the user's Current paywall, verbatim current CTA, components, user state, offer, named friction on the CTA.
-3. **Current CTA critique table:** alignment / clarity / specificity / offer-match / score / strengths / weaknesses.
-4. **Ranked CTA candidates (3-5):** title (the candidate copy), mechanism, expected metric, when-it-works condition, supporting evidence (mini `.deck` of 1-2 corpus rows OR experiment before/after pair), and a `.ebadge` strength label. Sort by Total score desc.
-5. **Strongest Matches table** (~10 curated `cta_experiments` rows): BEFORE → AFTER, company, 1-sentence learning_summary, "why it matters to THIS CTA".
-6. **Best CTA Directions To Test:** 5 abstracted patterns the matches converge on, each with a WHEN-IT-WORKS condition.
-7. **Top Recommendation:** pick ONE candidate to test first, with the A/B sentence ("Replacing `<current>` with `<candidate>` should lift `<metric>` because `<mechanism>`").
-8. **Convention check** as a 3-column table: Already uses · Missing · Unusual.
-9. **Evidence summary** (AFTER hypotheses): the corpus rows, divergent examples, experiment cards used as evidence.
+Call it once `work/report-data.json` and every `references/` image exist. The
+report dir is `$REPORT_DIR = .lazyweb/paywall-cta/{topic-slug}-{YYYY-MM-DD}`.
 
-A candidate card may include an inline `.mock-cta` block (the candidate text
-rendered as a primary button) — never ASCII art.
+Arguments:
+- `report_data`: the parsed `work/report-data.json` object (see "Author report-data.json" below).
+- `assets`: every file in `$REPORT_DIR/references/` as `{ "name": <filename>, "b64": <base64 of the bytes> }` — the locally-saved screenshots the report points at via `references/{name}`. Lazyweb references embedded by absolute imageUrl are NOT assets.
+- `report_skill`: `"paywall-cta"`.
+- `idempotency_key`: the report dir slug, e.g. `paywall-cta/{topic-slug}-{YYYY-MM-DD}`. Send the SAME value on every call for this report so a retry returns the same link.
+- `version`: the value you read from `~/.lazyweb/VERSION` at skill start.
 
-### Report essentials
+Handle the result:
+- `{ ok: true, url }` — show "Shareable link: {url} (unlisted - anyone with the link can view)", then `open "{url}"` (skip `open` in a headless/CI/no-GUI environment and just print the link).
+- `{ ok: false, code: "REPORT_RENDER_ERROR", detail }` — `detail` names the missing or invalid `report_data` field; fix it in `work/report-data.json` and call ONCE more.
+- `{ ok: false, code: "REPORT_TOO_LARGE" }` — reduce the number/size of embedded screenshots and retry once.
+- any other `{ ok: false }` — tell the user hosting failed and why (the `error` field); there is no local copy.
 
-#### A. Agent Instructions — report section #1
+The server fills a fixed, validated template and rejects incomplete report_data,
+so a partial report can never be hosted. Never hand-render HTML or fall back to a
+local file.
 
-One plain human sentence, then a copy-pastable block written FOR A DOWNSTREAM
-CODING AGENT:
+### Author report-data.json (the report content)
 
-```html
-<section id="agent-instructions" class="agent-instructions">
-  <div class="ai-head"><span class="ai-badge">FOR THE CODING AGENT</span>
-    <button class="ai-copy" type="button" onclick="
-      var sec=this.closest('.agent-instructions'); var txt=sec.querySelector('.ai-block').innerText;
-      var done=function(ok){this.textContent=ok?'Copied':'Press Cmd/Ctrl+C';setTimeout(function(){this.textContent='Copy';}.bind(this),1500);}.bind(this);
-      if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(function(){done(true);},function(){done(false);});}
-      else{var r=document.createRange();r.selectNodeContents(sec.querySelector('.ai-block'));var s=getSelection();s.removeAllRanges();s.addRange(r);try{document.execCommand('copy');done(true);}catch(e){done(false);}}">Copy</button>
-  </div>
-  <p class="ai-human">{one human sentence: the strongest CTA to ship first + why}</p>
-  <pre class="ai-block">{COPY BLOCK — fill from this report}</pre>
-</section>
+You author the report as **content**, not HTML. Write
+`$REPORT_DIR/work/report-data.json`; the server fills the Lazyweb report
+template from it and hosts the result (see "Render and host the report" above).
+You never read or write the template, never write fill/render code, and never
+open a local report file — the deliverable is the hosted URL.
+
+All strings are RAW — the server does every bit of HTML-attribute and JS-string
+escaping (quotes, `<`, apostrophes in CTA copy and bet names). Never pre-escape.
+A missing or invalid required field comes back from `lazyweb_render_report` as
+`{ ok:false, code:"REPORT_RENDER_ERROR", detail:"missing <field>" }` — fix that
+field in `report-data.json` and call once more.
+
+The full `report-data.json` schema (the server fills the Lazyweb template from
+this):
+
+```json
+{
+  "topic": "<report title>",
+  "agent_instructions": {
+    "human": "<one human sentence: the single most important thing to do>",
+    "task": "<what the downstream coding agent is building; fills {TASK} in the handoff>",
+    "recs": ["<imperative rec 1>", "<rec 2>", "<rec 3>"],          // >=1 required
+    "index_on": "<1-3 well-evidenced signals>",                    // optional
+    "dont_index": "<weak-evidence / non-transferable items>",      // optional
+    "dive": "<next Lazyweb skill or MCP tool — why>",              // optional
+    "evidence_basis": "<Lazyweb screenshots | web captures · DATE>" // optional
+  },
+  "current_state": null | { "src": "references/current-state.png", "alt": "<alt>", "desc": "<one line>" },  // optional
+  "patterns": [   // pattern / recommendation cards. Required UNLESS experiments[] is present.
+    { "verdict": "Build this" | "Optional" | "Skip",
+      "strength": "Strong"|"Moderate"|"Thin",          // optional badge
+      "prevalence": "5 of 9 references",                 // optional count
+      "claim": "<one-line claim>",                       // required
+      "deck": [ {"src":"<absolute imageUrl OR references/<file>>","alt":"<alt>","source":"Lazyweb"|"Web","company":"<name>","detail":"<key detail>"} ] }
+  ],
+  "experiments": [   // ab-test-research ONLY. Required if patterns is absent. Rendered as control-vs-variant pairs.
+    { "title":"<experiment name>", "change":"<what changed>",
+      "control": {"src":"<img>","alt":"<alt>","label":"Control — ..."},
+      "variant": {"src":"<img>","alt":"<alt>","label":"Variant — ..."},
+      "facts": [ {"k":"Primary metric","v":"paid conversion"}, {"k":"Lift","v":"+18% (p<0.05)"} ],
+      "outcome": "Shipped — +18% paid conversion" }
+  ],
+  "more_refs": null | [ {"src","alt","source","company","detail"} ]   // optional extra references deck
+}
 ```
 
-Copy-block text (keep these exact labels; fill `{REPORT_PATH}` with the absolute path of the report.html you wrote):
+Rules: at least one of `patterns` / `experiments` must be non-empty. Image
+`src` = the absolute Lazyweb `imageUrl` for Lazyweb references; a relative
+`references/<file>` path for locally-saved current-state / web-capture /
+generated screenshots (each uploaded as an asset in the render call). Never use
+`file://` URLs or absolute local paths (`/Users/...`, `C:\...`).
 
-```
-LAZYWEB CTA REPORT — AGENT HANDOFF
-Use the report at {REPORT_PATH} to rewrite the paywall CTA.
+#### Map this skill's report onto the schema
 
-CURRENT CTA: "{current_cta_verbatim}"
-SHIP THIS NEXT: "{top_recommended_cta}"
-MECHANISM: {one-line mechanism}
-WHY THIS BEATS CURRENT: {one line tying mechanism to the current CTA's weakness}
+This skill uses `patterns[]` (not `experiments[]` — that shape is for
+`ab-test-research`):
 
-RUNNERS-UP (rank order):
-1. "{candidate 2 copy}" — {mechanism}
-2. "{candidate 3 copy}" — {mechanism}
-3. "{candidate 4 copy}" — {mechanism}
+- `topic` — the report title, e.g. `Paywall CTA — {product}`.
+- `agent_instructions` — the agent handoff. `human` = the single human sentence
+  naming the strongest CTA to ship first + why. `task` = "rewrite the paywall
+  CTA" (fills `{TASK}` in the handoff). `recs` = the ranked CTA candidates as
+  imperative lines (recommended first, e.g. `Ship "Start my 7-day trial" — names
+  the offer the current CTA hides`). `index_on` = the well-evidenced signals
+  (the specific current-CTA weakness the top candidate attacks). `dont_index` =
+  median corpus phrases, brand-name CTAs when the brand is already free, generic
+  verbs without an offer/benefit referent. `dive` = "`/lazyweb-optimize-paywall`
+  for a full paywall redesign; `/lazyweb-ab-test-research` for deeper experiment
+  mining". `evidence_basis` = "Lazyweb paywall CTA corpus + curated A/B
+  observations · {DATE}".
+- `current_state` — the current paywall CTA screen: `src` =
+  `references/current-state.png`, `desc` = the verbatim current CTA + named
+  friction on it.
+- `patterns[]` — the proposed CTA alternatives, ranked, recommended first.
+  Each pattern is one candidate CTA: `claim` = the candidate copy itself plus
+  its one-line mechanism ("`Start my free trial` — names the offer the current
+  CTA hides"); `verdict` = `Build this` for the top recommendation, `Optional`
+  for runners-up, `Skip` for any candidate you list as explicitly rejected;
+  `strength` = the candidate's evidence strength badge; `prevalence` = the
+  convention count when one supports it; `deck` = the proof for that candidate —
+  1-2 corpus rows (Lazyweb `imageUrl`) and/or a before/after A/B observation,
+  each `detail` carrying the mechanism or measured/directional learning.
+- `more_refs` — optional extra deck for the curated "Strongest Matches" A/B
+  observations and divergent corpus rows you want shown as supporting evidence
+  but did not attach to a specific candidate.
 
-A/B FRAMING:
-Replacing "{current}" with "{top_recommended}" should lift {metric} because {mechanism}.
-
-DO NOT OVER-INDEX ON: median corpus phrases, brand-name CTAs when the brand is already free, generic verbs without an offer/benefit referent.
-DIVE FURTHER: `/lazyweb-optimize-paywall` for a full paywall redesign, `/lazyweb-ab-test-research` for deeper experiment mining.
-
-Evidence basis: {Lazyweb paywall CTA corpus + curated A/B observations} · {DATE}
-```
-
-#### B. Conciseness & "show, don't tell"
-
-No length target. Lead with value (Agent Instructions + the top recommended CTA). Show, don't tell — make the case with corpus screenshots, before/after A/B pairs, or a `.mock-cta` rendering of the candidate, not paragraphs. Index each candidate on the mechanism + specific corpus / experiment row that supports it.
-
-#### C. HTML / styling (LIGHT theme)
-
-Single HTML file, inline CSS (no external deps; the one inline `onclick` copy
-handler is allowed). White background, system fonts, `max-width:900px`, light
-borders, `#f6f8fa` table headers, semantic HTML. Include the shared CSS below
-in `<style>`; Agent Instructions is the first section styled as the light-blue
-callout. Open in the browser: `open "$REPORT_DIR/report.html"`.
-
-```css
-:root{--ink:#1f2328;--mut:#57606a;--line:#d0d7de;--soft:#eef4fb;--accent:#0969da}
-body{font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;color:var(--ink);background:#fff;max-width:900px;margin:0 auto;padding:40px 22px}
-table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid var(--line);padding:7px 9px}th{background:#f6f8fa;text-align:left}
-.agent-instructions{background:var(--soft);border-left:4px solid var(--accent);border-radius:8px;padding:14px 16px;margin:18px 0}
-.ai-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}
-.ai-badge{font-size:11px;font-weight:700;letter-spacing:.04em;color:#0a3b78}
-.ai-copy{font:600 12px/1 inherit;cursor:pointer;border:1px solid var(--accent);color:var(--accent);background:#fff;border-radius:6px;padding:5px 11px}.ai-copy:hover{background:var(--accent);color:#fff}
-.ai-human{margin:0 0 10px;font-size:15px}
-.ai-block{white-space:pre-wrap;word-break:break-word;background:#fff;border:1px solid var(--line);border-radius:6px;padding:12px 13px;margin:0;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--ink);user-select:all}
-/* Mock CTA button for rendering candidate copy */
-.mock-cta{display:inline-block;background:var(--accent);color:#fff;font:700 14px/1.1 inherit;border-radius:8px;padding:12px 24px;margin:6px 0}
-.mock-cta.secondary{background:#fff;color:var(--accent);border:1.5px solid var(--accent)}
-/* Standard evidence components reused from optimize-paywall skill: .deck, .pat, .prev, .tag, .verdict, .ebadge, .corpus, .flip — include the CSS block from lazyweb-optimize-paywall SKILL.md verbatim in <style>. */
-.lw-foot{margin-top:34px;padding-top:14px;border-top:1px solid var(--line);text-align:center;font-size:13px;color:var(--mut)}
-```
-
-### Report footer (REQUIRED — the very last element of the report)
-
-End every report with this footer:
-
-```html
-<footer class="lw-foot">Powered by <a href="https://www.lazyweb.com">Lazyweb</a> — turn your agent into a design researcher… for free!</footer>
-```
+Keep candidates mechanism-led, tier-honest, falsifiable, and distinct per the
+"Propose alternatives" rules above; never claim measured lift unless the
+experiment evidence explicitly provides it.
