@@ -38,7 +38,7 @@ mechanism. Regardless of whether you are in plan mode or not, ALWAYS:
 3. Author the report by **writing the HTML file yourself** to
    `$REPORT_DIR/report.html` — a shared Lazyweb evidence report with the shared
    Agent Instructions block first, shared report furniture, component CSS in a
-   `<style>` block, and carousel + lightbox JS before `</body>`
+   `<style>` block, and deck nav + carousel + lightbox JS before `</body>`
    (see "Write the shared Lazyweb report" below). There is no server render step.
 4. Do NOT write optimization content into a plan file, a `report.md`, or a
    `report-data.json`. The deliverable is the `report.html` you author.
@@ -127,21 +127,22 @@ drives them, so do not rename, restructure, or drop them):
 <h1>Paywall Design Recommendation</h1>
 
 <!-- 2. TOP CARD: 3-column carousel (current | mockup | hypothesis) -->
-<!-- 3. EVIDENCE CARD: annotated before/after carousel -->
+<!-- 3. EVIDENCE DECK: annotated before/after proof cards -->
 <!-- 4. DIAGNOSIS CARD -->
-<!-- 5. PRIORITIZATION CARD -->
+<!-- 5. PRIORITIZATION: .legend + ranked .rec cards -->
 <!-- 6. FOOTER -->
 
 <!-- lightbox overlay + scripts -->
 <div id="lightbox" class="lightbox hidden" aria-hidden="true"><button class="lightbox-close">&times;</button><button class="lightbox-prev">&larr;</button><img class="lightbox-image" alt="" /><button class="lightbox-next">&rarr;</button></div>
+<script>/* paste the verbatim _DECK_JS block from "Embedded JS" below */</script>
 <script>/* paste the verbatim _CAROUSEL_JS block from "Embedded JS" below */</script>
 <script>/* paste the verbatim _LIGHTBOX_JS block from "Embedded JS" below */</script>
 </body></html>
 ```
 
 Section order is fixed: **Agent Instructions copy block → title → top
-3-column carousel → evidence → diagnosis → prioritization → footer → lightbox +
-scripts.**
+3-column carousel → evidence deck → diagnosis → prioritization recs → footer →
+lightbox + scripts.**
 
 ### 1. Top card — 3-column hypothesis carousel (required)
 
@@ -212,13 +213,15 @@ When a mockup falls back to a CSS mock-frame (ladder rung c), put the `.mock`
 frame inside the `.mockup-slide` in place of the `<img>`. Never leave a slide
 empty and never emit ASCII art.
 
-### 2. Evidence card — annotated before/after carousel with bbox overlays (required)
+### 2. Evidence deck — annotated before/after proof cards with bbox overlays (required)
 
-A second independent `data-carousel-group="evidence"` card. One
-`.design-slide.evidence-slide` per hypothesis that has corpus evidence (slide 0
-`active`). Each slide has a `.col-heading.slide-heading` ("Evidence for
-Hypothesis N"), then an `.evidence-body` split into the `.evidence-imgpair`
-(before/after columns) and the `.evidence-text`.
+A shared `.deck` evidence scroller inside a `.card`. Render one
+`.evidence-slide` proof card per hypothesis that has corpus evidence. All proof
+cards remain visible in the horizontal deck, scroll-snap card-by-card, and the
+deck gets `.deck-nav` prev/next buttons when there are more than two cards. Each
+card has a `.col-heading.slide-heading` ("Evidence for Hypothesis N"), then an
+`.evidence-body` split into the `.evidence-imgpair` (before/after columns) and
+the `.evidence-text`.
 
 Each before/after image lives in a `.ba-col` and is wrapped in a `.ba-imgwrap`
 so a `.bbox` overlay can be absolutely positioned over it (see "Annotated
@@ -228,12 +231,14 @@ learnings + bbox overlays" below for how to compute the rect). The
 - `.recommendation-title` — "[hypothesis title] in [Company] app".
 - `.delta` — the curated `learning` (from `lazyweb_search_ab_tests`) or
   `visionDescription` (from `lazyweb_search`). Never paste a raw `what_changed`.
+- `.ebadge` and `.corpus` — evidence strength and prevalence count in plain,
+  honest words ("directional", "single source", "5 of 9 references").
 - optional `.lift-cause-label` + `.lift-cause` — "How we apply it" on this paywall.
 
 ```html
-<div class="card" data-carousel-group="evidence">
-<div class="design-carousel">
-  <div class="design-slide evidence-slide active">
+<div class="card evidence-card">
+<div class="deck" data-deck>
+  <article class="evidence-slide">
     <h3 class="col-heading slide-heading">Evidence for Hypothesis 1</h3>
     <div class="evidence-body">
       <div class="evidence-imgpair">
@@ -252,19 +257,19 @@ learnings + bbox overlays" below for how to compute the rect). The
           <div class="ba-label-below">After</div>
         </div>
       </div>
-      <div class="evidence-text">
+        <div class="evidence-text">
         <div class="recommendation-title">Locked-tier grid in Acme app</div>
+        <div class="evidence-meta"><span class="ebadge">Directional</span><span class="corpus">5 of 9 references</span></div>
         <div class="delta">The curated annotated learning sentence…</div>
         <div class="lift-cause-label">How we apply it</div>
         <div class="lift-cause">On this paywall we …</div>
       </div>
     </div>
-  </div>
+  </article>
 </div>
-<div class="design-controls">
-  <button class="design-btn design-prev">← Previous</button>
-  <div class="design-dots"><span class="design-dot active" data-idx="0"></span></div>
-  <button class="design-btn design-next">Next →</button>
+<div class="deck-nav">
+  <button class="prev" type="button">←</button>
+  <button class="next" type="button">→</button>
 </div>
 </div>
 ```
@@ -285,57 +290,132 @@ class (`sev-high` / `sev-medium` / `sev-low` / `sev-none`), a `.diag-head`
 strengths — name what the paywall already does well; do not invent a problem to
 fill a row.
 
-### 4. Prioritization card
+### 4. Prioritization recs
 
-A `.card` with a `.basic-table` (`is-selected` highlights the chosen
-hypotheses): rank, hypothesis title + text, and a one-line assessment of why it
-made (or didn't make) the cut. This is where the ordering decision is shown in
-the body, not just implied by carousel order.
+A `.legend` followed by ranked `.rec` cards. The #1 recommendation is
+`.rec.lead` and is marked human-visibly as the recommended path. Each card
+contains the rank, hypothesis title + text, the one-line reason to do it first or
+skip it, and nearby `.ebadge`/`.corpus` evidence labels. This is where the
+ordering decision is shown in the body, not just implied by carousel order.
+
+```html
+<div class="legend">
+  <div><strong>Recommended path</strong><span>Ship first when evidence is strongest and implementation is contained.</span></div>
+  <div><strong>Runner-up</strong><span>Keep only if it tests a meaningfully different mechanism.</span></div>
+</div>
+<section class="rec lead">
+  <div class="rec-rank">#1 Recommended</div>
+  <h3>Locked-tier grid</h3>
+  <p>Make plan differences visible before price comparison because 5 of 9 references clarify value this way.</p>
+  <p class="rec-reason"><strong>Do first:</strong> highest evidence fit and lowest copy risk.</p>
+  <div class="evidence-meta"><span class="ebadge">Directional</span><span class="corpus">5 of 9 references</span></div>
+</section>
+<section class="rec">
+  <div class="rec-rank">#2 Runner-up</div>
+  <h3>Trial reminder</h3>
+  <p>Use only if cancellation anxiety is the primary diagnosed friction.</p>
+  <p class="rec-reason"><strong>Skip for now:</strong> weaker corpus fit than the grid change.</p>
+  <div class="evidence-meta"><span class="ebadge">Thin</span><span class="corpus">2 of 9 references</span></div>
+</section>
+```
 
 ### 5. Footer
 
 Append a small muted footer paragraph:
 `<p class="muted">Powered by Lazyweb — turn your agent into a design researcher… for free!</p>`
 
-### Embedded CSS — adapt into the `<style>` block
+### Embedded CSS — paste into the `<style>` block
 
-Use this block as component CSS for the paywall-specific DOM and JS below, but
-adapt its page-level palette to the shared Lazyweb tokens from "Shared report
-furniture compliance" above. Do not ship a dark-theme report.
+Use this light, shared-token CSS contract for the shared furniture and
+paywall-specific DOM/JS below. Do not replace it with the old dark Hallow palette
+or leave component selectors hard-coded to dark backgrounds.
 
 ```css
-:root { color-scheme: dark; }
+:root {
+  color-scheme: light;
+  --ink:#1f2328; --mut:#57606a; --line:#d0d7de; --soft:#eef4fb; --accent:#0969da;
+  --paper:#ffffff; --panel:#f6f8fa; --ok:#1f883d; --warn:#9a6700; --danger:#cf222e;
+}
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
   max-width: 1320px; margin: 2em auto; padding: 0 1.5em;
-  line-height: 1.6; background: #161616; color: #e6e6e6;
+  line-height: 1.6; background: var(--paper); color: var(--ink);
 }
-a { color: #8ab4f8; }
+a { color: var(--accent); }
 h1 { margin-top: 0; }
-h2, h3, h4 { color: #fafafa; }
-.muted { color: #9a9a9a; }
-code { background: #2a2a2a; padding: 1px 6px; border-radius: 3px; color: #f0e0c0; font-size: .92em; }
+h2, h3, h4 { color: var(--ink); }
+.muted { color: var(--mut); }
+code { background: var(--soft); padding: 1px 6px; border-radius: 3px; color: var(--ink); font-size: .92em; }
 .card {
-  border: 1px solid #303030; border-radius: 10px;
-  padding: 1.25em 1.5em; margin: 1.25em 0; background: #1f1f1f;
+  border: 1px solid var(--line); border-radius: 8px;
+  padding: 1.25em 1.5em; margin: 1.25em 0; background: var(--paper);
 }
 .col-heading {
-  margin: 0 0 .75em; color: #fafafa; font-size: 1.25em; font-weight: 600;
+  margin: 0 0 .75em; color: var(--ink); font-size: 1.25em; font-weight: 600;
 }
 .slide-heading {
   margin: 0 0 1em;
 }
 
+.ai-block {
+  background: var(--soft); border: 1px solid #bfdbfe; border-radius: 8px;
+  padding: 1em; color: var(--ink); white-space: pre-wrap;
+}
+.deck {
+  display: flex; gap: 1em; overflow-x: auto; scroll-snap-type: x mandatory;
+  padding: .25em .25em 1em; margin: 0 -.25em;
+}
+.deck > * {
+  flex: 0 0 min(760px, 88vw); scroll-snap-align: start;
+}
+.deck-nav {
+  display: flex; justify-content: flex-end; gap: .5em; margin-top: .5em;
+}
+.deck-nav .prev, .deck-nav .next {
+  width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line);
+  background: var(--paper); color: var(--ink); cursor: pointer; font: inherit;
+}
+.deck-nav .prev:hover, .deck-nav .next:hover { border-color: var(--accent); color: var(--accent); }
+.legend {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: .75em; margin: 1.25em 0;
+}
+.legend > div {
+  border: 1px solid var(--line); border-radius: 8px; background: var(--panel);
+  padding: .85em 1em;
+}
+.legend strong { display: block; color: var(--ink); }
+.legend span { display: block; color: var(--mut); font-size: .9em; margin-top: .25em; }
+.rec {
+  border: 1px solid var(--line); border-radius: 8px; background: var(--paper);
+  padding: 1em 1.1em; margin: .9em 0;
+}
+.rec.lead { border-color: var(--accent); background: var(--soft); }
+.rec-rank {
+  color: var(--accent); font-size: .78em; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .06em; margin-bottom: .35em;
+}
+.rec h3 { margin: 0 0 .35em; }
+.rec p { margin: .45em 0; color: var(--ink); }
+.rec-reason { color: var(--mut); }
+.evidence-meta { display: flex; flex-wrap: wrap; gap: .45em; margin: .5em 0 .75em; }
+.ebadge, .corpus {
+  display: inline-flex; align-items: center; border-radius: 999px; padding: .28em .55em;
+  border: 1px solid var(--line); background: var(--panel); color: var(--mut);
+  font-weight: 700; font-size: 10px; line-height: 1; text-transform: uppercase;
+}
+.corpus { color: var(--accent); background: var(--soft); border-color: #bfdbfe; }
+
 /* Top row — 3 columns: current paywall | mockup carousel | hypothesis text */
 .top-row { display: flex; gap: 2em; align-items: flex-start; margin: 1em 0; }
 .top-row .paywall-col { flex: 0 0 300px; }
 .top-row .paywall-col img {
-  width: 100%; height: auto; border: 1px solid #303030; border-radius: 8px;
+  width: 100%; height: auto; border: 1px solid var(--line); border-radius: 8px;
   cursor: zoom-in;
 }
 .top-row .mockup-col { flex: 0 0 300px; }
 .top-row .mockup-col .mockup-slide img {
-  width: 100%; height: auto; border: 1px solid #303030; border-radius: 8px;
+  width: 100%; height: auto; border: 1px solid var(--line); border-radius: 8px;
   cursor: zoom-in;
 }
 /* Iteration: New / Prior toggle inside a single slide. Image stays full size;
@@ -343,42 +423,42 @@ code { background: #2a2a2a; padding: 1px 6px; border-radius: 3px; color: #f0e0c0
    hypothesis has a prior version to compare against. */
 .mockup-toggle {
   display: inline-flex; gap: 0; margin: .65em 0 0; padding: 2px;
-  background: #1a1a1a; border: 1px solid #303030; border-radius: 6px;
+  background: var(--paper); border: 1px solid var(--line); border-radius: 6px;
 }
 .mockup-toggle-btn {
-  background: transparent; color: #999; border: 0; padding: 4px 10px;
+  background: transparent; color: var(--mut); border: 0; padding: 4px 10px;
   font: inherit; font-size: .78em; font-weight: 600; letter-spacing: .03em;
   text-transform: uppercase; border-radius: 4px; cursor: pointer;
   transition: background .12s, color .12s;
 }
-.mockup-toggle-btn:hover { color: #fafafa; }
+.mockup-toggle-btn:hover { color: var(--ink); }
 .mockup-toggle-btn.active {
-  background: #2a3a55; color: #cfdeff; cursor: default;
+  background: var(--accent); color: var(--paper); cursor: default;
 }
 .mockup-toggle-btn.active[data-target="prior"] {
-  background: #3a3025; color: #f0d9b0;
+  background: var(--soft); color: var(--accent);
 }
 .mockup-view-wrapper { position: relative; }
 .mockup-view.hidden { display: none; }
 /* Per-version feedback caption shown below the toggle. Small, muted, swaps
    on tab click. Reserves no height when empty so the layout doesn't jump. */
 .mockup-feedback-caption {
-  margin: .55em 0 0; font-size: .82em; color: #aaa; line-height: 1.45;
+  margin: .55em 0 0; font-size: .82em; color: var(--mut); line-height: 1.45;
   font-style: italic; max-width: 100%; word-wrap: break-word;
 }
 .mockup-feedback-caption.hidden { display: none; }
 .top-row .hypothesis-col { flex: 1; min-width: 0; padding-top: .5em; }
 .top-row .hypothesis-slide .hypothesis-title {
-  font-size: 1.55em; font-weight: 700; color: #fafafa; margin-bottom: .65em;
+  font-size: 1.55em; font-weight: 700; color: var(--ink); margin-bottom: .65em;
   line-height: 1.2; letter-spacing: -.01em;
   /* Allow wrapping; never clip with ellipsis. */
   word-break: break-word; overflow-wrap: anywhere;
 }
 .top-row .hypothesis-slide .hypothesis-subheader {
-  font-size: 1em; color: #cccccc; line-height: 1.55;
+  font-size: 1em; color: var(--mut); line-height: 1.55;
 }
 .top-row .hypothesis-slide .hypothesis-subheader code {
-  font-size: .9em; background: #232323; color: #f0e0c0;
+  font-size: .9em; background: var(--soft); color: var(--ink);
   padding: 2px 6px; border-radius: 3px;
 }
 
@@ -386,11 +466,11 @@ code { background: #2a2a2a; padding: 1px 6px; border-radius: 3px; color: #f0e0c0
    whose hypothesis traces back to a prior run's hypothesis. */
 .prior-tag {
   display: inline-block; font-size: .72em; font-weight: 600; letter-spacing: .03em;
-  text-transform: uppercase; color: #f0e0c0; background: #2a2410;
-  border: 1px solid #5a4a20; border-radius: 3px;
+  text-transform: uppercase; color: var(--accent); background: var(--soft);
+  border: 1px solid #bfdbfe; border-radius: 3px;
   padding: 2px 6px; margin-bottom: .55em;
 }
-.prior-tag.unchanged { color: #b8e0b8; background: #102a10; border-color: #2a5a2a; }
+.prior-tag.unchanged { color: var(--ok); background: #dafbe1; border-color: #aceebb; }
 
 /* Peer-cohort benchmark — ranked component prevalence with has/missing flag */
 .bench-chart { margin-top: .5em; }
@@ -399,16 +479,16 @@ code { background: #2a2a2a; padding: 1px 6px; border-radius: 3px; color: #f0e0c0
   grid-template-columns: 220px 1fr 52px 130px;
   gap: 1em; align-items: center; margin: .35em 0; font-size: .92em;
 }
-.bench-row.off .bench-label { color: #c9c9c9; }
-.bench-row.on .bench-label { color: #e6e6e6; }
+.bench-row.off .bench-label { color: var(--mut); }
+.bench-row.on .bench-label { color: var(--ink); }
 .bench-track {
-  height: 9px; background: #232323; border-radius: 4px; overflow: hidden;
+  height: 9px; background: var(--soft); border-radius: 4px; overflow: hidden;
 }
 .bench-fill { height: 100%; border-radius: 3px; }
-.bench-fill.on { background: #7a9cf0; }
-.bench-fill.off { background: #6a6a6a; }
+.bench-fill.on { background: var(--accent); }
+.bench-fill.off { background: var(--mut); }
 .bench-pct {
-  color: #fafafa; text-align: right; font-variant-numeric: tabular-nums;
+  color: var(--ink); text-align: right; font-variant-numeric: tabular-nums;
   font-size: .9em;
 }
 .bench-indicator { text-align: right; }
@@ -417,10 +497,10 @@ code { background: #2a2a2a; padding: 1px 6px; border-radius: 3px; color: #f0e0c0
   font-size: .75em; font-weight: 600; text-transform: uppercase;
   letter-spacing: .04em; white-space: nowrap;
 }
-.bench-flag.on  { background: #1f2e1f; color: #7fc77f; border: 1px solid #2c4a2c; }
-.bench-flag.off { background: #2a2218; color: #d8a85f; border: 1px solid #3e2f1c; }
+.bench-flag.on  { background: #dafbe1; color: var(--ok); border: 1px solid #aceebb; }
+.bench-flag.off { background: #fff8c5; color: var(--warn); border: 1px solid #eac54f; }
 .bench-missing-inline {
-  color: #d8a85f; font-weight: 600;
+  color: var(--warn); font-weight: 600;
 }
 
 /* Winning-strategies chart — count-first layout with trigger keywords */
@@ -430,26 +510,26 @@ code { background: #2a2a2a; padding: 1px 6px; border-radius: 3px; color: #f0e0c0
   grid-template-columns: 1fr 80px 140px;
   gap: 1em; align-items: center;
   margin: .55em 0; padding: .35em 0;
-  border-top: 1px solid #232323;
+  border-top: 1px solid var(--soft);
 }
 .strat-row:first-child { border-top: none; }
 .strat-row.muted { opacity: .42; }
-.strat-label { color: #fafafa; font-weight: 600; font-size: .98em; }
+.strat-label { color: var(--ink); font-weight: 600; font-size: .98em; }
 .strat-triggers {
-  color: #9a9a9a; font-size: .82em; font-style: italic;
+  color: var(--mut); font-size: .82em; font-style: italic;
   margin-top: .15em;
 }
 .strat-count {
   font-variant-numeric: tabular-nums; text-align: right;
 }
 .strat-count .strat-count-big {
-  color: #fafafa; font-size: 1.05em; font-weight: 600;
+  color: var(--ink); font-size: 1.05em; font-weight: 600;
 }
 .strat-count .strat-count-of {
-  color: #8a8a8a; font-size: .82em;
+  color: var(--mut); font-size: .82em;
 }
 .strat-count .strat-pct {
-  display: block; color: #8a8a8a; font-size: .78em; margin-top: .1em;
+  display: block; color: var(--mut); font-size: .78em; margin-top: .1em;
 }
 .strat-row .bench-indicator { text-align: right; }
 
@@ -468,34 +548,34 @@ code { background: #2a2a2a; padding: 1px 6px; border-radius: 3px; color: #f0e0c0
   gap: 1.2em; align-items: center;
   margin: .25em 0; padding: .2em 0;
 }
-.trend-label { color: #e6e6e6; font-size: .92em; font-weight: 500; }
+.trend-label { color: var(--ink); font-size: .92em; font-weight: 500; }
 /* The bar track: a wide rectangle with a crisp center axis line. */
 .trend-bar-axis {
   position: relative; height: 14px;
   background-image: linear-gradient(
     to right,
     transparent calc(50% - 1px),
-    #6a6a6a calc(50% - 1px),
-    #6a6a6a calc(50% + 1px),
+    var(--mut) calc(50% - 1px),
+    var(--mut) calc(50% + 1px),
     transparent calc(50% + 1px)
   );
 }
 .trend-bar {
   position: absolute; top: 2px; height: 10px; border-radius: 2px;
 }
-.trend-bar.pos { left: 50%; background: #5d9c5d; }
-.trend-bar.neg { right: 50%; background: #b87a3d; }
+.trend-bar.pos { left: 50%; background: var(--ok); }
+.trend-bar.neg { right: 50%; background: var(--warn); }
 .trend-num {
   font-variant-numeric: tabular-nums; text-align: right;
-  font-size: .85em; font-weight: 600; color: #aaaaaa;
+  font-size: .85em; font-weight: 600; color: var(--mut);
 }
-.trend-num.pos { color: #7fc77f; }
-.trend-num.neg { color: #d8a85f; }
+.trend-num.pos { color: var(--ok); }
+.trend-num.neg { color: var(--warn); }
 
 /* Mockup column heading is per-slide ("Hypothesis #X") — no purple accent */
 .top-row .mockup-col .mockup-heading {
   margin: 0 0 .75em;
-  color: #fafafa;
+  color: var(--ink);
 }
 
 /* Carousel — slides hidden by default, only active shown */
@@ -504,65 +584,64 @@ code { background: #2a2a2a; padding: 1px 6px; border-radius: 3px; color: #f0e0c0
 .design-controls {
   display: flex; align-items: center; justify-content: space-between;
   gap: 1em; margin-top: 1.5em; padding-top: 1em;
-  border-top: 1px solid #2a2a2a;
+  border-top: 1px solid var(--soft);
 }
 .design-btn {
-  background: #2a2a2a; color: #fafafa; border: 1px solid #404040;
+  background: var(--soft); color: var(--ink); border: 1px solid var(--line);
   border-radius: 6px; padding: .45em 1em; cursor: pointer; font-size: .92em;
   font-family: inherit;
 }
-.design-btn:hover { background: #3a3a3a; }
+.design-btn:hover { background: var(--panel); }
 .design-btn:disabled { opacity: .35; cursor: default; }
 .design-dots { display: flex; gap: .45em; align-items: center; }
 .design-dot {
   width: 9px; height: 9px; border-radius: 50%;
-  background: #404040; cursor: pointer; transition: background 0.15s;
+  background: var(--line); cursor: pointer; transition: background 0.15s;
 }
-.design-dot:hover { background: #555; }
-.design-dot.active { background: #7a9cf0; }
+.design-dot:hover { background: var(--mut); }
+.design-dot.active { background: var(--accent); }
 
-/* Evidence card — corpus before/after carousel */
+/* Evidence deck — corpus before/after proof cards */
 .evidence-slide .evidence-body { display: flex; gap: 2em; align-items: flex-start; }
 .evidence-slide .evidence-imgpair { flex: 0 0 auto; display: flex; gap: 1em; }
 .evidence-slide .evidence-imgpair .ba-col {
   display: flex; flex-direction: column; align-items: center; width: 220px;
 }
 .evidence-slide .evidence-imgpair .ba-col img {
-  width: 220px; max-width: 220px; height: auto; border: 1px solid #303030;
-  border-radius: 8px; background: #0a0a0a; margin: 0; cursor: zoom-in;
+  width: 220px; max-width: 220px; height: auto; border: 1px solid var(--line);
+  border-radius: 8px; background: var(--panel); margin: 0; cursor: zoom-in;
 }
 .evidence-slide .evidence-imgpair .ba-label-below {
-  margin-top: .6em; font-size: .75em; color: #9a9a9a;
+  margin-top: .6em; font-size: .75em; color: var(--mut);
   text-transform: uppercase; letter-spacing: .08em; font-weight: 600; text-align: center;
 }
 .evidence-slide .evidence-text { flex: 1; min-width: 0; padding-top: .5em; }
 .evidence-slide .evidence-text .recommendation-title {
-  font-size: 1.15em; font-weight: 600; color: #fafafa;
+  font-size: 1.15em; font-weight: 600; color: var(--ink);
   margin: 0 0 .85em; line-height: 1.3;
 }
 .evidence-slide .evidence-text .delta {
-  font-size: 1em; color: #e6e6e6; line-height: 1.55; margin-bottom: .85em;
+  font-size: 1em; color: var(--ink); line-height: 1.55; margin-bottom: .85em;
 }
 .evidence-slide .evidence-text .lift-cause {
-  font-size: .92em; color: #cccccc; line-height: 1.5;
+  font-size: .92em; color: var(--mut); line-height: 1.5;
 }
 .evidence-slide .evidence-text .lift-cause-label {
-  font-size: .72em; color: #9a9a9a; text-transform: uppercase; letter-spacing: .08em;
+  font-size: .72em; color: var(--mut); text-transform: uppercase; letter-spacing: .08em;
   margin-bottom: .25em; font-weight: 600;
 }
 
-/* ========== Prioritization logic — plain tables, info-dense ==========
-   Top: a single table of the final selected hypotheses. Below: tabs per
-   source showing ALL hypotheses that source proposed, with selected rows
-   highlighted. Stripped of ornament — readable density, not visual flair. */
+/* ========== Legacy audit tables — optional supporting data only ==========
+   The report decision uses .legend + .rec above. These table styles are kept
+   only for referenced-data audits or older rerenders that still emit tables. */
 .priority-intro {
-  font-size: .9em; color: #9c9c9c; margin: 0 0 1.4em; line-height: 1.55;
+  font-size: .9em; color: var(--mut); margin: 0 0 1.4em; line-height: 1.55;
 }
-.priority-intro strong { color: #fafafa; font-weight: 600; }
+.priority-intro strong { color: var(--ink); font-weight: 600; }
 
 .priority-section-label {
   font-size: .78em; font-weight: 700; letter-spacing: .12em;
-  text-transform: uppercase; color: #d8b66f;
+  text-transform: uppercase; color: var(--accent);
   margin: 1.6em 0 .65em;
 }
 
@@ -572,78 +651,78 @@ code { background: #2a2a2a; padding: 1px 6px; border-radius: 3px; color: #f0e0c0
 }
 .basic-table th {
   text-align: left; font-weight: 600; font-size: .78em;
-  text-transform: uppercase; letter-spacing: .07em; color: #888;
-  border-bottom: 1px solid #333; padding: .6em .9em;
+  text-transform: uppercase; letter-spacing: .07em; color: var(--mut);
+  border-bottom: 1px solid var(--line); padding: .6em .9em;
 }
 .basic-table td {
-  padding: .85em .9em; border-bottom: 1px solid #1f1f1f;
-  vertical-align: top; color: #c8c8c8; line-height: 1.55;
+  padding: .85em .9em; border-bottom: 1px solid var(--line);
+  vertical-align: top; color: var(--mut); line-height: 1.55;
 }
 .basic-table tr:last-child td { border-bottom: none; }
-.basic-table tr.is-selected td { background: rgba(216, 182, 111, .05); }
+.basic-table tr.is-selected td { background: rgba(9, 105, 218, .06); }
 .basic-table tr.is-selected td:first-child {
-  border-left: 3px solid #d8b66f;
+  border-left: 3px solid var(--accent);
   padding-left: calc(.9em - 3px);
 }
-.basic-table tr.is-rejected td { color: #7a7a7a; }
+.basic-table tr.is-rejected td { color: var(--mut); }
 
 .basic-table .col-rank {
   width: 3em; font-variant-numeric: tabular-nums; font-weight: 600;
-  color: #d8b66f; white-space: nowrap;
+  color: var(--accent); white-space: nowrap;
 }
-.basic-table tr.is-rejected .col-rank { color: #555; font-weight: 400; }
+.basic-table tr.is-rejected .col-rank { color: var(--mut); font-weight: 400; }
 .basic-table .col-hyp { width: 42%; }
 .basic-table .col-assess { width: 50%; }
 .basic-table .hyp-title {
-  font-weight: 600; color: #fafafa; font-size: 1em; margin-bottom: .3em;
+  font-weight: 600; color: var(--ink); font-size: 1em; margin-bottom: .3em;
 }
-.basic-table tr.is-rejected .hyp-title { color: #b0b0b0; font-weight: 500; }
-.basic-table .hyp-text { color: #b8b8b8; font-size: .92em; }
-.basic-table tr.is-rejected .hyp-text { color: #777; }
+.basic-table tr.is-rejected .hyp-title { color: var(--mut); font-weight: 500; }
+.basic-table .hyp-text { color: var(--mut); font-size: .92em; }
+.basic-table tr.is-rejected .hyp-text { color: var(--mut); }
 .basic-table .assess-reject {
-  font-style: italic; color: #888; font-size: .9em;
+  font-style: italic; color: var(--mut); font-size: .9em;
 }
 /* Evidence-tab row anatomy: company [R#] header, winning-move atom, and
    (for applied rows) an "Applied as:" callout that surfaces the
    hypothesis that was derived from this experiment. */
 .basic-table .ev-ref {
-  color: #888; font-weight: 400; font-size: .9em; margin-left: .35em;
+  color: var(--mut); font-weight: 400; font-size: .9em; margin-left: .35em;
 }
 .basic-table .ev-move {
-  color: #b8b8b8; font-size: .9em; margin-top: .2em; line-height: 1.45;
+  color: var(--mut); font-size: .9em; margin-top: .2em; line-height: 1.45;
 }
-.basic-table tr.is-rejected .ev-move { color: #777; }
+.basic-table tr.is-rejected .ev-move { color: var(--mut); }
 .basic-table .ev-applied-hyp {
   margin-top: .55em; padding-top: .55em;
-  border-top: 1px dashed #2a2a2a; font-size: .9em;
+  border-top: 1px dashed var(--soft); font-size: .9em;
 }
 .basic-table .ev-applied-label {
-  color: #d8b66f; font-weight: 600; font-size: .78em;
+  color: var(--accent); font-weight: 600; font-size: .78em;
   text-transform: uppercase; letter-spacing: .06em;
 }
 .basic-table .ev-applied-title {
-  color: #fafafa; font-weight: 600; margin-left: .35em;
+  color: var(--ink); font-weight: 600; margin-left: .35em;
 }
 
 /* Tabs for the per-source view (legacy; kept for any audit/rerender
    that still emits tabs) */
 .priority-tabs .tab-bar {
-  display: flex; gap: 0; border-bottom: 1px solid #333;
+  display: flex; gap: 0; border-bottom: 1px solid var(--line);
   margin-bottom: .8em;
 }
 .priority-tabs .tab-btn {
-  background: transparent; border: 0; color: #888; cursor: pointer;
+  background: transparent; border: 0; color: var(--mut); cursor: pointer;
   padding: .7em 1.2em; font-size: .9em; font-weight: 500;
   border-bottom: 2px solid transparent;
   font-family: inherit;
   transition: color .15s, border-color .15s;
 }
-.priority-tabs .tab-btn:hover { color: #d8d8d8; }
+.priority-tabs .tab-btn:hover { color: var(--ink); }
 .priority-tabs .tab-btn.active {
-  color: #fafafa; border-bottom-color: #d8b66f;
+  color: var(--ink); border-bottom-color: var(--accent);
 }
 .priority-tabs .tab-btn .tab-n {
-  margin-left: .4em; color: #666; font-size: .85em;
+  margin-left: .4em; color: var(--mut); font-size: .85em;
   font-variant-numeric: tabular-nums;
 }
 .priority-tabs .tab-panel { display: none; }
@@ -657,26 +736,26 @@ code { background: #2a2a2a; padding: 1px 6px; border-radius: 3px; color: #f0e0c0
 }
 .unified-summary {
   cursor: pointer; padding: .55em .2em; font-size: .92em;
-  color: #d8d8d8; user-select: none; list-style: none;
+  color: var(--ink); user-select: none; list-style: none;
 }
 .unified-summary::before {
   content: '▸';
   display: inline-block; margin-right: .55em;
-  color: #888; transition: transform .15s;
+  color: var(--mut); transition: transform .15s;
 }
 .unified-details[open] > .unified-summary::before {
   transform: rotate(90deg);
 }
-.unified-summary:hover { color: #fafafa; }
+.unified-summary:hover { color: var(--ink); }
 .unified-summary .muted { margin-left: .3em; font-size: .9em; }
 .unified-table { margin-top: .6em; }
 .unified-table .col-data { width: 38%; }
 .unified-table .col-cat {
-  width: 11em; color: #b8b8b8; font-size: .9em; white-space: nowrap;
+  width: 11em; color: var(--mut); font-size: .9em; white-space: nowrap;
 }
 .unified-table .col-assess { width: auto; }
 .unified-table tr.is-relevant td:first-child {
-  border-left: 3px solid #6ec07a;
+  border-left: 3px solid var(--ok);
   padding-left: calc(.9em - 3px);
 }
 
@@ -689,14 +768,14 @@ code { background: #2a2a2a; padding: 1px 6px; border-radius: 3px; color: #f0e0c0
   display: flex; gap: .4em; flex-wrap: wrap; margin: .7em 0 .2em;
 }
 .unified-toggle-btn {
-  background: transparent; border: 1px solid #444; color: #b8b8b8;
+  background: transparent; border: 1px solid var(--line); color: var(--mut);
   cursor: pointer; padding: .35em .9em; font-size: .82em;
   font-family: inherit; border-radius: 4px; font-weight: 500;
   transition: border-color .15s, color .15s, background .15s;
 }
-.unified-toggle-btn:hover { color: #fafafa; border-color: #666; }
+.unified-toggle-btn:hover { color: var(--ink); border-color: var(--mut); }
 .unified-toggle-btn.active {
-  color: #1a1a1a; background: #d8b66f; border-color: #d8b66f;
+  color: var(--paper); background: var(--accent); border-color: var(--accent);
 }
 .unified-toggle-btn .toggle-n {
   font-variant-numeric: tabular-nums; opacity: .7; margin-left: .15em;
@@ -708,37 +787,37 @@ code { background: #2a2a2a; padding: 1px 6px; border-radius: 3px; color: #f0e0c0
 .stack-rank-table .col-data { width: auto; }
 .stack-rank-table .col-score {
   width: 5em; text-align: right; white-space: nowrap;
-  font-variant-numeric: tabular-nums; color: #b8b8b8; font-size: .9em;
+  font-variant-numeric: tabular-nums; color: var(--mut); font-size: .9em;
 }
 .stack-rank-table .col-total {
-  color: #fafafa; font-weight: 600;
-  border-left: 1px solid #2a2a2a;
+  color: var(--ink); font-weight: 600;
+  border-left: 1px solid var(--soft);
 }
 .stack-rank-table .col-proposed {
   width: 6em; text-align: center; white-space: nowrap;
   font-size: .92em;
 }
-.stack-rank-table .col-proposed .rel-yes { color: #6ec07a; }
-.stack-rank-table .col-proposed .rel-no { color: #888; }
+.stack-rank-table .col-proposed .rel-yes { color: var(--ok); }
+.stack-rank-table .col-proposed .rel-no { color: var(--mut); }
 /* Proposed rows get a subtle row tint instead of a stark left border —
    the ✅ Yes in the Proposed column already says "this made the cut";
    doubling it with a hard green stripe adds noise without info. */
-.stack-rank-table tr.is-relevant td { background: rgba(255, 255, 255, .025); }
+.stack-rank-table tr.is-relevant td { background: rgba(9, 105, 218, .04); }
 /* Hypothesis cell: neutral title, slightly-muted description */
-.stack-rank-table .rank-title { color: #fafafa; }
-.stack-rank-table .rank-desc { color: #b8b8b8; }
+.stack-rank-table .rank-title { color: var(--ink); }
+.stack-rank-table .rank-desc { color: var(--mut); }
 /* Category column — small uppercase tag in muted gray. The Category
    *text* names the slot; no need to also color-code it (the user can
    read it). Filter buttons are where category lives visually. */
 .stack-rank-table .col-slot {
   width: 9em; white-space: nowrap; font-size: .78em;
-  color: #888; text-transform: uppercase; letter-spacing: .06em;
+  color: var(--mut); text-transform: uppercase; letter-spacing: .06em;
   font-weight: 600;
 }
 /* Proposed column — make ❌ visually quieter than ✅ so the eye lands
    on the four picks without a wall of red competing for attention. */
-.stack-rank-table .col-proposed .rel-yes { color: #c8c8c8; }
-.stack-rank-table .col-proposed .rel-no  { color: #555; }
+.stack-rank-table .col-proposed .rel-yes { color: var(--mut); }
+.stack-rank-table .col-proposed .rel-no  { color: var(--mut); }
 /* Category filter buttons above the stack-rank table — left-aligned,
    single gold active state. "All" reset sits at the right end so the
    category options appear first in scan order. */
@@ -746,14 +825,14 @@ code { background: #2a2a2a; padding: 1px 6px; border-radius: 3px; color: #f0e0c0
   display: flex; gap: .4em; flex-wrap: wrap; margin: .4em 0 .8em;
 }
 .cat-filter-btn {
-  background: transparent; border: 1px solid #444; color: #b8b8b8;
+  background: transparent; border: 1px solid var(--line); color: var(--mut);
   cursor: pointer; padding: .35em .9em; font-size: .82em;
   font-family: inherit; border-radius: 4px; font-weight: 500;
   transition: border-color .15s, color .15s, background .15s;
 }
-.cat-filter-btn:hover { color: #fafafa; border-color: #666; }
+.cat-filter-btn:hover { color: var(--ink); border-color: var(--mut); }
 .cat-filter-btn.active {
-  color: #1a1a1a; background: #d8b66f; border-color: #d8b66f;
+  color: var(--paper); background: var(--accent); border-color: var(--accent);
 }
 /* "Show all" reset — peer button sitting tight with the category
    pills (no auto-margin orphaning it). Quieter treatment than the 4
@@ -761,17 +840,17 @@ code { background: #2a2a2a; padding: 1px 6px; border-radius: 3px; color: #f0e0c0
    margin gives breathing room from the category cluster so it reads as
    "related but distinct" without floating away into white space. */
 .cat-all-link {
-  background: transparent; border: 1px dashed #444; color: #888;
+  background: transparent; border: 1px dashed var(--line); color: var(--mut);
   cursor: pointer; padding: .35em .9em; font-size: .82em;
   font-family: inherit; font-weight: 500; border-radius: 4px;
   margin-left: .6em;
   transition: border-color .15s, color .15s, background .15s;
 }
 .cat-all-link:hover {
-  color: #fafafa; border-color: #666;
+  color: var(--ink); border-color: var(--mut);
 }
 .cat-all-link.active {
-  color: #1a1a1a; background: #d8b66f; border-color: #d8b66f;
+  color: var(--paper); background: var(--accent); border-color: var(--accent);
   border-style: solid;
 }
 
@@ -783,15 +862,15 @@ code { background: #2a2a2a; padding: 1px 6px; border-radius: 3px; color: #f0e0c0
    and render green. */
 .diagnosis-list { margin-top: .5em; }
 .diag-row {
-  border-left: 3px solid #6a6a6a;
-  border-top: 1px solid #232323;
+  border-left: 3px solid var(--mut);
+  border-top: 1px solid var(--soft);
   padding: .75em 0 .75em 1em; margin: 0;
 }
 .diag-row:first-child { border-top: none; }
-.diag-row.sev-high   { border-left-color: #d06a6a; }
-.diag-row.sev-medium { border-left-color: #d8a85f; }
-.diag-row.sev-low    { border-left-color: #7a9cf0; }
-.diag-row.sev-none   { border-left-color: #5d9c5d; }
+.diag-row.sev-high   { border-left-color: var(--danger); }
+.diag-row.sev-medium { border-left-color: var(--warn); }
+.diag-row.sev-low    { border-left-color: var(--accent); }
+.diag-row.sev-none   { border-left-color: var(--ok); }
 .diag-head {
   display: flex; flex-wrap: wrap; align-items: center; gap: .55em;
   margin-bottom: .4em;
@@ -800,32 +879,32 @@ code { background: #2a2a2a; padding: 1px 6px; border-radius: 3px; color: #f0e0c0
   display: inline-block; padding: .12em .65em; border-radius: 999px;
   font-size: .72em; font-weight: 700; text-transform: uppercase;
   letter-spacing: .05em; white-space: nowrap;
-  border: 1px solid #444; color: #c9c9c9; background: #232323;
+  border: 1px solid var(--line); color: var(--mut); background: var(--soft);
 }
-.diag-sev.sev-high   { background: #2e1d1d; color: #e08585; border-color: #4a2c2c; }
-.diag-sev.sev-medium { background: #2a2218; color: #d8a85f; border-color: #3e2f1c; }
-.diag-sev.sev-low    { background: #1d2330; color: #8ab0f0; border-color: #2c3650; }
-.diag-sev.sev-none   { background: #1f2e1f; color: #7fc77f; border-color: #2c4a2c; }
+.diag-sev.sev-high   { background: #ffebe9; color: var(--danger); border-color: #ff8182; }
+.diag-sev.sev-medium { background: #fff8c5; color: var(--warn); border-color: #eac54f; }
+.diag-sev.sev-low    { background: var(--soft); color: var(--accent); border-color: #bfdbfe; }
+.diag-sev.sev-none   { background: #dafbe1; color: var(--ok); border-color: #aceebb; }
 .diag-type {
-  font-size: .78em; color: #9a9a9a; text-transform: uppercase;
+  font-size: .78em; color: var(--mut); text-transform: uppercase;
   letter-spacing: .05em; font-weight: 600;
 }
 .diag-id {
-  font-size: .78em; color: #777; font-variant-numeric: tabular-nums;
+  font-size: .78em; color: var(--mut); font-variant-numeric: tabular-nums;
 }
 .diag-applied {
-  font-size: .8em; color: #d8b66f; font-weight: 600; margin-left: auto;
+  font-size: .8em; color: var(--accent); font-weight: 600; margin-left: auto;
 }
 .diag-summary {
-  color: #fafafa; font-size: .98em; line-height: 1.5; margin-bottom: .4em;
+  color: var(--ink); font-size: .98em; line-height: 1.5; margin-bottom: .4em;
 }
 .diag-meta {
   display: flex; flex-direction: column; gap: .3em;
-  font-size: .86em; color: #aaaaaa; line-height: 1.5;
+  font-size: .86em; color: var(--mut); line-height: 1.5;
 }
 .diag-meta-label {
   text-transform: uppercase; letter-spacing: .06em; font-size: .82em;
-  color: #777; font-weight: 600; margin-right: .35em;
+  color: var(--mut); font-weight: 600; margin-right: .35em;
 }
 
 /* Other inspiration grid — cards with screenshots, click to lightbox */
@@ -834,11 +913,11 @@ code { background: #2a2a2a; padding: 1px 6px; border-radius: 3px; color: #f0e0c0
   gap: 1em; margin-top: .75em;
 }
 .divergent-card {
-  background: #181818; border: 1px solid #303030; border-radius: 8px;
+  background: var(--paper); border: 1px solid var(--line); border-radius: 8px;
   overflow: hidden; display: flex; flex-direction: column;
 }
 .divergent-imgwrap {
-  background: #0a0a0a;
+  background: var(--panel);
   display: flex; align-items: center; justify-content: center;
   height: 280px; overflow: hidden;
 }
@@ -847,19 +926,19 @@ code { background: #2a2a2a; padding: 1px 6px; border-radius: 3px; color: #f0e0c0
   object-fit: contain; border-radius: 0; border: 0; margin: 0;
 }
 .divergent-meta { padding: .85em 1em; }
-.divergent-card .pattern { font-size: .92em; color: #fafafa; margin-bottom: .4em; line-height: 1.4; }
+.divergent-card .pattern { font-size: .92em; color: var(--ink); margin-bottom: .4em; line-height: 1.4; }
 .divergent-card .pattern-list {
   margin: 0 0 .4em; padding-left: 1.1em;
-  font-size: .9em; color: #fafafa; line-height: 1.4;
+  font-size: .9em; color: var(--ink); line-height: 1.4;
 }
 .divergent-card .pattern-list li { margin-bottom: .25em; }
-.divergent-card .companies { font-size: .75em; color: #9a9a9a; text-transform: uppercase; letter-spacing: .04em; }
+.divergent-card .companies { font-size: .75em; color: var(--mut); text-transform: uppercase; letter-spacing: .04em; }
 
 .data-subsection { margin: 1.5em 0 1em; }
 .data-subsection h4 {
-  margin: 0 0 .35em; font-size: 1.05em; font-weight: 600; color: #fafafa;
+  margin: 0 0 .35em; font-size: 1.05em; font-weight: 600; color: var(--ink);
 }
-.data-subsection .data-sub { color: #9a9a9a; font-size: .88em; margin-bottom: .85em; }
+.data-subsection .data-sub { color: var(--mut); font-size: .88em; margin-bottom: .85em; }
 
 /* Lightbox (reused) */
 .lightbox-img { cursor: zoom-in; transition: filter 0.15s; }
@@ -871,11 +950,11 @@ code { background: #2a2a2a; padding: 1px 6px; border-radius: 3px; color: #f0e0c0
 .lightbox.hidden { display: none; }
 .lightbox-image {
   max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain;
-  border-radius: 6px; background: #0a0a0a; cursor: default;
+  border-radius: 6px; background: var(--panel); cursor: default;
 }
 .lightbox-close, .lightbox-prev, .lightbox-next {
-  position: absolute; background: rgba(40,40,40,0.9); color: #fafafa;
-  border: 1px solid #555; border-radius: 50%; width: 44px; height: 44px;
+  position: absolute; background: rgba(40,40,40,0.9); color: var(--paper);
+  border: 1px solid var(--mut); border-radius: 50%; width: 44px; height: 44px;
   font-size: 1.5em; line-height: 0; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
 }
@@ -1033,7 +1112,7 @@ image, dim outside it" effect) — append it inside the SAME `<style>` block:
 .bbox::after {
   content: attr(data-label);
   position: absolute; top: -1px; left: -1px;
-  background: #ff8c2a; color: #1a1a1a;
+  background: #ff8c2a; color: var(--paper);
   font: 600 10px/1 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   padding: 2px 5px; border-radius: 2px 0 3px 0;
   letter-spacing: .04em;
@@ -1042,7 +1121,29 @@ image, dim outside it" effect) — append it inside the SAME `<style>` block:
 
 ### Embedded JS — paste VERBATIM before `</body>`
 
-First the carousel driver (drives every `[data-carousel-group]`, its
+First the shared deck nav driver (drives each `.deck-nav` next to a `[data-deck]`
+scroller):
+
+```js
+(function(){
+  document.querySelectorAll('.deck-nav').forEach(function(nav){
+    var card = nav.closest('.card') || nav.parentElement;
+    var deck = card && card.querySelector('[data-deck]');
+    if (!deck) return;
+    function step(dir){
+      var first = deck.querySelector(':scope > *');
+      var amount = first ? first.getBoundingClientRect().width + 16 : deck.clientWidth * 0.85;
+      deck.scrollBy({ left: dir * amount, behavior: 'smooth' });
+    }
+    var prev = nav.querySelector('.prev');
+    var next = nav.querySelector('.next');
+    if (prev) prev.addEventListener('click', function(){ step(-1); });
+    if (next) next.addEventListener('click', function(){ step(1); });
+  });
+})();
+```
+
+Then the top-card carousel driver (drives every `[data-carousel-group]`, its
 `.design-slide.active`, `.design-dot`, and prev/next):
 
 ```js
@@ -1332,7 +1433,7 @@ For EACH reference / evidence image you put in the report (the before/after
 shots in the evidence card, and any reference you want to spotlight), draw a
 `.bbox` overlay highlighting the region the learning is about — a bounding box
 around the relevant part of the screen, with everything outside it visually
-dimmed (the `.bbox` CSS produces the highlighted rect; the dark page does the
+dimmed (the `.bbox` CSS produces the highlighted rect; the page does the
 "dim outside" read). The Lazyweb MCP does NOT return bbox coordinates, so YOU,
 the vision-capable agent, must estimate them by looking at the image:
 
@@ -1444,10 +1545,10 @@ baseline — make room by collapsing other content, never by miniaturizing the C
 These four rules apply to every report you write and override convenience. A report that breaks them is non-conforming, even if every section is present.
 
 **1. Show, don't tell — every claim carries its proof.**
-Any assertion — a pattern, anti-pattern, idea, hypothesis, "what's working" item, convention check, recommendation, or A/B learning — must carry the real screenshot(s) or experiment that demonstrate it, embedded in a deck the reader can step through. Put the supporting references in that hypothesis's evidence `.design-slide` so the embedded carousel walks the reader through the proof; never reduce the proof to a bare prose list. Prevalence words ("most", "near-universal", "dominant") must be backed by a shown count ("5 of 9 references"), never an adjective alone.
+Any assertion — a pattern, anti-pattern, idea, hypothesis, "what's working" item, convention check, recommendation, or A/B learning — must carry the real screenshot(s) or experiment that demonstrate it, embedded in a `.deck` proof card the reader can step through. Put the supporting references beside that hypothesis's claim so the evidence deck walks the reader through the proof; never reduce the proof to a bare prose list. Prevalence words ("most", "near-universal", "dominant") must be backed by a shown count ("5 of 9 references"), never an adjective alone.
 
 **2. Be opinionated; carry the decision.**
-Lead with ONE strongest hypothesis — make it the FIRST (`active`) slide in the top carousel and `is-selected` rank #1 in the prioritization table — so the decision shows in the human-visible body, not only in the handoff. Give every other hypothesis an explicit assessment in the prioritization table (build / optional / skip); a skipped idea still carries the reference that justifies skipping it. No ties among top picks; no flat undifferentiated menu.
+Lead with ONE strongest hypothesis — make it the FIRST (`active`) slide in the top carousel and the `.rec.lead` card under the `.legend` — so the decision shows in the human-visible body, not only in the handoff. Give every other hypothesis an explicit ranked `.rec` assessment (build / optional / skip); a skipped idea still carries the reference that justifies skipping it. No ties among top picks; no flat undifferentiated menu.
 
 **3. Maximize confidence with evidence + data.**
 Back each hypothesis with what worked for OTHER apps (real screenshots in its evidence slide, with the curated annotated learning and a bbox overlay) PLUS supporting data: a prevalence count across the corpus ("seen in N of M examples") and, where the screen is growth/monetization, A/B experiment evidence via `lazyweb_search_ab_tests`. If no experiment data exists, say so in the hypothesis subheader ("no experiment data found — design-prevalence-based") and lean on the prevalence count as the directional signal. Never let a hypothesis render with neither a visual nor a number behind it.
