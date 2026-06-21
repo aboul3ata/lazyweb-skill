@@ -1487,7 +1487,7 @@ Each hypothesis must:
 Rank the portfolio by an expected-payoff read across three axes — **Confidence**
 (how sure the move generalizes to THIS paywall), **Upside** (how much it moves the
 metric if it works), and **Boldness** (how far it departs from table stakes). The
-lead pick (rank #1, the `active` slide and `is-selected` row) is the best expected
+lead pick (rank #1, the `active` slide and `is-relevant` row) is the best expected
 payoff for THIS paywall — often the high-value bet, not simply the safest. Show
 that ordering, and each hypothesis's slot, in the Prioritization card.
 
@@ -1599,7 +1599,7 @@ These four rules apply to every report you write and override convenience. A rep
 Any assertion — a pattern, anti-pattern, idea, hypothesis, "what's working" item, convention check, recommendation, or A/B learning — must carry the real screenshot(s) or experiment that demonstrate it, embedded in a deck the reader can step through. Put the supporting references in that hypothesis's evidence `.design-slide` so the embedded carousel walks the reader through the proof; never reduce the proof to a bare prose list. Prevalence words ("most", "near-universal", "dominant") must be backed by a shown count ("5 of 9 references"), never an adjective alone.
 
 **2. Be opinionated; carry the decision.**
-Lead with ONE strongest hypothesis — make it the FIRST (`active`) slide in the top carousel and `is-selected` rank #1 in the prioritization table — so the decision shows in the human-visible body, not only in the handoff. Give every other hypothesis an explicit assessment in the prioritization table (build / optional / skip); a skipped idea still carries the reference that justifies skipping it. No ties among top picks; no flat undifferentiated menu.
+Lead with ONE strongest hypothesis — make it the FIRST (`active`) slide in the top carousel and `is-relevant` rank #1 in the prioritization table — so the decision shows in the human-visible body, not only in the handoff. Give every other hypothesis an explicit proposed/cut decision in the prioritization table (`✅ Yes` / `❌ No`); a cut idea still carries the reference that justifies skipping it. No ties among top picks; no flat undifferentiated menu.
 
 **3. Maximize confidence with evidence + data.**
 Back each hypothesis with what worked for OTHER apps (real screenshots in its evidence slide, with the curated annotated learning and a bbox overlay) PLUS supporting data: a prevalence count across the corpus ("seen in N of M examples") and, where the screen is growth/monetization, A/B experiment evidence via `lazyweb_search_ab_tests`. If no experiment data exists, say so in the hypothesis subheader ("no experiment data found — design-prevalence-based") and lean on the prevalence count as the directional signal. Never let a hypothesis render with neither a visual nor a number behind it.
