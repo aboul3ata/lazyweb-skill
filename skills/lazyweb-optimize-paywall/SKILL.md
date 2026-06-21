@@ -26,18 +26,20 @@ component advice.
 
 ## CRITICAL: Output Behavior
 
-**This skill produces a self-contained dark "Hallow" report you write yourself,
-not a plan and not a server-rendered page.** Regardless of whether you are in
-plan mode or not, ALWAYS:
+**This skill produces a self-contained Lazyweb HTML report you write yourself,
+not a plan and not a server-rendered page.** It must still follow the shared
+Lazyweb report contract from `AGENTS.md`; local HTML is only the delivery
+mechanism. Regardless of whether you are in plan mode or not, ALWAYS:
 
 1. Do the evidence work (read the paywall, search Lazyweb, mine experiments,
    form 2-4 hypotheses) per the workflow sections below.
 2. Generate one mockup per hypothesis (the "Generate the mockups" ladder below)
    and save the references the report will point at.
 3. Author the report by **writing the HTML file yourself** to
-   `$REPORT_DIR/report.html` — a dark-theme Hallow page with the verbatim CSS in
-   a `<style>` block and the verbatim carousel + lightbox JS before `</body>`
-   (see "Write the Hallow report" below). There is no server render step.
+   `$REPORT_DIR/report.html` — a shared Lazyweb evidence report with the shared
+   Agent Instructions block first, shared report furniture, component CSS in a
+   `<style>` block, and carousel + lightbox JS before `</body>`
+   (see "Write the shared Lazyweb report" below). There is no server render step.
 4. Do NOT write optimization content into a plan file, a `report.md`, or a
    `report-data.json`. The deliverable is the `report.html` you author.
 5. Open the finished report: `open "$REPORT_DIR/report.html"` (skip `open` in a
@@ -54,13 +56,32 @@ The report dir convention is `$REPORT_DIR = .lazyweb/optimize-paywall/{topic-slu
 Create `$REPORT_DIR/references/` for the screenshots and generated mockups the
 report embeds. There is no `work/` dir and no `report-data.json`.
 
-## Write the Hallow report (the single deliverable)
+## Write the shared Lazyweb report (the single deliverable)
 
-You author `$REPORT_DIR/report.html` directly — a single dark-theme HTML
+You author `$REPORT_DIR/report.html` directly — a single Lazyweb HTML
 document with every image inlined (so the file is genuinely self-contained) and
 the carousel + lightbox scripts embedded. You own the template now; there is no
 `lazyweb_render_report` call, no server-side template, and no hosted URL. The
 finished `report.html` IS the report.
+
+### Shared report furniture compliance (required)
+
+This section overrides any older Hallow-specific wording or dark-theme examples
+below. The report must use the shared Lazyweb report furniture from `AGENTS.md`:
+
+- Section #1 is the light-blue Agent Instructions copy block.
+- Define and use the shared tokens `--ink:#1f2328; --mut:#57606a;
+  --line:#d0d7de; --soft:#eef4fb; --accent:#0969da`.
+- Use `.deck` for evidence carousels where all references are visible, with
+  scroll-snap and prev/next buttons.
+- Use `.legend` plus ranked `.rec` cards for the opinionated decision; the #1
+  recommendation must be `.rec.lead`.
+- Use `.ebadge` and `.corpus` for honest evidence labels and prevalence counts.
+- Use `.mock` for CSS fallback mock-frames.
+
+You may reuse the paywall-specific carousel, bbox, diagnosis, and prioritization
+components below, but only after the Agent Instructions block and only in a way
+that preserves the shared light report tokens and furniture.
 
 **Inline every image as a `data:` URI.** Fetch each Lazyweb `imageUrl`/`image_url`
 and each locally-saved screenshot/mockup, base64-encode the bytes, and embed it
@@ -100,15 +121,16 @@ drives them, so do not rename, restructure, or drop them):
 <html lang="en"><head><meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Paywall Design Recommendation</title>
-<style>/* paste the verbatim _HTML_CSS block + the verbatim .bbox CSS block from "Embedded CSS" below */</style>
+<style>/* shared Lazyweb tokens + adapted component CSS + .bbox CSS from "Embedded CSS" below */</style>
 </head><body>
+<!-- 1. AGENT INSTRUCTIONS COPY BLOCK (.ai-block / light-blue shared block) -->
 <h1>Paywall Design Recommendation</h1>
 
-<!-- 1. TOP CARD: 3-column carousel (current | mockup | hypothesis) -->
-<!-- 2. EVIDENCE CARD: annotated before/after carousel -->
-<!-- 3. DIAGNOSIS CARD -->
-<!-- 4. PRIORITIZATION CARD -->
-<!-- 5. FOOTER -->
+<!-- 2. TOP CARD: 3-column carousel (current | mockup | hypothesis) -->
+<!-- 3. EVIDENCE CARD: annotated before/after carousel -->
+<!-- 4. DIAGNOSIS CARD -->
+<!-- 5. PRIORITIZATION CARD -->
+<!-- 6. FOOTER -->
 
 <!-- lightbox overlay + scripts -->
 <div id="lightbox" class="lightbox hidden" aria-hidden="true"><button class="lightbox-close">&times;</button><button class="lightbox-prev">&larr;</button><img class="lightbox-image" alt="" /><button class="lightbox-next">&rarr;</button></div>
@@ -117,8 +139,9 @@ drives them, so do not rename, restructure, or drop them):
 </body></html>
 ```
 
-Section order is fixed: **title → top 3-column carousel → evidence → diagnosis →
-prioritization → footer → lightbox + scripts.**
+Section order is fixed: **Agent Instructions copy block → title → top
+3-column carousel → evidence → diagnosis → prioritization → footer → lightbox +
+scripts.**
 
 ### 1. Top card — 3-column hypothesis carousel (required)
 
@@ -274,10 +297,11 @@ the body, not just implied by carousel order.
 Append a small muted footer paragraph:
 `<p class="muted">Powered by Lazyweb — turn your agent into a design researcher… for free!</p>`
 
-### Embedded CSS — paste VERBATIM into the `<style>` block
+### Embedded CSS — adapt into the `<style>` block
 
-Copy this whole block character-for-character. It is the dark Hallow theme that
-the DOM above and the JS below depend on.
+Use this block as component CSS for the paywall-specific DOM and JS below, but
+adapt its page-level palette to the shared Lazyweb tokens from "Shared report
+furniture compliance" above. Do not ship a dark-theme report.
 
 ```css
 :root { color-scheme: dark; }
