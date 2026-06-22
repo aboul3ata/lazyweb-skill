@@ -209,9 +209,7 @@ For EACH of the 4 `selected` winners, generate a mockup that is an EDIT of the
 CURRENT screenshot (so it keeps the real brand/layout/dimensions), conditioned on
 the winner's `mockup_prompt` prefixed with the **ENFORCED PREAMBLE** below.
 
-- **If you ARE Codex** → use built-in `image_gen` (gpt-image-2) with the current
-  screenshot as the reference image.
-- **Otherwise (Claude Code, etc.)** → use the async pair. Do NOT call
+- **All hosts (Codex, Claude Code, etc.)** → use the async pair. Do NOT call
   `lazyweb_generate_mockup` (it times out through the gateway). Start all 4 up
   front so they run in parallel: `lazyweb_start_mockup` with `prompt` =
   `ENFORCED PREAMBLE + winner.mockup_prompt`, the current screen as `image_base64`
