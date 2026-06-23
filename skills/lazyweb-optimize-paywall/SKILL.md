@@ -83,30 +83,46 @@ If the MCP is missing/auth fails, tell the user to run
 
 1. Capture or read the target paywall. Prefer a real screenshot or URL over prose.
    Save it to `$WORK/references/current-state.png` — it becomes the "Current"
-   column and the input to synthesis. Hold it as base64 for the tool calls.
+   column and the input to synthesis. **Keep the file path** — the helper script
+   (Step 2) reads and base64-encodes it in code. Do NOT inline the base64 into a
+   tool call yourself: a large blob gets corrupted in the agent's output ("does
+   not represent a valid image" / "invalid base64-encoded value") and is
+   size-hostile through the gateway. `$SKILL_DIR` below = the directory holding
+   this SKILL.md (where `optimize_paywall.py` ships).
 2. Ask one concise question only if the **product**, **conversion goal**, or
    target screen is missing and cannot be inferred. You do NOT need to analyze the
    paywall yourself — the server labels it.
 
 ## Step 2 — Synthesize (the server does the thinking)
 
-Call **`lazyweb_start_paywall_synthesize`** with:
-- `image_base64` (+ `mime_type`) — the current screenshot. (Or `image_url`.)
-- `product` — the product/company name (excluded from the corpus so it isn't
-  benchmarked against itself).
-- `conversion_goal` — e.g. "annual-plan share" or "trial starts".
-- `category`, `plan_structure`, `constraints` — when known (improve labeling).
-- optional `divergence`: `auto` (default) / `low` / `med` / `high` — ambition.
+**Run the helper script** `optimize_paywall.py` (it reads the screenshot file,
+base64-encodes it **in code**, calls `lazyweb_start_paywall_synthesize`, and polls
+`lazyweb_get_paywall_synthesize` for you — so the image bytes never pass through
+your output, where they'd be corrupted or hit the gateway size limit):
 
-It returns a `job_id`. Poll **`lazyweb_get_paywall_synthesize`** with it every ~6s
-until `status:"done"` (allow up to ~180s). On `done`, `result` has:
-- `synthesis_id` — pass this to render.
-- `winners` — the 4 picks (one per slot), each with `slot`, `hypothesis_title`,
-  `change_scope`, `evidence_company`, and a ready **`mockup_prompt`**.
+```
+python "$SKILL_DIR/optimize_paywall.py" synthesize \
+  --image "$WORK/references/current-state.png" \
+  --product "<product/company name; excluded from corpus so it isn't benchmarked vs itself>" \
+  --conversion-goal "<e.g. annual-plan share / trial starts>" \
+  --plan-structure "<e.g. monthly $6.99 / annual $59.99>" \
+  [--category <cat>] [--constraints "<...>"] [--divergence auto|low|med|high] \
+  --out "$WORK/synthesis.json"
+```
 
-If it returns `status:"error"`, report the error and stop (don't fall back to
-hand-writing a report). Transient `mcp_proxy_busy`/timeout on a poll → just poll
-again.
+It prints (and writes to `--out`) `{ synthesis_id, winners:[{slot,
+hypothesis_title, change_scope, evidence_company, mockup_prompt}] }`.
+`synthesis_id` goes to render; each of the 4 `winners` carries a ready
+`mockup_prompt`. The script needs `LAZYWEB_MCP_TOKEN` (or
+`~/.lazyweb/lazyweb_mcp_token`); if your Python has no CA bundle, set
+`SSL_CERT_FILE` to one (e.g. `python3 -c 'import certifi;print(certifi.where())'`).
+
+The script exits non-zero with a clear message on a bad image or a server
+`status:"error"` — surface it and stop (don't hand-write a report).
+
+(Already-hosted screenshot? Passing `image_url` directly to
+`lazyweb_start_paywall_synthesize` also works. Never hand-pass `image_base64` —
+that is the fragile path this script exists to replace.)
 
 ## Step 3 — Generate one mockup per winner (async)
 
@@ -116,16 +132,20 @@ screenshot (keeps the real brand/layout/dimensions), conditioned on the winner's
 
 - **If you ARE Codex** → use built-in `image_gen` (gpt-image-2) with the current
   screenshot as the reference image.
-- **Otherwise (Claude Code, etc.)** → use the async pair. Do NOT call
-  `lazyweb_generate_mockup` (it times out through the gateway). Start all 4 up
-  front so they run in parallel: `lazyweb_start_mockup` with `prompt` =
-  `ENFORCED PREAMBLE + winner.mockup_prompt`, the current screen as `image_base64`
-  (+ `mime_type`), and **omit `size`** (EDIT mode defaults to `auto`, matching the
-  input's aspect ratio). Then poll `lazyweb_get_mockup` for each `job_id` every
-  ~5s (budget ~180s) until `done`. Use the returned **`image_url`** (a signed URL)
-  as that winner's mockup — NOT the base64 (four base64 mockups overflow the
-  gateway request-size limit; the renderer fetches the URL server-side). You may
-  also save `image_base64` to `$WORK/references/mock-<slot>.png` for the user.
+- **Otherwise (Claude Code, etc.)** → run the helper script once per winner — it
+  posts the current screenshot **byte-perfectly** in EDIT mode (`image_base64`
+  built from the file in code, `size` omitted) and polls `lazyweb_get_mockup` for
+  you. Do NOT call `lazyweb_generate_mockup` (times out) and do NOT hand-pass
+  `image_base64`. Run the 4 in parallel (background them):
+  ```
+  python "$SKILL_DIR/optimize_paywall.py" mockup \
+    --image "$WORK/references/current-state.png" \
+    --prompt "<ENFORCED PREAMBLE + winner.mockup_prompt>" \
+    --out "$WORK/mock-<slot>.json" &
+  ```
+  Each prints `{ image_url }` (a signed URL) — use that as the winner's mockup,
+  NOT base64 (four base64 mockups overflow the gateway request-size limit; the
+  renderer fetches the URL server-side).
 - **Fallback** — only if a mockup truly can't be generated
   (`MOCKUP_IMAGE_KEY_MISSING` / `MOCKUP_DAILY_LIMIT`, an `error` status, or still
   `pending` after ~180s): omit that one slot's key from the `mockups` map. The
