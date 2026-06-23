@@ -57,6 +57,12 @@ POLL_INTERVAL_S = 6.0
 SYNTH_BUDGET_S = 240.0
 MOCKUP_BUDGET_S = 240.0
 ALLOWED_MIME = {"image/png", "image/jpeg", "image/webp"}
+# Above this base64 length the screenshot is uploaded to lazybackend for a signed
+# URL instead of going inline — the gateway 413s large MCP request bodies (a
+# ~380KB PNG / 507KB b64 is fine; full-res ~2.6MB+ b64 gets rejected). The upload
+# goes DIRECT to lazybackend, which has no such cap.
+UPLOAD_THRESHOLD_B64 = 1_400_000
+LAZYBACKEND_URL = os.environ.get("LAZYBACKEND_URL", "https://lazybackend-jgpo.onrender.com")
 
 
 def log(msg: str) -> None:
@@ -231,12 +237,40 @@ def poll(client: McpClient, get_tool: str, job_id: str, budget_s: float, label: 
     raise RuntimeError(f"{label} timed out after {budget_s:.0f}s (job {job_id})")
 
 
+def upload_image_for_url(b64: str, mime: str, token: str) -> str:
+    """POST the screenshot DIRECTLY to lazybackend (bypassing the gateway's
+    request-size cap) and return a 24h signed image_url."""
+    url = f"{LAZYBACKEND_URL.rstrip('/')}/paywall-report/upload-image"
+    body = json.dumps({"image_b64": b64, "mime_type": mime}).encode()
+    req = urllib.request.Request(url, data=body, headers={
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {token}",
+    })
+    payload = json.loads(
+        urllib.request.urlopen(req, timeout=POST_TIMEOUT_S).read().decode("utf-8", "replace")
+    )
+    image_url = (payload or {}).get("image_url") or ""
+    if not image_url:
+        raise RuntimeError(f"upload-image returned no image_url: {json.dumps(payload)[:200]}")
+    return image_url
+
+
+def image_args(image_path: str, token: str, label: str) -> dict:
+    """MCP image args: inline base64 for small images, else upload to lazybackend
+    and pass a small image_url — keeps large bodies off the size-limited gateway
+    (which 413s full-res screenshots). Byte-perfect either way (encoded in code)."""
+    b64, mime = read_image_b64(image_path)
+    if len(b64) > UPLOAD_THRESHOLD_B64:
+        log(f"{label}: {len(b64)} b64 chars ({mime}) — large; uploading for a URL "
+            "(bypasses the gateway size limit)…")
+        return {"image_url": upload_image_for_url(b64, mime, token)}
+    log(f"{label}: {len(b64)} b64 chars ({mime}); inline from file (byte-perfect)…")
+    return {"image_base64": b64, "mime_type": mime}
+
+
 def cmd_synthesize(client: McpClient, a: argparse.Namespace) -> dict:
-    b64, mime = read_image_b64(a.image)
-    log(f"synthesize: {len(b64)} b64 chars ({mime}); posting from file (byte-perfect)…")
     args = {
-        "image_base64": b64,
-        "mime_type": mime,
+        **image_args(a.image, client.token, "synthesize"),
         "product": a.product or "",
         "conversion_goal": a.conversion_goal or "",
         "plan_structure": a.plan_structure or "",
@@ -265,12 +299,9 @@ def cmd_mockup(client: McpClient, a: argparse.Namespace) -> dict:
         prompt = pathlib.Path(a.prompt_file).expanduser().read_text(encoding="utf-8").strip()
     if not prompt:
         fatal("mockup needs --prompt or --prompt-file")
-    b64, mime = read_image_b64(a.image)
-    log(f"mockup: {len(b64)} b64 chars ({mime}); EDIT off the current screenshot…")
     args = {
         "prompt": prompt,
-        "image_base64": b64,
-        "mime_type": mime,
+        **image_args(a.image, client.token, "mockup (EDIT off current screenshot)"),
         "quality": a.quality or "high",
         "skill": "lazyweb-optimize-paywall",
         "version": skill_version(),
