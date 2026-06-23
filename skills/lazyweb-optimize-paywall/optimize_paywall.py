@@ -281,8 +281,12 @@ def cmd_mockup(client: McpClient, a: argparse.Namespace) -> dict:
         raise RuntimeError(f"start_mockup returned no job_id: {json.dumps(started)[:300]}")
     log(f"mockup job {job_id}")
     done = poll(client, "lazyweb_get_mockup", job_id, MOCKUP_BUDGET_S, "mockup")
+    result = done.get("result") or done
+    image_url = result.get("image_url") or result.get("imageUrl")
+    if not image_url:
+        raise RuntimeError(f"mockup completed without image_url: {json.dumps(done)[:300]}")
     # Prefer the signed URL (payload-friendly); the renderer fetches it server-side.
-    return {"image_url": done.get("image_url"), "mime_type": done.get("mime_type")}
+    return {"image_url": image_url, "mime_type": result.get("mime_type") or result.get("mimeType")}
 
 
 def main() -> None:
