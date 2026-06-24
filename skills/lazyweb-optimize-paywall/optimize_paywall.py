@@ -278,6 +278,8 @@ def cmd_synthesize(client: McpClient, a: argparse.Namespace) -> dict:
         "constraints": a.constraints or "",
         "task": a.task or "Optimize the paywall for conversion",
         "divergence": a.divergence or "auto",
+        "platform": a.platform or "mobile",
+        "screen_type": a.screen_type or "",
         "report_skill": "optimize-paywall",
         "skill": "lazyweb-optimize-paywall",
         "version": skill_version(),
@@ -330,6 +332,9 @@ def main() -> None:
     s.add_argument("--constraints", default="")
     s.add_argument("--task", default="")
     s.add_argument("--divergence", default="auto", choices=["auto", "low", "med", "high"])
+    s.add_argument("--platform", default="mobile", choices=["mobile", "web"])
+    s.add_argument("--screen-type", dest="screen_type", default="",
+                   choices=["", "paywall", "pricing", "landing", "signup"])
     s.add_argument("--out", default="")
 
     m = sub.add_parser("mockup")

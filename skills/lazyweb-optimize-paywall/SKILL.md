@@ -92,6 +92,17 @@ If the MCP is missing/auth fails, tell the user to run
 2. Ask one concise question only if the **product**, **conversion goal**, or
    target screen is missing and cannot be inferred. You do NOT need to analyze the
    paywall yourself — the server labels it.
+3. **Detect platform + screen_type** from the screenshot (routes the evidence):
+   - `platform`: `mobile` (tall portrait phone screenshot) or `web` (wide
+     desktop/browser page).
+   - `screen_type`: `paywall` (in-app subscription offer) · `pricing` (web
+     plans/pricing page) · `landing` (marketing homepage/hero) · `signup`
+     (account-creation / lead-capture). If it's none of these, tell the user this
+     skill optimizes paywall/pricing/landing/signup and stop.
+   Mobile paywalls behave exactly as before (`--platform mobile`,
+   `--screen-type paywall`); pass both to the helper in Step 2. For `web`, evidence
+   is single-snapshot **learnings** (observed patterns, not A/B-tested), so the
+   report frames hypotheses as "worth testing," not measured lifts.
 
 ## Step 2 — Synthesize (the server does the thinking)
 
@@ -106,6 +117,7 @@ python "$SKILL_DIR/optimize_paywall.py" synthesize \
   --product "<product/company name; excluded from corpus so it isn't benchmarked vs itself>" \
   --conversion-goal "<e.g. annual-plan share / trial starts>" \
   --plan-structure "<e.g. monthly $6.99 / annual $59.99>" \
+  --platform <mobile|web> --screen-type <paywall|pricing|landing|signup> \
   [--category <cat>] [--constraints "<...>"] [--divergence auto|low|med|high] \
   --out "$WORK/synthesis.json"
 ```
