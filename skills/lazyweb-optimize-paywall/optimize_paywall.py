@@ -269,6 +269,16 @@ def image_args(image_path: str, token: str, label: str) -> dict:
 
 
 def cmd_synthesize(client: McpClient, a: argparse.Namespace) -> dict:
+    # Operator product brief — the highest-signal context. Inline text or @file.
+    # Forwarded as `product_brief`; the server treats it as AUTHORITATIVE and
+    # grounds the diagnosis in it (who the user is, the free/paid value exchange,
+    # where this screen sits in the flow). Without it the diagnosis stays generic.
+    brief = (a.product_brief or "").strip()
+    if brief.startswith("@"):
+        bp = pathlib.Path(brief[1:]).expanduser()
+        if not bp.is_file():
+            fatal(f"--product-brief file not found: {bp}")
+        brief = bp.read_text(encoding="utf-8").strip()
     args = {
         **image_args(a.image, client.token, "synthesize"),
         "product": a.product or "",
@@ -277,6 +287,7 @@ def cmd_synthesize(client: McpClient, a: argparse.Namespace) -> dict:
         "category": a.category or "",
         "constraints": a.constraints or "",
         "task": a.task or "Optimize the paywall for conversion",
+        "product_brief": brief,
         "divergence": a.divergence or "auto",
         "platform": a.platform or "mobile",
         "screen_type": a.screen_type or "",
@@ -331,6 +342,11 @@ def main() -> None:
     s.add_argument("--category", default="")
     s.add_argument("--constraints", default="")
     s.add_argument("--task", default="")
+    s.add_argument("--product-brief", dest="product_brief", default="",
+                   help="Operator product knowledge (HIGH SIGNAL — grounds the diagnosis): "
+                        "who the user is + why they're here, where this screen sits in the "
+                        "flow, the free/paid boundary + why someone upgrades, the wedge vs "
+                        "alternatives. Inline text or @path/to/brief.md.")
     s.add_argument("--divergence", default="auto", choices=["auto", "low", "med", "high"])
     s.add_argument("--platform", default="mobile", choices=["mobile", "web"])
     s.add_argument("--screen-type", dest="screen_type", default="",

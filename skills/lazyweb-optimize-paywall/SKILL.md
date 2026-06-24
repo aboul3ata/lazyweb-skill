@@ -89,9 +89,19 @@ If the MCP is missing/auth fails, tell the user to run
    not represent a valid image" / "invalid base64-encoded value") and is
    size-hostile through the gateway. `$SKILL_DIR` below = the directory holding
    this SKILL.md (where `optimize_paywall.py` ships).
-2. Ask one concise question only if the **product**, **conversion goal**, or
-   target screen is missing and cannot be inferred. You do NOT need to analyze the
-   paywall yourself — the server labels it.
+2. **Author a short product brief — the single highest-signal input.** This is what
+   makes the diagnosis specific to THIS product instead of generic corpus advice. In
+   ~3–6 sentences cover: **who the user is** and why they're on this screen; **where
+   it sits in the flow** (what came before, what's after); the **free vs paid
+   boundary** — what paying actually unlocks vs the free tier, and why someone
+   upgrades; and the product's **wedge vs alternatives**. Use what the user told you
+   plus what you know about the product; ask ONE concise question only if the
+   product, conversion goal, or the free-vs-paid story is missing and you can't infer
+   it. You do NOT need to analyze the *screenshot* — the server labels the pixels —
+   but you DO provide this product knowledge: the server treats it as **authoritative**
+   and grounds every friction + hypothesis in it. Pass it via `--product-brief`
+   (inline, or `@path/to/brief.md`). Skipping it is the difference between fable-grade
+   and generic output.
 3. **Detect platform + screen_type** from the screenshot (routes the evidence):
    - `platform`: `mobile` (tall portrait phone screenshot) or `web` (wide
      desktop/browser page).
@@ -117,6 +127,7 @@ python "$SKILL_DIR/optimize_paywall.py" synthesize \
   --product "<product/company name; excluded from corpus so it isn't benchmarked vs itself>" \
   --conversion-goal "<e.g. annual-plan share / trial starts>" \
   --plan-structure "<e.g. monthly $6.99 / annual $59.99>" \
+  --product-brief "<who the user is; free vs paid + why upgrade; where this sits in the flow; the wedge>" \
   --platform <mobile|web> --screen-type <paywall|pricing|landing|signup> \
   [--category <cat>] [--constraints "<...>"] [--divergence auto|low|med|high] \
   --out "$WORK/synthesis.json"
