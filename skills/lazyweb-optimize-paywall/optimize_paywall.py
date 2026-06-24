@@ -55,7 +55,7 @@ PROTOCOL_VERSION = "2025-06-18"
 POST_TIMEOUT_S = 60
 POLL_INTERVAL_S = 6.0
 SYNTH_BUDGET_S = 240.0
-MOCKUP_BUDGET_S = 240.0
+MOCKUP_BUDGET_S = 300.0  # stays under the gateway's MOCKUP_GEN_TIMEOUT_MS (330s)
 ALLOWED_MIME = {"image/png", "image/jpeg", "image/webp"}
 # Above this base64 length the screenshot is uploaded to lazybackend for a signed
 # URL instead of going inline — the gateway 413s large MCP request bodies (a
@@ -315,7 +315,7 @@ def cmd_mockup(client: McpClient, a: argparse.Namespace) -> dict:
     args = {
         "prompt": prompt,
         **image_args(a.image, client.token, "mockup (EDIT off current screenshot)"),
-        "quality": a.quality or "high",
+        "quality": a.quality or "medium",
         "skill": "lazyweb-optimize-paywall",
         "version": skill_version(),
     }  # NOTE: omit `size` in EDIT mode so it matches the input aspect ratio
@@ -357,7 +357,10 @@ def main() -> None:
     m.add_argument("--image", required=True)
     m.add_argument("--prompt", default="")
     m.add_argument("--prompt-file", dest="prompt_file", default="")
-    m.add_argument("--quality", default="high", choices=["low", "medium", "high", "auto"])
+    # medium (not high): high-quality gpt-image-2 edits are the slowest gens and
+    # their >180s tail caused the mockup timeouts; medium ~halves diffusion work
+    # for a directional redesign preview. Pass --quality high to override.
+    m.add_argument("--quality", default="medium", choices=["low", "medium", "high", "auto"])
     m.add_argument("--out", default="")
 
     a = ap.parse_args()
