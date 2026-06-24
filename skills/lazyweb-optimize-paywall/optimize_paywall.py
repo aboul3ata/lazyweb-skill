@@ -290,11 +290,14 @@ def cmd_synthesize(client: McpClient, a: argparse.Namespace) -> dict:
         "product_brief": brief,
         "divergence": a.divergence or "auto",
         "platform": a.platform or "mobile",
-        "screen_type": a.screen_type or "",
         "report_skill": "optimize-paywall",
         "skill": "lazyweb-optimize-paywall",
         "version": skill_version(),
     }
+    # Only send screen_type when set: the gateway's optional enum rejects "" (a
+    # default mobile paywall has none), which silently fails the whole call.
+    if a.screen_type:
+        args["screen_type"] = a.screen_type
     started = payload_of(client.tools_call(1, "lazyweb_start_paywall_synthesize", args))
     job_id = started.get("job_id")
     if not job_id:
