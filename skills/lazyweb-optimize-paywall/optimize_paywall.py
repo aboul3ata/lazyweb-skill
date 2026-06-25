@@ -285,6 +285,10 @@ def cmd_synthesize(client: McpClient, a: argparse.Namespace) -> dict:
         }
     if not (a.image or "").strip():
         fatal("synthesize with --objective optimize|improve requires --image (a screenshot of the current screen). For a new screen from scratch, use --objective create.")
+    intent = (getattr(a, "intent", "") or "").strip()
+    if objective == "improve" and not intent:
+        fatal("synthesize with --objective improve requires --intent \"<what to improve>\" "
+              "(e.g. 'make it feel more premium'). For metric-driven conversion work use --objective optimize.")
     # Operator product brief — the highest-signal context. Inline text or @file.
     # Forwarded as `product_brief`; the server treats it as AUTHORITATIVE and
     # grounds the diagnosis in it (who the user is, the free/paid value exchange,
@@ -312,6 +316,11 @@ def cmd_synthesize(client: McpClient, a: argparse.Namespace) -> dict:
         "skill": "lazyweb-optimize-paywall",
         "version": skill_version(),
     }
+    # `objective` already carries the run mode (optimize|improve). Forward the
+    # freeform intent for improve, where it also drives the task.
+    args["intent"] = intent
+    if objective == "improve" and not (a.task or "").strip():
+        args["task"] = intent
     started = payload_of(client.tools_call(1, "lazyweb_start_paywall_synthesize", args))
     job_id = started.get("job_id")
     if not job_id:
@@ -356,6 +365,10 @@ def main() -> None:
     s.add_argument("--objective", default="optimize", choices=["optimize", "improve", "create"],
                    help="Intent-first: optimize|improve operate on an EXISTING screen (need --image); "
                         "create = a NEW screen from scratch (redirects to deep-design-research, no image).")
+    s.add_argument("--intent", default="",
+                   help="Freeform plain-text intent for --objective improve: what the user wants "
+                        "better about this design (e.g. 'make it feel more premium'). REQUIRED for "
+                        "improve; ignored for optimize.")
     s.add_argument("--product", default="")
     s.add_argument("--conversion-goal", dest="conversion_goal", default="")
     s.add_argument("--plan-structure", dest="plan_structure", default="")

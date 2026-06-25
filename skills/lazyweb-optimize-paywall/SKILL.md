@@ -39,7 +39,7 @@ whether an image happens to be available:
 | `objective` | User intent | What happens |
 |---|---|---|
 | **optimize** (default) | Move a **metric** (conversion) on an **existing** screen | Run the pipeline below (Steps 1–4). **Screenshot required.** |
-| **improve** | Raise **aesthetic / design quality** of an **existing** screen | Same pipeline, design-quality framing. **Screenshot required.** |
+| **improve** | Make an **existing** screen better per a **stated intent** (not a metric) | Same pipeline, intent-driven framing. **Screenshot + `--intent "<what to improve>"` required.** |
 | **create** | Design a **new** screen **from scratch** (none exists) | **Redirect to `lazyweb-deep-design-research`** (greenfield). No screenshot. |
 
 **Grounding is enforced by the intent; it does not select it.** For `optimize`/
@@ -168,7 +168,7 @@ python "$SKILL_DIR/optimize_paywall.py" synthesize \
   --plan-structure "<e.g. monthly $6.99 / annual $59.99>" \
   --product-brief "<who the user is; free vs paid + why upgrade; where this sits in the flow; the wedge>" \
   --platform <mobile|web> --screen-type <paywall|pricing|landing|signup> \
-  [--objective optimize|improve]   # default optimize; a NEW screen from scratch uses create (see Objectives) — not this command \
+  [--objective optimize|improve] [--intent "<what to improve>"]   # default optimize; improve REQUIRES --intent (no metric goal); a NEW screen from scratch uses create (see Objectives) \
   [--category <cat>] [--constraints "<...>"] [--divergence auto|low|med|high] \
   --out "$WORK/synthesis.json"
 ```
