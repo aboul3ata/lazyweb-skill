@@ -218,13 +218,21 @@ screenshot (keeps the real brand/layout/dimensions), conditioned on the winner's
 
 ### ENFORCED PREAMBLE — prepend to every winner's `mockup_prompt`
 
-> ENFORCED CONSTRAINTS — the output is a redesigned paywall mockup based on the
-> baseline image. (1) EXACT VISUAL STYLE PRESERVATION: match the baseline's
+The opening noun and constraint (2) carry `[mobile]` / `[web]` tagged wording —
+**keep the clause matching the `platform` you detected in Step 1 and delete the
+other tag's text** (e.g. on `web`, keep the `[web]` wording and drop the `[mobile]`
+wording). Everything else is identical for both platforms.
+
+> ENFORCED CONSTRAINTS — the output is a redesigned mockup of the baseline screen —
+> [mobile] a mobile app paywall · [web] a web pricing/landing/signup page — based on
+> the baseline image. (1) EXACT VISUAL STYLE PRESERVATION: match the baseline's
 > background color, brand palette, typography (family/weight/size hierarchy),
 > border-radius, icon/illustration style, and overall feel — it must look like
 > the same product. (2) DIMENSION + ASPECT PRESERVATION: keep the baseline's
-> aspect ratio and status-bar / safe-area insets in the same proportions.
-> (3) PRIMARY CTA PROMINENCE LOCK: the dominant purchase/subscribe button stays
+> aspect ratio and outer framing in the same proportions, adding no new outer
+> margins — [mobile] preserve the status-bar / safe-area insets; [web] keep the top
+> navigation bar flush to the top edge and preserve the full page width / browser
+> chrome. (3) PRIMARY CTA PROMINENCE LOCK: the dominant purchase/subscribe button stays
 > AT LEAST as large and as visually dominant as in the baseline — you may move
 > it, never shrink it; if the change needs room, collapse other content rather
 > than miniaturizing the CTA. (4) CHANGE SCOPE — apply the change at the
