@@ -101,12 +101,19 @@ Use hosted Lazyweb MCP tools at `https://www.lazyweb.com/mcp`. First list the
 tools and run `lazyweb_health`. Required tools:
 
 - `lazyweb_health` — verify connectivity.
+- `lazyweb_request_image_upload` + `lazyweb_resolve_image_upload` — **the image
+  input path (presigned upload over MCP auth).** `request` mints a short-TTL
+  presigned PUT; you `curl` the file straight to storage with NO Lazyweb
+  credential; `resolve` returns a stable `image_url` you pass to synthesize /
+  start_mockup. Authed by the existing MCP session, so it works for OAuth
+  connector *and* static-token connections. See Step 1.
 - `lazyweb_start_paywall_synthesize` + `lazyweb_get_paywall_synthesize` — **THE
   core call (async).** Start runs the full internal generation pipeline from the
   screenshot (label → retrieve twins → diagnose frictions → synthesize the
   slot-diverse portfolio with mechanism-bound evidence → stack-rank top-1 per
   slot). Poll get until `done`. Result: `{ synthesis_id, winners:[{slot,
-  hypothesis_title, mockup_prompt, change_scope, evidence_company}] }`.
+  hypothesis_title, mockup_prompt, change_scope, evidence_company}] }`. Pass the
+  current screen as `image_url` (from `resolve_image_upload`).
 - `lazyweb_start_mockup` + `lazyweb_get_mockup` — async paywall mockup generation
   (the sync `lazyweb_generate_mockup` times out through the gateway; use the pair).
 - `lazyweb_render_report` — server-renders + hosts the report (pass
@@ -117,24 +124,45 @@ tools and run `lazyweb_health`. Required tools:
 
 If the **MCP itself** is missing or its auth fails (e.g. `lazyweb_health` errors),
 tell the user to run `curl -fsSL https://www.lazyweb.com/install.sh | bash`,
-reload, and rerun. Note this is distinct from a missing **helper-script token**
-(`~/.lazyweb/lazyweb_mcp_token`): the MCP can be perfectly healthy while that file
-is absent. A missing token must NOT block the skill — see Step 2's no-token
-fallback.
+reload, and rerun. With the presign upload flow (Step 1), image input is
+authenticated by the **MCP session itself** — if the MCP is healthy, upload works,
+by construction. The legacy helper-script token (`~/.lazyweb/lazyweb_mcp_token`) is
+no longer on the image-input path; it only matters for the optional token-script
+fallback (see Step 2).
 
 ## Step 1 — Ground the paywall
 
 1. Capture or read the target paywall. Prefer a real screenshot or URL over prose.
    Save it to `$WORK/references/current-state.png` — it becomes the "Current"
-   column and the input to synthesis. **Keep the file path** — Step 2's helper
-   script reads it and base64-encodes it **in code**, then uploads it, so the
-   bytes never pass through your output. The reason is **size, not corruption**: a
-   full-resolution screenshot is hundreds of KB to several MB of base64 — far too
-   large for an agent to emit reliably as a tool argument, and big inline blobs
-   can 502 the gateway. (Small/downscaled images inline fine; full-res ones do
-   not.) The script is the preferred path; if it can't authenticate, Step 2 has a
-   no-token fallback that never hard-fails. `$SKILL_DIR` below = the directory
-   holding this SKILL.md (where `optimize_paywall.py` ships).
+   column and the input to synthesis. **Keep the file path.**
+
+   **Upload it via the presign flow → get a stable `image_url`** (the primary
+   image-input path; the bytes never pass through your output). The reason the
+   bytes can't go inline is **size, not just corruption**: a full-resolution
+   screenshot is hundreds of KB to several MB of base64 — far too large for an
+   agent to emit reliably as a tool argument, and big inline blobs can 502 the
+   gateway. The presign flow moves the bytes out-of-band over `curl`, authed by
+   your existing MCP session (no `~/.lazyweb` token needed). Spec:
+   [`specs/image-upload-architecture.md`](../../specs/image-upload-architecture.md).
+
+   ```bash
+   IMG="$WORK/references/current-state.png"
+   # mime: image/png | image/jpeg | image/webp (match the file)
+   MIME="image/png"
+   ```
+   a. `lazyweb_request_image_upload({ mime_type: "<MIME>" })` → `{ upload_url, key }`.
+   b. PUT the bytes with **NO credentials** (the presigned URL is the auth):
+      ```bash
+      curl -fsS -X PUT -H "content-type: $MIME" --data-binary @"$IMG" "<upload_url>"
+      ```
+   c. `lazyweb_resolve_image_upload({ key: "<key>" })` → `{ image_url }`.
+   d. Use that `image_url` as the current screen for synthesis (Step 2) and as the
+      EDIT base for each mockup (Step 3). One upload feeds all of them.
+
+   `$SKILL_DIR` below = the directory holding this SKILL.md (where
+   `optimize_paywall.py` ships). The helper now accepts `--image-url "<image_url>"`
+   so it can reuse the already-uploaded screenshot instead of re-reading the file.
+   (Already have a hosted screenshot URL? Skip a–c and pass it straight through.)
 2. **Author a short product brief — the single highest-signal input.** This is what
    makes the diagnosis specific to THIS product instead of generic corpus advice. In
    ~3–6 sentences cover: **who the user is** and why they're on this screen; **where
@@ -162,14 +190,28 @@ fallback.
 
 ## Step 2 — Synthesize (the server does the thinking)
 
-**Run the helper script** `optimize_paywall.py` (it reads the screenshot file,
-base64-encodes it **in code**, calls `lazyweb_start_paywall_synthesize`, and polls
-`lazyweb_get_paywall_synthesize` for you — so a full-res image's bytes never have
-to pass through your output, which can't carry a multi-MB base64 blob reliably):
+Now that the screen is a short `image_url` (not bytes), there are **two equivalent
+ways** to run synthesis; pick by what's available:
+
+- **Direct MCP (cleanest, no token, no script).** Call
+  `lazyweb_start_paywall_synthesize({ image_url, platform, screen_type, product,
+  conversion_goal, plan_structure, product_brief, objective, … })` from your own
+  authenticated MCP session, then poll `lazyweb_get_paywall_synthesize({ job_id })`
+  until `done`. Nothing here needs `~/.lazyweb` — the `image_url` is already public
+  and your MCP session is the auth.
+- **Helper script (convenience for the polling loop).** `optimize_paywall.py`
+  forwards your `--image-url` to the same tool and does the poll for you. Note the
+  script opens its *own* MCP connection, so it still needs a bearer token for *that
+  connection* (independent of the image); if you have no token, use the direct-MCP
+  path above.
+
+**Helper invocation** — pass the **`image_url` from Step 1** (the bytes already
+live in storage from the presign upload, so they never touch your output or the
+gateway):
 
 ```
 python "$SKILL_DIR/optimize_paywall.py" synthesize \
-  --image "$WORK/references/current-state.png" \
+  --image-url "<image_url from Step 1 resolve_image_upload>" \
   --product "<product/company name; excluded from corpus so it isn't benchmarked vs itself>" \
   --conversion-goal "<e.g. annual-plan share / trial starts>" \
   --plan-structure "<e.g. monthly $6.99 / annual $59.99>" \
@@ -183,48 +225,33 @@ python "$SKILL_DIR/optimize_paywall.py" synthesize \
 It prints (and writes to `--out`) `{ synthesis_id, winners:[{slot,
 hypothesis_title, change_scope, evidence_company, mockup_prompt}] }`.
 `synthesis_id` goes to render; each of the 4 `winners` carries a ready
-`mockup_prompt`. The script POSTs directly to the backend, so it needs its **own**
-bearer token: `LAZYWEB_MCP_TOKEN` or `~/.lazyweb/lazyweb_mcp_token` (if your
-Python has no CA bundle, set `SSL_CERT_FILE`, e.g.
-`python3 -c 'import certifi;print(certifi.where())'`).
+`mockup_prompt`. With `--image-url` the helper passes the URL straight through to
+`lazyweb_start_paywall_synthesize` over your MCP session — **no `~/.lazyweb` token
+is involved** in the image-input path.
 
-The script exits non-zero with a clear message on a bad image or a server
-`status:"error"` — surface those and stop (don't hand-write a report). A
-**missing/invalid token is also a stop condition — but a clear, actionable one,
-not a silent dead-end** (and not an excuse to ship a degraded report).
+The script exits non-zero with a clear message on a bad image-url or a server
+`status:"error"` — surface those and stop (don't hand-write a report).
 
-### No-token handling — fail clearly; never ship a degraded report
+### Image input — presign is the primary path (token-upload is legacy)
 
-The token file is written by the installer and is usually present, but it can be
-missing — a second machine, a reinstall that didn't re-write it, or a client that
-connected Lazyweb as an MCP/OAuth connector instead of via `install.sh` (the
-connector path never runs the installer's token step). The MCP tools authenticate
-over your client's existing MCP session, but the **script** needs this token to
-upload the full-res screenshot. (The durable fix removes this token entirely — see
-[`specs/image-upload-architecture.md`](../../specs/image-upload-architecture.md):
-a presigned `lazyweb_request_image_upload` minted over the MCP session. Until that
-ships, use the recovery below.) When the token is missing:
+Image input runs through the **Step 1 presign flow**
+(`request_image_upload` → `curl` PUT → `resolve_image_upload` → `image_url`),
+authenticated by your existing MCP session. Because that auth rides the MCP
+session, **the old missing-token problem effectively goes away for upload**: it
+works identically for OAuth-connector users (who never had a token file) and
+static-token users. There is no degraded-report branch and no inline-base64
+fallback to manage — just pass the resolved `image_url`. Spec:
+[`specs/image-upload-architecture.md`](../../specs/image-upload-architecture.md).
 
-1. **Self-heal (preferred, when available):** call `lazyweb_issue_cli_token`,
-   write the returned token to `~/.lazyweb/lazyweb_mcp_token` (mode 0600), then
-   retry the script. This restores the full-res path transparently — the user gets
-   a normal, full-quality report with real mockups.
-2. **Otherwise STOP and ask.** Tell the user plainly: *"I can't generate a real
-   report without the Lazyweb token (`~/.lazyweb/lazyweb_mcp_token` is missing).
-   Run `curl -fsSL https://www.lazyweb.com/install.sh | bash` to provision it (or
-   paste a token), then rerun."* A clear, actionable stop is the **correct**
-   outcome.
-
-**Do NOT substitute a hard-shrunk inline image to limp through.** An agent can
-only emit ≲~5K base64 chars reliably (a ~150px JPEG; ~19K corrupts →
-`invalid base64-encoded value`), which renders a pixelated, unreadable "Current"
-column and **no mockups** — visibly worse than asking for the token. Produce that
-low-fi, no-mockup preview **only if the user explicitly asks** for a rough preview
-without setting up the token, and label it a throwaway. Default behavior is the
-clear stop above.
-
-(Already-hosted screenshot? Passing `image_url` directly to
-`lazyweb_start_paywall_synthesize` also works, and avoids base64 entirely.)
+**Fallback (legacy, optional).** The helper still supports `--image <file>`, which
+base64-encodes the screenshot **in code** and POSTs it to lazybackend using a
+static bearer token (`LAZYWEB_MCP_TOKEN` or `~/.lazyweb/lazyweb_mcp_token`; set
+`SSL_CERT_FILE` if your Python has no CA bundle). Use it only if presign is
+unavailable. If you go this route and the token is missing (e.g. an OAuth-connector
+machine that never ran `install.sh`), don't limp through with a hard-shrunk inline
+image — prefer the presign flow above, or STOP and tell the user plainly: *"Run
+`curl -fsSL https://www.lazyweb.com/install.sh | bash` to provision the token, or
+just use the presign upload."*
 
 ## Step 3 — Generate one mockup per winner (async)
 
@@ -234,14 +261,14 @@ screenshot (keeps the real brand/layout/dimensions), conditioned on the winner's
 
 - **If you ARE Codex** → use built-in `image_gen` (gpt-image-2) with the current
   screenshot as the reference image.
-- **Otherwise (Claude Code, etc.)** → run the helper script once per winner — it
-  posts the current screenshot **byte-perfectly** in EDIT mode (`image_base64`
-  built from the file in code, `size` omitted) and polls `lazyweb_get_mockup` for
+- **Otherwise (Claude Code, etc.)** → run the helper script once per winner — pass
+  the **`image_url` from Step 1** as the EDIT base (`--image-url`, `size` omitted so
+  the mockup matches the input aspect ratio) and it polls `lazyweb_get_mockup` for
   you. Do NOT call `lazyweb_generate_mockup` (times out) and do NOT hand-pass
   `image_base64`. Run the 4 in parallel (background them):
   ```
   python "$SKILL_DIR/optimize_paywall.py" mockup \
-    --image "$WORK/references/current-state.png" \
+    --image-url "<image_url from Step 1 resolve_image_upload>" \
     --prompt "<ENFORCED PREAMBLE + winner.mockup_prompt>" \
     --out "$WORK/mock-<slot>.json" &
   ```
@@ -254,11 +281,12 @@ screenshot (keeps the real brand/layout/dimensions), conditioned on the winner's
   server renders a "(no mockup)" placeholder for it; the rest of the report is
   unaffected. Never block the whole report on one missing mockup; never use ASCII
   art. A mix (3 real + 1 placeholder) is fine.
-- **No-token** — the default is to STOP and ask for the token (Step 2), not to
-  render placeholder mockups. Only in the **explicit low-fi preview** case: omit
-  all four mockups (the report shows "(no mockup)"). Do NOT hand-emit an EDIT base
-  for `lazyweb_start_mockup` — a usable mockup base far exceeds the ~5K-char emit
-  limit and would corrupt the same way synthesize does.
+- **Image base** — use the Step 1 `image_url` as the EDIT base (same upload that
+  fed synthesis). Do NOT hand-emit an `image_base64` EDIT base for
+  `lazyweb_start_mockup` — a usable mockup base far exceeds the ~5K-char emit limit
+  and would corrupt the same way synthesize does. With the presign flow there's no
+  missing-token stop here; if presign is genuinely unavailable, see Step 2's legacy
+  fallback.
 
 ### ENFORCED PREAMBLE — prepend to every winner's `mockup_prompt`
 
@@ -306,8 +334,9 @@ Notes:
 - `mockups` is keyed by each winner's `slot`; each value is the **`image_url`**
   from `lazyweb_get_mockup`. Omit a slot only if its mockup couldn't be generated.
 - `target_image` is the current screenshot as a base64 `data:` URI (one image is
-  fine through the gateway). In no-token degraded mode, pass the **downscaled**
-  JPEG data URI here — it only needs to render the "Current" column.
+  fine through the gateway). Migrating this render-asset input off base64 to the
+  presigned `image_url` is **Phase 2** (out of scope here) — keep the `data:` URI
+  for now. You already have the bytes locally at `$WORK/references/current-state.png`.
 - Pass a stable `idempotency_key` (e.g. `"optimize-paywall/{topic}-{date}"`) so a
   re-render dedupes to the same URL.
 - On a `400` with `code:"render_field_missing"`, the `detail` names the bad field

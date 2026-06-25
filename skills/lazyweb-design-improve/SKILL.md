@@ -58,7 +58,7 @@ report dir is `$REPORT_DIR = .lazyweb/design-improve/{topic-slug}-{YYYY-MM-DD}`.
 
 Arguments:
 - `report_data`: the parsed `work/report-data.json` object (see "Author report-data.json" below).
-- `assets`: every file in `$REPORT_DIR/references/` as `{ "name": <filename>, "b64": <base64 of the bytes> }` — the locally-saved screenshots the report points at via `references/{name}`. Lazyweb references embedded by absolute imageUrl are NOT assets.
+- `assets`: every file in `$REPORT_DIR/references/` as `{ "name": <filename>, "b64": <base64 of the bytes> }` — the locally-saved screenshots the report points at via `references/{name}`. Lazyweb references embedded by absolute imageUrl are NOT assets. (Render-asset base64 stays as-is here — migrating these uploads to the presigned `image_url` flow is Phase 2, out of scope for now; see `specs/image-upload-architecture.md`.)
 - `report_skill`: `"design-improve"`.
 - `idempotency_key`: the report dir slug, e.g. `design-improve/{topic-slug}-{YYYY-MM-DD}`. Send the SAME value on every call for this report so a retry returns the same link.
 - `version`: the value you read from `~/.lazyweb/VERSION` at skill start.
@@ -180,7 +180,9 @@ Use the hosted Lazyweb MCP tools at `https://www.lazyweb.com/mcp` for all Lazywe
 Required current public MCP tools:
 - `lazyweb_search` — text search over mobile and desktop screenshots
 - `lazyweb_find_similar` — more results like a returned Lazyweb `imageUrl` or image payload
-- `lazyweb_compare_image` — visual search from `image_base64` + `mime_type` or `image_url`
+- `lazyweb_request_image_upload` — mint a presigned `upload_url` + `key` for the current-state screenshot, authed by the MCP session (no `~/.lazyweb` token)
+- `lazyweb_resolve_image_upload` — turn the uploaded `key` into a fetchable `image_url` to pass to `lazyweb_compare_image`
+- `lazyweb_compare_image` — visual search from a fetchable `image_url` (preferred — use the presigned upload flow; see "Find Similar Screens in Lazyweb" and `specs/image-upload-architecture.md`)
 - `lazyweb_render_report` — render + host the finished report from `report_data` + reference images, returns the shareable link (the deliverable; see "Render and host the report" above)
 - `lazyweb_search_ab_tests` — public mobile-only A/B Test Agent wrapper when growth experiment evidence is needed
 - `lazyweb_health` — connectivity check
@@ -249,12 +251,38 @@ If no screenshot can be captured, ask the user to provide one. Don't proceed wit
 
 ### 2. Find Similar Screens in Lazyweb
 
-Use image comparison to find visually similar screens. Read the local screenshot
-bytes, base64 encode them, detect the MIME type, then call `lazyweb_compare_image`:
+Use image comparison to find visually similar screens. Send the current-state
+screenshot through the presigned image-upload flow — NEVER emit a full-res
+screenshot as inline `image_base64` (an LLM corrupts large base64 in transit, so
+the search silently fails). Get the bytes to an `image_url` the server can fetch,
+then pass that URL to `lazyweb_compare_image`. See
+`specs/image-upload-architecture.md` for why bytes never route through the model.
 
-```json
-{"image_base64":"<base64 file bytes>","mime_type":"image/png","limit":30}
-```
+1. Determine the screenshot's MIME type (`image/png`, `image/jpeg`, or `image/webp`).
+2. Mint a presigned upload target (authed by the MCP session — no `~/.lazyweb` token needed):
+
+   ```json
+   lazyweb_request_image_upload({"mime_type":"image/png"})  ->  {"upload_url":"<presigned PUT>","key":"<key>"}
+   ```
+
+3. PUT the raw bytes with NO credentials (the presigned URL is the auth):
+
+   ```bash
+   curl -fsS -X PUT -H "content-type: image/png" \
+     --data-binary @"$REPORT_DIR/references/current-state.png" "<upload_url>"
+   ```
+
+4. Resolve the stable image URL the pipeline will fetch:
+
+   ```json
+   lazyweb_resolve_image_upload({"key":"<key>"})  ->  {"image_url":"<image_url>"}
+   ```
+
+5. Call `lazyweb_compare_image` with that `image_url`:
+
+   ```json
+   {"image_url":"<image_url>","limit":30}
+   ```
 
 Also do text searches for the screen type with multiple angles:
 

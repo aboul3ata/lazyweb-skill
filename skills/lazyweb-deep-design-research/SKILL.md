@@ -82,7 +82,7 @@ report dir is `$REPORT_DIR = .lazyweb/deep-design-research/{topic-slug}-{YYYY-MM
 
 Arguments:
 - `report_data`: the parsed `work/report-data.json` object (see "Author report-data.json" below).
-- `assets`: every file in `$REPORT_DIR/references/` as `{ "name": <filename>, "b64": <base64 of the bytes> }` — the control screenshot and each generated prototype image the report points at via `references/{name}`. Lazyweb references embedded by absolute `imageUrl` are NOT assets; only locally saved files.
+- `assets`: every file in `$REPORT_DIR/references/` as `{ "name": <filename>, "b64": <base64 of the bytes> }` — the control screenshot and each generated prototype image the report points at via `references/{name}`. Lazyweb references embedded by absolute `imageUrl` are NOT assets; only locally saved files. (Note: migrating these render assets off inline base64 to the presigned upload flow is Phase 2 — out of scope here; keep `assets:[{b64}]` as-is.)
 - `report_skill`: `"deep-design-research"`.
 - `idempotency_key`: the report dir slug, e.g. `deep-design-research/{topic-slug}-{YYYY-MM-DD}`. Send the SAME value on every call for this report so a retry returns the same link instead of a duplicate.
 - `version`: the value you read from `~/.lazyweb/VERSION` at skill start.
@@ -125,7 +125,8 @@ Use the hosted Lazyweb MCP tools at `https://www.lazyweb.com/mcp` for all Lazywe
 Required MCP tools:
 - `lazyweb_search` - text search over mobile and desktop screenshots
 - `lazyweb_find_similar` - more results like a returned Lazyweb `imageUrl` or image payload
-- `lazyweb_compare_image` - visual search from `image_base64` + `mime_type` or `image_url`
+- `lazyweb_compare_image` - visual search from an `image_url` (the control reaches it via the presigned upload flow; see "Send the control via presigned upload")
+- `lazyweb_request_image_upload` / `lazyweb_resolve_image_upload` - presigned upload for the control screenshot: request a `{ upload_url, key }`, PUT the bytes, resolve to an `image_url` (spec: `specs/image-upload-architecture.md`)
 - `lazyweb_health` - connectivity check
 - `lazyweb_render_report` - render + host the finished report from `report_data` + reference images, returns the shareable link (the deliverable; see "Render and host the report" above)
 
@@ -280,9 +281,10 @@ On success, `work/evidence.json` holds merged, same-company-deduped references
    - `lazyweb_find_similar` on the 2-3 strongest results, passing each
      reference's `imageUrl` string as `image_url`, `"limit": 5`;
    - `lazyweb_compare_image` is OMITTED from the fast path (measured: low
-     yield and payload-hostile — inline base64 through chat costs more than
-     it returns). Only the agent-fallback path may use it, with the
-     downscaled ≤500px viewport-crop JPEG.
+     yield). Only the agent-fallback path may use it, sending the control via
+     the presigned image-upload flow (request -> PUT -> resolve -> `image_url`;
+     see "Send the control via presigned upload" below, spec:
+     `specs/image-upload-architecture.md`) — never inline base64.
    Read ONLY the script's stderr verdict line (`TOPUP_SATURATED:` /
    `TOPUP: N attachable`) and `evidence-topup-summary.json` — never the raw
    top-up file (its signed URLs are payload-hostile). Expect description-less
@@ -370,9 +372,28 @@ neighbors. This is how the corpus gets from "three or four screenshots" to a
 real reference set.
 
 When a current-state screenshot exists, also run `lazyweb_compare_image` with
-it (`image_base64` + `mime_type`) and fold the top structural matches into the
-reference set — visual similarity from the control itself is the strongest
-grounding move available.
+it via the presigned image-upload flow (see "Send the control via presigned
+upload" below; spec: `specs/image-upload-architecture.md`) and fold the top
+structural matches into the reference set — visual similarity from the control
+itself is the strongest grounding move available. Pass the resolved
+`image_url` to `lazyweb_compare_image`; never inline a full-res screenshot as
+`image_base64`.
+
+#### Send the control via presigned upload
+
+The control screenshot is uploaded once and referenced by URL — large base64
+sent inline through chat gets corrupted by the LLM. Use the Phase 0 MCP
+upload tools (spec: `specs/image-upload-architecture.md`):
+
+1. Determine the `mime_type` of `$REPORT_DIR/references/current-state.png`
+   (`image/png`, `image/jpeg`, or `image/webp`).
+2. `lazyweb_request_image_upload({ mime_type })` -> `{ upload_url, key }`
+   (authed by the MCP session; no `~/.lazyweb` token needed).
+3. PUT the bytes with NO credentials:
+   `curl -fsS -X PUT -H "content-type: <mime>" --data-binary @"$REPORT_DIR/references/current-state.png" "<upload_url>"`
+4. `lazyweb_resolve_image_upload({ key })` -> `{ image_url }`.
+5. Call `lazyweb_compare_image({ image_url, skill, version })` with that
+   `image_url` and fold the top structural matches into the reference set.
 
 `lazyweb_compare_image` and `lazyweb_find_similar` results often come back
 without a `visionDescription` and sometimes with null/near-duplicate metadata.
@@ -386,11 +407,11 @@ Handle them explicitly:
 
 Keep `limit` at 15 (10-20 band): larger results overflow many hosts' tool-result cap,
 forcing a dump-to-file + re-read round trip that costs more time than a second
-page. Page with `offset` when you genuinely need more. When sending the control
-to `lazyweb_compare_image`, **crop it to its top viewport window FIRST** (a
-full-page capture downscaled whole becomes an unembeddable sliver and the
-server rejects it), then downscale that window to a ≤500px-wide JPEG before
-base64 — a full 1500px PNG exceeds tool-call limits.
+page. Page with `offset` when you genuinely need more. The control reaches
+`lazyweb_compare_image` through the presigned upload flow above (request -> PUT
+-> resolve -> `image_url`), so there is no inline base64 to crop or downscale —
+upload the full-resolution `current-state.png` and let the server work from the
+hosted asset.
 
 Platform routing:
 - SaaS, web, desktop app, admin surface, or marketing page -> use `platform: "desktop"`

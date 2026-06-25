@@ -1,6 +1,6 @@
 # Image upload architecture — get bytes to the server without routing them through the model
 
-**Status:** proposed (2026-06-25) · **Primary:** presigned upload over MCP auth · **Interim:** `lazyweb_issue_cli_token`
+**Status:** Phase 0 SHIPPED (lazybackend#282 + cli-lazybackend#67) · Phase 1 (input-image skills) migrating · **Primary:** presigned upload over MCP auth (two-call: request → PUT → resolve) · **Interim (now moot):** `lazyweb_issue_cli_token`
 **Affects:** every skill that sends a user image (optimize-paywall, design-improve, deep-design-research, quick-search, paywall-cta, …) and the cli/MCP server + lazybackend.
 
 ## Problem
@@ -65,32 +65,39 @@ Two sub-problems → two requirements:
    session itself** — so that *if the MCP works, upload works, by construction.* A
    separately-provisioned static token violates this (and did).
 
-## Decision — PRIMARY: presigned upload URL minted over MCP auth
+## Decision — PRIMARY: presigned upload over MCP auth (SHIPPED — two-call)
 
-New MCP tool, authenticated by the **existing MCP session** (works for connector
-*and* static-token connections):
+Two MCP tools, authenticated by the **existing MCP session** (works for connector
+*and* static-token connections). Shipped in lazybackend#282 (`/paywall-report/
+request-upload` + `/resolve-upload`) and cli-lazybackend#67 (the tools):
 
 ```
 lazyweb_request_image_upload({ mime_type, byte_size? })
-  -> { upload_url,   // presigned PUT to object storage, short TTL (~10 min)
-       image_url }   // stable GET URL the pipeline will fetch
+  -> { upload_url,   // presigned PUT to object storage, ~10 min TTL
+       key }         // storage key to resolve after the PUT
+lazyweb_resolve_image_upload({ key })
+  -> { image_url }   // 24h signed GET URL the pipeline fetches
 ```
 
+**Why two calls, not one:** the pinned `storage3==2.31.0` can presign a PUT for a
+not-yet-existing object (`create_signed_upload_url`), but the download URL
+(`create_signed_url`) 400s until the object exists — so `image_url` must be minted
+*after* the PUT, in a second call.
+
 Agent flow (all agent-emitted strings are short; bytes never touch the model):
-1. `{upload_url, image_url} = lazyweb_request_image_upload({mime_type})`  (MCP, OAuth)
-2. `curl -fsS -T current-state.png "$upload_url"`  (Bash; **no Lazyweb credential** — the presigned URL is the auth)
-3. pass `image_url` to `synthesize` / `start_mockup` / `render` (and `compare_image`/`find_similar`)
+1. `{upload_url, key} = lazyweb_request_image_upload({mime_type})`  (MCP, session-authed)
+2. `curl -fsS -X PUT -H "content-type: <mime>" --data-binary @current-state.png "$upload_url"`  (Bash; **no Lazyweb credential** — the presigned URL is the auth)
+3. `{image_url} = lazyweb_resolve_image_upload({key})`
+4. pass `image_url` to `synthesize` / `start_mockup` / `render` / `compare_image` / `find_similar`
 
 Why this is the target:
 - **No static token, no file to go missing** → fixes the connector class entirely.
 - **Bytes never routed through the model** → fixes the 38%+ corruption/oversize failures.
 - **One mechanism for every skill** — design-improve's 43%-failing inline
   `compare_image` becomes an `image_url` send.
-- The heavy `optimize_paywall.py` collapses to ~one `curl`; SSL-bundle/token logic goes away.
+- The heavy `optimize_paywall.py` upload/token logic becomes a `curl` + two tool calls.
 
-Server work: (a) presign endpoint behind MCP auth → object storage (S3/GCS/Supabase
-storage) with a short-lived stable read URL; (b) the `*_image` / `synthesize` /
-`render` tools already accept `image_url`, so consumers need no change.
+Consumers unchanged: `*_image` / `synthesize` / `render` already accept `image_url`.
 
 ## Interim — `lazyweb_issue_cli_token` (self-heal the token file)
 
@@ -115,6 +122,45 @@ disk and a mint→write→retry dance. Demote/remove once presign ships.
 **self-heals** (`issue_cli_token`, when available) or **stops with a clear,
 actionable message** (run `install.sh` / paste a token). It never substitutes a
 hard-shrunk inline image by default.
+
+## Affected skills (audit 2026-06-25) + status
+
+Two byte-leak paths: **(1) input image** (user screenshot → `compare_image` /
+`synthesize` / mockup) and **(2) render assets** (local screenshots → `render_report`
+`assets:[{b64}]`, the `REPORT_TOO_LARGE` / ~26 MB-502 mode).
+
+| skill | input-image path | render-assets b64 | status |
+|---|---|---|---|
+| optimize-paywall | token-script → synthesize | (target_image b64) | ✅ Phase 1 migrated (token dropped) |
+| design-improve | inline base64 | ✅ | ✅ Phase 1 migrated · render = Phase 2 |
+| deep-design-research | inline base64 (fallback) | ✅ | ✅ Phase 1 migrated · render = Phase 2 |
+| paywall-cta | inline base64 | ✅ | ✅ Phase 1 migrated · render = Phase 2 |
+| optimize-sign-up | `signup_design_run({image_b64})` | no | ❌ **REMOVED** (legacy, 0 runs/0 data) |
+| lite-design-research | — | ✅ | ⏭ Phase 2 only |
+| design-brainstorm | — | ✅ | ⏭ Phase 2 only |
+| ab-test-research | URL-only | ✅ | ⏭ Phase 2 only |
+| design-best-practices, quick-search | none | no | n/a |
+
+## Rollout — per-skill checklist
+
+**Phase 0 — server (DONE):**
+- [x] `lazyweb_request_image_upload` + `lazyweb_resolve_image_upload` (two-call) — cli-lazybackend#67
+- [x] `/paywall-report/request-upload` + `/resolve-upload` — lazybackend#282
+- [x] Consumers already accept `image_url` (verified)
+- [x] Metrics: image volume + fail% on lazylanding `/metrics` — Lazylanding#211
+- [ ] (interim, now moot) `lazyweb_issue_cli_token`
+
+**Phase 1 — input-image paths (THIS PR):**
+- [x] design-improve · [x] paywall-cta · [x] deep-design-research · [x] optimize-paywall (token dropped)
+- [x] optimize-sign-up → **removed** instead of migrated (legacy)
+
+**Phase 2 — render-assets paths (needs a render enabler first: a long-TTL/365d resolve
+or server-side re-host on render, since a 24h presigned URL can't be embedded
+permanently):**
+- [ ] design-improve, deep-design-research, design-brainstorm, lite-design-research, paywall-cta, ab-test-research
+
+**Phase 3 — cleanup:**
+- [ ] Remove `~/.lazyweb/lazyweb_mcp_token` + `ensure_token`/`install-token` once no skill needs it.
 
 ## Acceptance
 

@@ -67,7 +67,8 @@ Required public tools:
 - `lazyweb_paywall_cta_research` — the core retrieval for this skill. Returns the CTA framework SOP plus the corpus slice, divergent examples, convention stats, brand-own references, and the broad pool of CTA-changed A/B observations the agent curates into "Strongest Matches."
 - `lazyweb_search_ab_tests` — mobile-only broader paywall A/B evidence when the user asks "what experiments have shipped on this?"
 - `lazyweb_search` — visual paywall references and convention examples
-- `lazyweb_compare_image` — visual similarity over the user's paywall image
+- `lazyweb_request_image_upload` / `lazyweb_resolve_image_upload` — presigned upload of the local paywall screenshot (authed by the MCP session; no `~/.lazyweb` token), yielding a public `image_url`
+- `lazyweb_compare_image` — visual similarity over the user's paywall image (pass the uploaded `image_url`)
 - `lazyweb_render_report` — render + host the finished report from `report_data` + reference images, returns the shareable link (the deliverable; see "Render and host the report" below)
 
 **Search discipline:** never repeat an identical `lazyweb_search` query — results are deterministic; page deeper with `offset` and follow `pagination.next_offset`. On `no_matches`/`low_coverage` warnings, use the closest result or note the coverage gap — don't rephrase the same concept in a loop. On `company_not_in_library`, use a suggested company or drop the filter.
@@ -91,10 +92,28 @@ continue with `lazyweb_search` / `lazyweb_compare_image` visual references.
 Before searching, establish the target:
 
 1. Run `lazyweb-context-detect` when available to infer project, platform, and stack.
-2. Capture or read the target paywall. Prefer an actual screenshot. **Always
-   capture / record the verbatim current primary CTA copy** — paraphrasing it
-   loses information the corpus needs.
-3. Identify:
+2. Capture or read the target paywall. Prefer an actual screenshot saved to
+   `$REPORT_DIR/references/current-state.png`. **Always capture / record the
+   verbatim current primary CTA copy** — paraphrasing it loses information the
+   corpus needs.
+3. **Upload the screenshot, then send it by `image_url` — never inline base64.**
+   `lazyweb_compare_image` accepts a public `image_url`, and an LLM corrupts a
+   full-res screenshot if it tries to emit the bytes as `image_base64`. Use the
+   presigned upload flow (spec: [`specs/image-upload-architecture.md`](../../specs/image-upload-architecture.md)),
+   which is authed by the MCP session — no `~/.lazyweb` token required:
+   1. Determine the screenshot `mime_type` (`image/png` | `image/jpeg` | `image/webp`).
+   2. `lazyweb_request_image_upload({ mime_type })` → `{ upload_url, key }`.
+   3. PUT the bytes with NO credentials (the presigned URL is the auth):
+      ```
+      curl -fsS -X PUT -H "content-type: <mime>" \
+        --data-binary @"$REPORT_DIR/references/current-state.png" "<upload_url>"
+      ```
+   4. `lazyweb_resolve_image_upload({ key })` → `{ image_url }`.
+   5. Pass that `image_url` to `lazyweb_compare_image` (e.g.
+      `{"image_url": "<image_url>", "skill": "paywall-cta", "version": "<x.y.z>"}`).
+   (Render-asset uploads in `lazyweb_render_report` still use the `assets:[{b64}]`
+   path — migrating those is Phase 2, out of scope here.)
+4. Identify:
    - **Primary goal**: first paid conversion vs trial start vs plan select vs win-back
    - **User state**: cold (first session) vs warm (engaged, gated) vs upgrade moment
    - **Offer**: trial vs no-trial, single vs multi-tier, intro price vs flat
@@ -102,7 +121,7 @@ Before searching, establish the target:
      (Premium, Plus, Pro, Go+)? Is a paid benefit named (ad-free, offline,
      unlimited)? If neither, the CTA must reference a generic paid-tier word,
      never the brand name when the brand is already free.
-4. Ask ONE concise question only when the screen goal, plan structure, or
+5. Ask ONE concise question only when the screen goal, plan structure, or
    user state is missing and cannot be inferred.
 
 ## Evidence Workflow

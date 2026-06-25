@@ -10,28 +10,36 @@ MCP tool, a large blob can be corrupted in the agent's output tokens (observed:
 "does not represent a valid image" / "invalid base64-encoded value") and is also
 size-hostile through the chat/gateway transport.
 
-This script does what the INTERNAL runner did: it reads the screenshot **from a
-file**, base64-encodes it **in code**, and makes the MCP `tools/call` itself over
-HTTP. The image bytes never pass through an LLM's output. The downstream server
-pipeline (`_agent_synthesize`) is unchanged, so labeling / evidence / hypotheses
-are identical to the internal version.
+PREFERRED image input: the presign flow (see specs/image-upload-architecture.md).
+The agent uploads the screenshot out-of-band — lazyweb_request_image_upload ->
+`curl -X PUT` the bytes (no Lazyweb credential) -> lazyweb_resolve_image_upload ->
+`image_url` — then passes `--image-url <image_url>` here. The URL is forwarded
+straight to the consuming MCP tool; the bytes never touch this script, the agent's
+output, or a static token. The downstream server pipeline (`_agent_synthesize`) is
+unchanged, so labeling / evidence / hypotheses are identical to the internal
+version.
 
-It mirrors the deep-design-research `fetch-evidence.py` MCP-client pattern.
+LEGACY fallback (`--image <file>`): reads the screenshot from a file, base64-encodes
+it **in code**, and (for large images) POSTs it to lazybackend with a static bearer
+token for a signed URL. Use only when presign is unavailable. It mirrors the
+deep-design-research `fetch-evidence.py` MCP-client pattern.
 
 USAGE
 -----
-  # 1) run synthesis from a screenshot file -> prints {synthesis_id, winners}
+  # 1) run synthesis from a presigned image_url -> prints {synthesis_id, winners}
   python optimize_paywall.py synthesize \
-      --image references/current-state.png \
+      --image-url "https://…/current-state.png" \
       --product Reddit --conversion-goal "annual-plan share" \
       --plan-structure "monthly $6.99 / annual $59.99" [--category social] \
       [--divergence auto] [--out work/synthesis.json]
+      # legacy: swap --image-url for --image references/current-state.png
 
-  # 2) generate ONE mockup (EDIT off the same screenshot) -> prints {image_url}
+  # 2) generate ONE mockup (EDIT off the same screen) -> prints {image_url}
   python optimize_paywall.py mockup \
-      --image references/current-state.png \
+      --image-url "https://…/current-state.png" \
       --prompt-file work/mock-safe_bet.txt   # or --prompt "..." \
       [--out work/mock-safe_bet.json]
+      # legacy: swap --image-url for --image references/current-state.png
 
 Exit codes: 0 ok; 2 fatal (bad token / endpoint / image / server error).
 Env overrides (tests): LAZYWEB_MCP_URL, LAZYWEB_MCP_TOKEN, OPTIMIZE_PAYWALL_VERSION.
@@ -255,16 +263,27 @@ def upload_image_for_url(b64: str, mime: str, token: str) -> str:
     return image_url
 
 
-def image_args(image_path: str, token: str, label: str) -> dict:
-    """MCP image args: inline base64 for small images, else upload to lazybackend
-    and pass a small image_url — keeps large bodies off the size-limited gateway
-    (which 413s full-res screenshots). Byte-perfect either way (encoded in code)."""
+def image_args(image_path: str, token: str, label: str, image_url: str = "") -> dict:
+    """MCP image args for the consuming tool.
+
+    PRIMARY path: an already-resolved presigned `image_url` (Step 1 of the skill:
+    lazyweb_request_image_upload -> curl PUT -> lazyweb_resolve_image_upload). The
+    URL is just passed through — no bytes, no token. See
+    specs/image-upload-architecture.md.
+
+    LEGACY fallback (--image <file>): base64-encode the file in code; small images
+    go inline, large ones are POSTed to lazybackend with a static bearer token for
+    a signed URL (keeps big bodies off the size-limited gateway). Prefer the
+    presign URL above."""
+    if (image_url or "").strip():
+        log(f"{label}: using presigned image_url (no bytes/token)…")
+        return {"image_url": image_url.strip()}
     b64, mime = read_image_b64(image_path)
     if len(b64) > UPLOAD_THRESHOLD_B64:
         log(f"{label}: {len(b64)} b64 chars ({mime}) — large; uploading for a URL "
-            "(bypasses the gateway size limit)…")
+            "(legacy token path; bypasses the gateway size limit)…")
         return {"image_url": upload_image_for_url(b64, mime, token)}
-    log(f"{label}: {len(b64)} b64 chars ({mime}); inline from file (byte-perfect)…")
+    log(f"{label}: {len(b64)} b64 chars ({mime}); inline from file (legacy, byte-perfect)…")
     return {"image_base64": b64, "mime_type": mime}
 
 
@@ -283,8 +302,12 @@ def cmd_synthesize(client: McpClient, a: argparse.Namespace) -> dict:
             "reason": "create designs a new screen from scratch; the paywall synthesize pipeline needs a current screenshot to label, retrieve twins, diagnose frictions, and EDIT a mockup.",
             "next": "Run the lazyweb-deep-design-research greenfield flow (pass screen_type, the conversion goal, and any brand/design-system context). If a screen already exists, this is the wrong objective — use --objective optimize|improve with --image.",
         }
-    if not (a.image or "").strip():
-        fatal("synthesize with --objective optimize|improve requires --image (a screenshot of the current screen). For a new screen from scratch, use --objective create.")
+    image_url = (getattr(a, "image_url", "") or "").strip()
+    if not image_url and not (a.image or "").strip():
+        fatal("synthesize with --objective optimize|improve requires --image-url "
+              "(preferred: from the presign flow — request_image_upload -> curl PUT "
+              "-> resolve_image_upload) or --image <file> (legacy). For a new screen "
+              "from scratch, use --objective create.")
     intent = (getattr(a, "intent", "") or "").strip()
     if objective == "improve" and not intent:
         fatal("synthesize with --objective improve requires --intent \"<what to improve>\" "
@@ -300,7 +323,7 @@ def cmd_synthesize(client: McpClient, a: argparse.Namespace) -> dict:
             fatal(f"--product-brief file not found: {bp}")
         brief = bp.read_text(encoding="utf-8").strip()
     args = {
-        **image_args(a.image, client.token, "synthesize"),
+        **image_args(a.image, client.token, "synthesize", image_url),
         "product": a.product or "",
         "conversion_goal": a.conversion_goal or "",
         "plan_structure": a.plan_structure or "",
@@ -338,9 +361,13 @@ def cmd_mockup(client: McpClient, a: argparse.Namespace) -> dict:
         prompt = pathlib.Path(a.prompt_file).expanduser().read_text(encoding="utf-8").strip()
     if not prompt:
         fatal("mockup needs --prompt or --prompt-file")
+    image_url = (getattr(a, "image_url", "") or "").strip()
+    if not image_url and not (a.image or "").strip():
+        fatal("mockup needs the current screen as the EDIT base: --image-url "
+              "(preferred, from the presign flow) or --image <file> (legacy).")
     args = {
         "prompt": prompt,
-        **image_args(a.image, client.token, "mockup (EDIT off current screenshot)"),
+        **image_args(a.image, client.token, "mockup (EDIT off current screenshot)", image_url),
         "quality": a.quality or "medium",
         "skill": "lazyweb-optimize-paywall",
         "version": skill_version(),
@@ -361,7 +388,15 @@ def main() -> None:
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     s = sub.add_parser("synthesize")
-    s.add_argument("--image", default="")
+    s.add_argument("--image", default="",
+                   help="LEGACY: local screenshot file, base64-encoded in code "
+                        "(needs a static token for the large-image upload). Prefer "
+                        "--image-url from the presign flow.")
+    s.add_argument("--image-url", dest="image_url", default="",
+                   help="PREFERRED: presigned/hosted image_url for the current "
+                        "screen (request_image_upload -> curl PUT -> "
+                        "resolve_image_upload). Passed straight through; no bytes, "
+                        "no token. See specs/image-upload-architecture.md.")
     s.add_argument("--objective", default="optimize", choices=["optimize", "improve", "create"],
                    help="Intent-first: optimize|improve operate on an EXISTING screen (need --image); "
                         "create = a NEW screen from scratch (redirects to deep-design-research, no image).")
@@ -387,7 +422,13 @@ def main() -> None:
     s.add_argument("--out", default="")
 
     m = sub.add_parser("mockup")
-    m.add_argument("--image", required=True)
+    m.add_argument("--image", default="",
+                   help="LEGACY: local screenshot file for the EDIT base "
+                        "(base64-encoded in code). Prefer --image-url.")
+    m.add_argument("--image-url", dest="image_url", default="",
+                   help="PREFERRED: presigned/hosted image_url for the EDIT base "
+                        "(reuse the Step 1 upload). See "
+                        "specs/image-upload-architecture.md.")
     m.add_argument("--prompt", default="")
     m.add_argument("--prompt-file", dest="prompt_file", default="")
     # medium (not high): high-quality gpt-image-2 edits are the slowest gens and
@@ -404,8 +445,20 @@ def main() -> None:
         out = cmd_synthesize(None, a)
     else:
         token = load_token()
+        # The script authenticates its OWN MCP/HTTP connection with this bearer
+        # token — this is independent of how the IMAGE arrives. With --image-url the
+        # bytes no longer need the token (the presigned PUT carries its own auth),
+        # but the script still needs a credential to open its MCP connection. If you
+        # have no token, the cleaner path is to let the agent's own (already
+        # authenticated) MCP client call lazyweb_start_paywall_synthesize /
+        # lazyweb_start_mockup with the image_url directly and skip this script —
+        # see SKILL.md Step 2. See specs/image-upload-architecture.md.
         if not token:
-            fatal("no Lazyweb token (set LAZYWEB_MCP_TOKEN or ~/.lazyweb/lazyweb_mcp_token)")
+            fatal("no Lazyweb token for the helper's MCP connection (set "
+                  "LAZYWEB_MCP_TOKEN or ~/.lazyweb/lazyweb_mcp_token). With an "
+                  "--image-url you can instead call the lazyweb_* MCP tools "
+                  "directly from the agent's authenticated session and skip this "
+                  "script entirely.")
 
         client = McpClient(a.endpoint, token)
         try:
