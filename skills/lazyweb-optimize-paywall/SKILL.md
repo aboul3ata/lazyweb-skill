@@ -115,19 +115,26 @@ tools and run `lazyweb_health`. Required tools:
 **Pass `skill: "optimize-paywall"` and `version: "<x.y.z>"` on every call** (read
 `~/.lazyweb/VERSION`, fall back `"0.0.0"`). Optional analytics; never drop a real arg.
 
-If the MCP is missing/auth fails, tell the user to run
-`curl -fsSL https://www.lazyweb.com/install.sh | bash`, reload, and rerun.
+If the **MCP itself** is missing or its auth fails (e.g. `lazyweb_health` errors),
+tell the user to run `curl -fsSL https://www.lazyweb.com/install.sh | bash`,
+reload, and rerun. Note this is distinct from a missing **helper-script token**
+(`~/.lazyweb/lazyweb_mcp_token`): the MCP can be perfectly healthy while that file
+is absent. A missing token must NOT block the skill — see Step 2's no-token
+fallback.
 
 ## Step 1 — Ground the paywall
 
 1. Capture or read the target paywall. Prefer a real screenshot or URL over prose.
    Save it to `$WORK/references/current-state.png` — it becomes the "Current"
-   column and the input to synthesis. **Keep the file path** — the helper script
-   (Step 2) reads and base64-encodes it in code. Do NOT inline the base64 into a
-   tool call yourself: a large blob gets corrupted in the agent's output ("does
-   not represent a valid image" / "invalid base64-encoded value") and is
-   size-hostile through the gateway. `$SKILL_DIR` below = the directory holding
-   this SKILL.md (where `optimize_paywall.py` ships).
+   column and the input to synthesis. **Keep the file path** — Step 2's helper
+   script reads it and base64-encodes it **in code**, then uploads it, so the
+   bytes never pass through your output. The reason is **size, not corruption**: a
+   full-resolution screenshot is hundreds of KB to several MB of base64 — far too
+   large for an agent to emit reliably as a tool argument, and big inline blobs
+   can 502 the gateway. (Small/downscaled images inline fine; full-res ones do
+   not.) The script is the preferred path; if it can't authenticate, Step 2 has a
+   no-token fallback that never hard-fails. `$SKILL_DIR` below = the directory
+   holding this SKILL.md (where `optimize_paywall.py` ships).
 2. **Author a short product brief — the single highest-signal input.** This is what
    makes the diagnosis specific to THIS product instead of generic corpus advice. In
    ~3–6 sentences cover: **who the user is** and why they're on this screen; **where
@@ -157,8 +164,8 @@ If the MCP is missing/auth fails, tell the user to run
 
 **Run the helper script** `optimize_paywall.py` (it reads the screenshot file,
 base64-encodes it **in code**, calls `lazyweb_start_paywall_synthesize`, and polls
-`lazyweb_get_paywall_synthesize` for you — so the image bytes never pass through
-your output, where they'd be corrupted or hit the gateway size limit):
+`lazyweb_get_paywall_synthesize` for you — so a full-res image's bytes never have
+to pass through your output, which can't carry a multi-MB base64 blob reliably):
 
 ```
 python "$SKILL_DIR/optimize_paywall.py" synthesize \
@@ -176,16 +183,48 @@ python "$SKILL_DIR/optimize_paywall.py" synthesize \
 It prints (and writes to `--out`) `{ synthesis_id, winners:[{slot,
 hypothesis_title, change_scope, evidence_company, mockup_prompt}] }`.
 `synthesis_id` goes to render; each of the 4 `winners` carries a ready
-`mockup_prompt`. The script needs `LAZYWEB_MCP_TOKEN` (or
-`~/.lazyweb/lazyweb_mcp_token`); if your Python has no CA bundle, set
-`SSL_CERT_FILE` to one (e.g. `python3 -c 'import certifi;print(certifi.where())'`).
+`mockup_prompt`. The script POSTs directly to the backend, so it needs its **own**
+bearer token: `LAZYWEB_MCP_TOKEN` or `~/.lazyweb/lazyweb_mcp_token` (if your
+Python has no CA bundle, set `SSL_CERT_FILE`, e.g.
+`python3 -c 'import certifi;print(certifi.where())'`).
 
 The script exits non-zero with a clear message on a bad image or a server
-`status:"error"` — surface it and stop (don't hand-write a report).
+`status:"error"` — surface those and stop (don't hand-write a report). A
+**missing/invalid token is also a stop condition — but a clear, actionable one,
+not a silent dead-end** (and not an excuse to ship a degraded report).
+
+### No-token handling — fail clearly; never ship a degraded report
+
+The token file is written by the installer and is usually present, but it can be
+missing — a second machine, a reinstall that didn't re-write it, or a client that
+connected Lazyweb as an MCP/OAuth connector instead of via `install.sh` (the
+connector path never runs the installer's token step). The MCP tools authenticate
+over your client's existing MCP session, but the **script** needs this token to
+upload the full-res screenshot. (The durable fix removes this token entirely — see
+[`specs/image-upload-architecture.md`](../../specs/image-upload-architecture.md):
+a presigned `lazyweb_request_image_upload` minted over the MCP session. Until that
+ships, use the recovery below.) When the token is missing:
+
+1. **Self-heal (preferred, when available):** call `lazyweb_issue_cli_token`,
+   write the returned token to `~/.lazyweb/lazyweb_mcp_token` (mode 0600), then
+   retry the script. This restores the full-res path transparently — the user gets
+   a normal, full-quality report with real mockups.
+2. **Otherwise STOP and ask.** Tell the user plainly: *"I can't generate a real
+   report without the Lazyweb token (`~/.lazyweb/lazyweb_mcp_token` is missing).
+   Run `curl -fsSL https://www.lazyweb.com/install.sh | bash` to provision it (or
+   paste a token), then rerun."* A clear, actionable stop is the **correct**
+   outcome.
+
+**Do NOT substitute a hard-shrunk inline image to limp through.** An agent can
+only emit ≲~5K base64 chars reliably (a ~150px JPEG; ~19K corrupts →
+`invalid base64-encoded value`), which renders a pixelated, unreadable "Current"
+column and **no mockups** — visibly worse than asking for the token. Produce that
+low-fi, no-mockup preview **only if the user explicitly asks** for a rough preview
+without setting up the token, and label it a throwaway. Default behavior is the
+clear stop above.
 
 (Already-hosted screenshot? Passing `image_url` directly to
-`lazyweb_start_paywall_synthesize` also works. Never hand-pass `image_base64` —
-that is the fragile path this script exists to replace.)
+`lazyweb_start_paywall_synthesize` also works, and avoids base64 entirely.)
 
 ## Step 3 — Generate one mockup per winner (async)
 
@@ -209,12 +248,17 @@ screenshot (keeps the real brand/layout/dimensions), conditioned on the winner's
   Each prints `{ image_url }` (a signed URL) — use that as the winner's mockup,
   NOT base64 (four base64 mockups overflow the gateway request-size limit; the
   renderer fetches the URL server-side).
-- **Fallback** — only if a mockup truly can't be generated
+- **Fallback** — if a mockup truly can't be generated
   (`MOCKUP_IMAGE_KEY_MISSING` / `MOCKUP_DAILY_LIMIT`, an `error` status, or still
   `pending` after ~180s): omit that one slot's key from the `mockups` map. The
   server renders a "(no mockup)" placeholder for it; the rest of the report is
   unaffected. Never block the whole report on one missing mockup; never use ASCII
   art. A mix (3 real + 1 placeholder) is fine.
+- **No-token** — the default is to STOP and ask for the token (Step 2), not to
+  render placeholder mockups. Only in the **explicit low-fi preview** case: omit
+  all four mockups (the report shows "(no mockup)"). Do NOT hand-emit an EDIT base
+  for `lazyweb_start_mockup` — a usable mockup base far exceeds the ~5K-char emit
+  limit and would corrupt the same way synthesize does.
 
 ### ENFORCED PREAMBLE — prepend to every winner's `mockup_prompt`
 
@@ -254,7 +298,8 @@ Notes:
 - `mockups` is keyed by each winner's `slot`; each value is the **`image_url`**
   from `lazyweb_get_mockup`. Omit a slot only if its mockup couldn't be generated.
 - `target_image` is the current screenshot as a base64 `data:` URI (one image is
-  fine through the gateway).
+  fine through the gateway). In no-token degraded mode, pass the **downscaled**
+  JPEG data URI here — it only needs to render the "Current" column.
 - Pass a stable `idempotency_key` (e.g. `"optimize-paywall/{topic}-{date}"`) so a
   re-render dedupes to the same URL.
 - On a `400` with `code:"render_field_missing"`, the `detail` names the bad field
