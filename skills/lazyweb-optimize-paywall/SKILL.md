@@ -119,8 +119,8 @@ If the **MCP itself** is missing or its auth fails (e.g. `lazyweb_health` errors
 tell the user to run `curl -fsSL https://www.lazyweb.com/install.sh | bash`,
 reload, and rerun. Note this is distinct from a missing **helper-script token**
 (`~/.lazyweb/lazyweb_mcp_token`): the MCP can be perfectly healthy while that file
-is absent. A missing token must NOT block the skill — see Step 2's no-token
-fallback.
+is absent. Handle a missing token separately from MCP auth failure — see Step 2's
+no-token handling.
 
 ## Step 1 — Ground the paywall
 
@@ -133,7 +133,8 @@ fallback.
    large for an agent to emit reliably as a tool argument, and big inline blobs
    can 502 the gateway. (Small/downscaled images inline fine; full-res ones do
    not.) The script is the preferred path; if it can't authenticate, Step 2 has a
-   no-token fallback that never hard-fails. `$SKILL_DIR` below = the directory
+   no-token handling path that self-heals when possible or stops clearly.
+   `$SKILL_DIR` below = the directory
    holding this SKILL.md (where `optimize_paywall.py` ships).
 2. **Author a short product brief — the single highest-signal input.** This is what
    makes the diagnosis specific to THIS product instead of generic corpus advice. In
@@ -306,8 +307,9 @@ Notes:
 - `mockups` is keyed by each winner's `slot`; each value is the **`image_url`**
   from `lazyweb_get_mockup`. Omit a slot only if its mockup couldn't be generated.
 - `target_image` is the current screenshot as a base64 `data:` URI (one image is
-  fine through the gateway). In no-token degraded mode, pass the **downscaled**
-  JPEG data URI here — it only needs to render the "Current" column.
+  fine through the gateway). Only in the **explicit low-fi preview** case, pass a
+  **downscaled** JPEG data URI here — it only needs to render the "Current"
+  column.
 - Pass a stable `idempotency_key` (e.g. `"optimize-paywall/{topic}-{date}"`) so a
   re-render dedupes to the same URL.
 - On a `400` with `code:"render_field_missing"`, the `detail` names the bad field
