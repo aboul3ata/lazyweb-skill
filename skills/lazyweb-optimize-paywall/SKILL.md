@@ -233,7 +233,7 @@ python "$SKILL_DIR/optimize_paywall.py" synthesize \
   --conversion-goal "<e.g. annual-plan share / trial starts>" \
   --plan-structure "<e.g. monthly $6.99 / annual $59.99>" \
   --product-brief "<who the user is; free vs paid + why upgrade; where this sits in the flow; the wedge>" \
-  --platform <mobile|web> --screen-type <paywall|pricing|landing|signup> \
+  --platform <mobile|web> --screen-type <paywall|pricing|landing|signup|onboarding|checkout|cancellation|settings|home_feed|profile|browse_search|out_of_vocab> \
   [--objective optimize|improve] [--intent "<what to improve>"]   # default optimize; improve REQUIRES --intent (no metric goal); a NEW screen from scratch uses create (see Objectives) \
   [--category <cat>] [--constraints "<...>"] [--divergence auto|low|med|high] \
   --out "$WORK/synthesis.json"

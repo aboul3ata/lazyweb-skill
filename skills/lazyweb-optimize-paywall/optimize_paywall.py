@@ -65,6 +65,21 @@ POLL_INTERVAL_S = 6.0
 SYNTH_BUDGET_S = 240.0
 MOCKUP_BUDGET_S = 300.0  # stays under the gateway's MOCKUP_GEN_TIMEOUT_MS (330s)
 ALLOWED_MIME = {"image/png", "image/jpeg", "image/webp"}
+SCREEN_TYPES = (
+    "",
+    "paywall",
+    "pricing",
+    "landing",
+    "signup",
+    "onboarding",
+    "checkout",
+    "cancellation",
+    "settings",
+    "home_feed",
+    "profile",
+    "browse_search",
+    "out_of_vocab",
+)
 # Above this base64 length the screenshot is uploaded to lazybackend for a signed
 # URL instead of going inline — the gateway 413s large MCP request bodies (a
 # ~380KB PNG / 507KB b64 is fine; full-res ~2.6MB+ b64 gets rejected). The upload
@@ -418,7 +433,7 @@ def main() -> None:
     s.add_argument("--divergence", default="auto", choices=["auto", "low", "med", "high"])
     s.add_argument("--platform", default="mobile", choices=["mobile", "web"])
     s.add_argument("--screen-type", dest="screen_type", default="",
-                   choices=["", "paywall", "pricing", "landing", "signup"])
+                   choices=SCREEN_TYPES)
     s.add_argument("--out", default="")
 
     m = sub.add_parser("mockup")
