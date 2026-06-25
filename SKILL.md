@@ -73,7 +73,6 @@ Choose exactly one mode:
 | Optimize (conversion) or improve (design quality) an EXISTING product screen — paywall, pricing, landing, signup, etc. | `skills/lazyweb-optimize-paywall/SKILL.md` |
 | Design a NEW product screen from scratch (no existing design to ground on) | `skills/lazyweb-deep-design-research/SKILL.md` |
 | Rewrite, evaluate, or stress-test ONE paywall CTA (button copy, not layout) | `skills/lazyweb-paywall-cta/SKILL.md` |
-| Optimize a sign-up / registration screen for completion rate | `skills/lazyweb-optimize-sign-up/SKILL.md` |
 | A/B tests, experiment examples, pricing, trials, lifecycle, or monetization strategy | `skills/lazyweb-ab-test-research/SKILL.md` |
 | Design best practices for X — find the top community-rated skill online and apply it as context (no install) | `skills/lazyweb-design-best-practices/SKILL.md` |
 | Update local Lazyweb skills, reinstall Lazyweb, or sync Lazyweb into agentic IDEs | `skills/lazyweb-update/SKILL.md` |

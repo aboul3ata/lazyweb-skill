@@ -50,7 +50,6 @@ The installer exposes a hybrid skill surface:
 | `/lazyweb-design-brainstorm` | Creative cross-category ideas or unconventional directions. |
 | `/lazyweb-optimize-paywall` | Optimize a paywall screen for paid conversion. |
 | `/lazyweb-paywall-cta` | Rewrite, evaluate, or stress-test ONE paywall CTA (button copy, not layout). |
-| `/lazyweb-optimize-sign-up` | Optimize a sign-up / registration screen for completion rate. |
 | `/lazyweb-ab-test-research` | A/B tests, experiments, pricing, lifecycle, or monetization strategy. |
 | `/lazyweb-design-best-practices` | Design best practices for X — live review sweep (skills.sh, design Twitter/X, Reddit, forums) finds the top-rated skill, fetches its instructions, and applies them as context. No install. |
 | `/lazyweb-update` | Update the local Lazyweb skill pack and reinstall it into agentic IDEs. |

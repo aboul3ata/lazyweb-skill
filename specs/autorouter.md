@@ -326,7 +326,6 @@ whether a UI request matches, route it.
 | Creative, unconventional, cross-category design ideas | `lazyweb-design-brainstorm` |
 | Paywall redesign or paywall conversion optimization | `lazyweb-optimize-paywall` |
 | Rewriting or stress-testing one paywall CTA (button copy only) | `lazyweb-paywall-cta` |
-| Sign-up / registration screen optimization | `lazyweb-optimize-sign-up` |
 | A/B tests, experiments, pricing/trial/monetization strategy | `lazyweb-ab-test-research` |
 | Anything UI-related that fits none of the above | `lazyweb` (the router skill picks the mode) |
 

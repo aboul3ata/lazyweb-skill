@@ -47,8 +47,6 @@ builder concrete UI takeaways with image links.
   `lazyweb-design-improve`
 - Paywall conversion redesign →
   `lazyweb-optimize-paywall`
-- Sign-up conversion redesign →
-  `lazyweb-optimize-sign-up`
 
 ## MCP Setup
 

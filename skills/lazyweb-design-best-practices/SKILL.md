@@ -69,7 +69,7 @@ When the task is about *screen-level UI evidence* — what real apps' paywalls,
 onboarding, sign-up, pricing, or checkout screens look like, or A/B test
 data — route to the sibling Lazyweb modes instead (`/lazyweb-deep-design-research`,
 `/lazyweb-lite-design-research`, `/lazyweb-optimize-paywall`,
-`/lazyweb-optimize-sign-up`, `/lazyweb-ab-test-research`): verify
+`/lazyweb-ab-test-research`): verify
 connectivity with `lazyweb_health` first, and pass
 `"skill": "design-best-practices"` plus `"version"` (from
 `cat "$HOME/.lazyweb/VERSION" 2>/dev/null || echo 0.0.0`) in every

@@ -138,7 +138,8 @@ install_skills_to_root() {
     lazyweb-design-research \
     lazyweb-quick-references \
     lazyweb-paywall-optimization \
-    lazyweb-signup-optimization
+    lazyweb-signup-optimization \
+    lazyweb-optimize-sign-up
   do
     rm -rf "$skills_root/$legacy_skill_dir"
   done
