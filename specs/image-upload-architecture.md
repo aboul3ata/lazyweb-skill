@@ -162,6 +162,30 @@ permanently):**
 **Phase 3 — cleanup:**
 - [ ] Remove `~/.lazyweb/lazyweb_mcp_token` + `ensure_token`/`install-token` once no skill needs it.
 
+## Rollout caveat — the client tool-manifest cache (verified 2026-06-25)
+
+Adding **new MCP tool names** does not reach existing connector users instantly.
+Confirmed: `www.lazyweb.com/mcp` serves `tools/list` with `cache-control: no-store`
+/ `cf-cache-status: DYNAMIC` (proxying `cli-lazybackend.onrender.com/mcp`) — so the
+server hands out new tools **fresh, never edge-cached**. The staleness is the
+**claude.ai connector layer caching the tool manifest** at connect time: a plain app
+restart did **not** refresh it across two tries; a **connector reconnect** does.
+
+- **New users:** get new tools on first connect. Fine.
+- **Existing connector users:** keep the cached manifest until they reconnect → a
+  **one-time reconnect** to pick up new tool *names*.
+
+**Design levers this implies:**
+1. **Prefer changing an existing tool's server-side behavior over adding a new tool
+   name** when existing users need it immediately — server behavior propagates to
+   everyone with no manifest refresh; new names don't.
+2. **Always degrade gracefully** when an expected tool is absent: STOP with a clear
+   "reconnect the connector + `lazyweb-update`" message — never fall back to a broken
+   or degraded path. (Implemented in the optimize-paywall Step 1 guard.) This makes
+   any new-tool rollout safe regardless of manifest-cache timing.
+3. Ensure the MCP server advertises the tools `listChanged` capability so clients
+   that honor `notifications/tools/list_changed` can auto-refresh.
+
 ## Acceptance
 
 - Fresh machine connected **only** via the OAuth connector (no `install.sh`):

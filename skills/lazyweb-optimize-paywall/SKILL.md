@@ -150,6 +150,17 @@ fallback (see Step 2).
    # mime: image/png | image/jpeg | image/webp (match the file)
    MIME="image/png"
    ```
+   **First, confirm the upload tools exist.** If `lazyweb_request_image_upload` /
+   `lazyweb_resolve_image_upload` are NOT in your available tools, your client is on a
+   tool list cached from before they shipped (common for an already-connected MCP/OAuth
+   connector — the server serves the tools fresh, but a plain app restart doesn't
+   refresh the connector's manifest). Do NOT limp through with inline base64 or a
+   hard-shrunk image. **STOP and tell the user, verbatim intent:** "The image-upload
+   tools aren't in your client yet. Reconnect the Lazyweb connector (your client's
+   connector settings → Lazyweb → disconnect + reconnect) and run `lazyweb-update`,
+   then rerun — they shipped recently and your client cached the old tool list (a new
+   chat/restart alone may not refresh it)." This is the correct outcome — a clear,
+   actionable stop, not a degraded report.
    a. `lazyweb_request_image_upload({ mime_type: "<MIME>" })` → `{ upload_url, key }`.
    b. PUT the bytes with **NO credentials** (the presigned URL is the auth):
       ```bash
