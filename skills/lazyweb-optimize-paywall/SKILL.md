@@ -190,10 +190,16 @@ fallback (see Step 2).
 3. **Detect platform + screen_type** from the screenshot (routes the evidence):
    - `platform`: `mobile` (tall portrait phone screenshot) or `web` (wide
      desktop/browser page).
-   - `screen_type`: `paywall` (in-app subscription offer) · `pricing` (web
-     plans/pricing page) · `landing` (marketing homepage/hero) · `signup`
-     (account-creation / lead-capture). If it's none of these, tell the user this
-     skill optimizes paywall/pricing/landing/signup and stop.
+   - `screen_type`: the screen archetype. Monetization screens — `paywall`
+     (in-app subscription offer) · `pricing` (web plans page) · `landing`
+     (marketing homepage/hero) · `signup` (account-creation / lead-capture) —
+     carry A/B-tested evidence. **Any other product screen is also supported**:
+     `onboarding` · `checkout` · `cancellation` · `settings` · `home_feed` ·
+     `profile` · `browse_search` (and anything else → `out_of_vocab`). The server
+     re-infers the type from the screenshot and scopes like-screen evidence
+     accordingly, so pass your best guess and don't stop — the engine never
+     declines a real product UI screen. Only stop if the image isn't a product
+     screen at all (e.g. a logo, a chart, a photo).
    Mobile paywalls behave exactly as before (`--platform mobile`,
    `--screen-type paywall`); pass both to the helper in Step 2. For `web`, evidence
    is single-snapshot **learnings** (observed patterns, not A/B-tested), so the
