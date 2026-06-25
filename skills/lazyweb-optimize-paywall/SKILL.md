@@ -190,7 +190,7 @@ fallback (see Step 2).
 
 ## Step 2 — Synthesize (the server does the thinking)
 
-Now that the screen is a short `image_url` (not bytes), there are **two equivalent
+Now that the screen is a short `image_url` (not bytes), there are **two supported
 ways** to run synthesis; pick by what's available:
 
 - **Direct MCP (cleanest, no token, no script).** Call
@@ -226,8 +226,9 @@ It prints (and writes to `--out`) `{ synthesis_id, winners:[{slot,
 hypothesis_title, change_scope, evidence_company, mockup_prompt}] }`.
 `synthesis_id` goes to render; each of the 4 `winners` carries a ready
 `mockup_prompt`. With `--image-url` the helper passes the URL straight through to
-`lazyweb_start_paywall_synthesize` over your MCP session — **no `~/.lazyweb` token
-is involved** in the image-input path.
+`lazyweb_start_paywall_synthesize` — the screenshot bytes do **not** need a
+`~/.lazyweb` token, but the helper still needs its own bearer token to authenticate
+its MCP connection. If that token is unavailable, use the direct-MCP path above.
 
 The script exits non-zero with a clear message on a bad image-url or a server
 `status:"error"` — surface those and stop (don't hand-write a report).
