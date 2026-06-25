@@ -1,5 +1,6 @@
 ---
 name: lazyweb-lite-design-research
+router-exclude: true
 description: |
   DEPRECATED — moved. Lite UI examples / screenshot references are now served by
   lazyweb-quick-search. Do not run it; route to the new skill.

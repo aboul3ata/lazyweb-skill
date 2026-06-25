@@ -2,6 +2,7 @@
 name: lazyweb-design-create
 route: "INTERNAL — create/greenfield backend for lazyweb-design"
 router-terms: create, greenfield, new screen from scratch, design from scratch
+router-exclude: true
 description: |
   INTERNAL create / greenfield backend. NOT a user-facing slash command — it is
   reached via `/lazyweb-design` with `objective=create`, which redirects here for
@@ -114,8 +115,8 @@ You never write HTML — you only choose image `src` values in `report-data.json
 
 ## When NOT to Use This
 
-- User just wants to see a few screenshots quickly -> route to `lazyweb-lite-design-research`
-- User has an existing design and wants improvement ideas -> route to `lazyweb-design-improve`
+- User just wants to see a few screenshots quickly -> route to `lazyweb-quick-search`
+- User has an existing design and wants improvement ideas -> route to `lazyweb-design`
 - User wants creative/unconventional ideas -> route to `lazyweb-design-brainstorm`
 
 ## Lazyweb MCP Setup

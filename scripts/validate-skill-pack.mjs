@@ -8,11 +8,27 @@ const root = path.resolve(new URL("..", import.meta.url).pathname);
 // A hardcoded list is the exact trap that left lazyweb-paywall-cta and
 // lazyweb-optimize-sign-up unvalidated (and undocumented) after 0.4.0:
 // a new mode must be picked up by adding its directory, nothing else.
-const visibleModeSkillDirs = readdirSync(path.join(root, "skills"), { withFileTypes: true })
+const modeSkillDirs = readdirSync(path.join(root, "skills"), { withFileTypes: true })
   .filter((entry) => entry.isDirectory() && existsSync(path.join(root, "skills", entry.name, "SKILL.md")))
   .map((entry) => `skills/${entry.name}`)
   .sort();
 
+function frontmatterOf(text) {
+  const m = text.match(/^---\n([\s\S]*?)\n---\n/);
+  return m ? m[1] : "";
+}
+
+function isRouterExcluded(relativeSkillDir) {
+  return /^router-exclude:\s*true\s*$/m.test(frontmatterOf(read(`${relativeSkillDir}/SKILL.md`)));
+}
+
+function isInternalOrDeprecated(relativeSkillDir) {
+  const fm = frontmatterOf(read(`${relativeSkillDir}/SKILL.md`));
+  return /\bINTERNAL\b/.test(fm) || /\bDEPRECATED\b/.test(fm);
+}
+
+const visibleModeSkillDirs = modeSkillDirs.filter((dir) => !isInternalOrDeprecated(dir));
+const autorouterSkillDirs = visibleModeSkillDirs.filter((dir) => !isRouterExcluded(dir));
 assert.ok(visibleModeSkillDirs.length > 0, "no mode skills found under skills/");
 
 const removedPluginPaths = [
@@ -61,6 +77,9 @@ for (const removedPath of removedPluginPaths) {
 
 assert.ok(existsSync(path.join(root, "SKILL.md")), "missing root SKILL.md");
 for (const dir of visibleModeSkillDirs) {
+  assert.ok(existsSync(path.join(root, dir, "SKILL.md")), `missing ${dir}/SKILL.md`);
+}
+for (const dir of modeSkillDirs) {
   assert.ok(existsSync(path.join(root, dir, "SKILL.md")), `missing ${dir}/SKILL.md`);
 }
 
@@ -116,11 +135,7 @@ assert.ok(existsSync(path.join(root, "bin", "lazyweb-hosts.sh")), "missing bin/l
 // 1. Every mode skill must carry a NON-EMPTY `route:` frontmatter value — the
 //    renderer builds the injected routing table from it, so an empty value
 //    would emit a blank intent cell that routes nothing.
-function frontmatterOf(text) {
-  const m = text.match(/^---\n([\s\S]*?)\n---\n/);
-  return m ? m[1] : "";
-}
-for (const dir of visibleModeSkillDirs) {
+for (const dir of autorouterSkillDirs) {
   const fm = frontmatterOf(read(`${dir}/SKILL.md`));
   const m = fm.match(/^route:\s*(.+)$/m);
   assert.ok(m, `${dir}/SKILL.md missing route: frontmatter (used by lazyweb-router to render the autorouter table)`);
@@ -134,7 +149,7 @@ for (const dir of visibleModeSkillDirs) {
 //    not reference a mode that does not exist on disk.) Deliberately NOT a
 //    prose diff: router rows are trigger-shaped, the root table is
 //    category-shaped (spec B3).
-const skillDirNames = new Set(visibleModeSkillDirs.map((dir) => path.basename(dir)));
+const skillDirNames = new Set(modeSkillDirs.map((dir) => path.basename(dir)));
 for (const match of router.matchAll(/skills\/([a-z0-9-]+)\/SKILL\.md/g)) {
   assert.ok(skillDirNames.has(match[1]), `root SKILL.md routes to skills/${match[1]}/SKILL.md which does not exist on disk`);
 }
@@ -192,15 +207,14 @@ for (const relativePath of ["README.md", "SKILL.md", ...visibleModeSkillDirs.map
   }
 }
 
-const designResearchText = read("skills/lazyweb-deep-design-research/SKILL.md");
+const designResearchText = read("skills/lazyweb-design-create/SKILL.md");
 // The render-tested report skeleton/CSS/JS lives in the template file the
 // skill instructs agents to copy; component assertions check both.
-const designResearchTemplate = read("skills/lazyweb-deep-design-research/report-template.html");
+const designResearchTemplate = read("skills/lazyweb-design-create/report-template.html");
 const designResearchAll = designResearchText + "\n" + designResearchTemplate;
-assert.match(designResearchText, /report-template\.html/, "design-research skill must reference its report template");
 for (const scriptName of ["fetch-evidence.py", "generate-prototypes.py", "fill-report.py"]) {
-  const sp = path.join(root, "skills/lazyweb-deep-design-research", scriptName);
-  assert.ok(existsSync(sp), `missing skills/lazyweb-deep-design-research/${scriptName}`);
+  const sp = path.join(root, "skills/lazyweb-design-create", scriptName);
+  assert.ok(existsSync(sp), `missing skills/lazyweb-design-create/${scriptName}`);
   assert.ok(statSync(sp).mode & 0o111, `${scriptName} must be executable`);
   assert.match(designResearchText, new RegExp(scriptName.replace(".", "\\.")), `design-research skill must reference ${scriptName}`);
 }
@@ -208,10 +222,10 @@ for (const removedSkeletonToken of [/genbar/, /pending-ref/, /pending-strip/, /l
   assert.doesNotMatch(designResearchTemplate, removedSkeletonToken, `removed skeleton-publish markup must not reappear in the template: ${removedSkeletonToken}`);
 }
 assert.doesNotMatch(designResearchText, /Skeleton publish|publish a SKELETON/i, "skeleton-publish instructions must not reappear in the skill");
-assert.match(designResearchText, /in-progress leftovers/, "publish gate must reject in-progress markers in final reports");
-assert.match(designResearchText, /ONCE, when it is complete/, "publish section must state reports publish only when complete");
-assert.match(designResearchText, /unfilled template example content/, "publish gate must block unfilled template example content");
-assert.match(designResearchText, /picsum\\\.photos|picsum\.photos/, "publish gate must name picsum.photos as forbidden in final reports");
+assert.match(designResearchText, /lazyweb_render_report` ONCE/, "server render section must state reports render once");
+assert.match(designResearchText, /REPORT_RENDER_ERROR/, "server render section must document validation errors");
+assert.match(designResearchText, /server fills a fixed, render-tested template/i, "server render section must state server-side template rendering");
+assert.match(designResearchText, /Never hand-render HTML or fall back to a local file/i, "server render section must forbid local fallback reports");
 for (const templatePattern of [
   /data-ex=/,
   /picsum\.photos/,
@@ -284,13 +298,6 @@ for (const pattern of [
   /medium effort/i,
   /low effort/i,
   /Normal skill execution must not run full `npm test`/,
-  /REPORT_CONTRACT_OK/,
-  /REPORT_CONTRACT_FAILED/,
-  /option-tabs/,
-  /option-panel/,
-  /Reference Evidence/,
-  /Source Notes/,
-  /Never publish a `lazyweb-deep-design-research` report that fails this gate/,
   /Provider priority order/,
   /Capability probe/,
   /imagegen-capability\.json/,

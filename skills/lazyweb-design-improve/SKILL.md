@@ -1,5 +1,6 @@
 ---
 name: lazyweb-design-improve
+router-exclude: true
 description: |
   DEPRECATED — moved. This skill has been folded into the lazyweb-design
   umbrella under `objective=improve`. Do not run it; route to the new skill.
