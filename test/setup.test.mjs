@@ -1,12 +1,34 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, lstatSync, mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync, symlinkSync } from "node:fs";
+import { existsSync, lstatSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync, mkdirSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 
 const root = path.resolve(import.meta.dirname, "..");
 const setup = path.join(root, "setup");
+
+function frontmatterOf(text) {
+  const m = text.match(/^---\n([\s\S]*?)\n---\n/);
+  return m ? m[1] : "";
+}
+
+function skillNamesByVisibility() {
+  const visible = [];
+  const hidden = [];
+  for (const entry of readdirSync(path.join(root, "skills"), { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const skillMd = path.join(root, "skills", entry.name, "SKILL.md");
+    if (!existsSync(skillMd)) continue;
+    const fm = frontmatterOf(readFileSync(skillMd, "utf8"));
+    if (/\bINTERNAL\b/.test(fm) || /\bDEPRECATED\b/.test(fm)) {
+      hidden.push(entry.name);
+    } else {
+      visible.push(entry.name);
+    }
+  }
+  return { visible: visible.sort(), hidden: hidden.sort() };
+}
 
 function makeExecutable(file, body) {
   writeFileSync(file, body, { mode: 0o755 });
@@ -60,17 +82,8 @@ test("setup installs visible skills and direct MCP config into detected local cl
       path.join(home, ".cursor", "skills")
     ];
     for (const skillsRoot of expectedSkillRoots) {
-      for (const skillName of [
-        "lazyweb",
-        "lazyweb-design",
-        "lazyweb-design-create",
-        "lazyweb-lite-design-research",
-        "lazyweb-quick-search",
-        "lazyweb-design-improve",
-        "lazyweb-design-brainstorm",
-        "lazyweb-ab-test-research",
-        "lazyweb-update"
-      ]) {
+      const { visible, hidden } = skillNamesByVisibility();
+      for (const skillName of ["lazyweb", ...visible]) {
         const skillPath = path.join(skillsRoot, skillName, "SKILL.md");
         assert.ok(existsSync(skillPath), `missing installed skill ${skillPath}`);
         if (skillName === "lazyweb") {
@@ -78,6 +91,9 @@ test("setup installs visible skills and direct MCP config into detected local cl
         } else {
           assert.ok(lstatSync(path.dirname(skillPath)).isSymbolicLink(), `${skillName} should be symlinked for updates`);
         }
+      }
+      for (const skillName of hidden) {
+        assert.equal(existsSync(path.join(skillsRoot, skillName)), false, `${skillName} should not be installed into ${skillsRoot}`);
       }
 
       for (const oldSkillName of [
@@ -87,7 +103,8 @@ test("setup installs visible skills and direct MCP config into detected local cl
         "lazyweb-signup-optimization",
         "lazyweb-optimize-paywall",
         "lazyweb-deep-design-research",
-        "lazyweb-optimize-sign-up"
+        "lazyweb-optimize-sign-up",
+        ...hidden
       ]) {
         const staleDir = path.join(skillsRoot, oldSkillName);
         mkdirSync(staleDir, { recursive: true });
@@ -98,6 +115,7 @@ test("setup installs visible skills and direct MCP config into detected local cl
     const cleanup = runSetup(home, fakeBin);
     assert.equal(cleanup.status, 0, cleanup.stderr || cleanup.stdout);
     for (const skillsRoot of expectedSkillRoots) {
+      const { hidden } = skillNamesByVisibility();
       for (const oldSkillName of [
         "lazyweb-design-research",
         "lazyweb-quick-references",
@@ -105,7 +123,8 @@ test("setup installs visible skills and direct MCP config into detected local cl
         "lazyweb-signup-optimization",
         "lazyweb-optimize-paywall",
         "lazyweb-deep-design-research",
-        "lazyweb-optimize-sign-up"
+        "lazyweb-optimize-sign-up",
+        ...hidden
       ]) {
         assert.equal(existsSync(path.join(skillsRoot, oldSkillName)), false, `${oldSkillName} should be cleaned up from ${skillsRoot}`);
       }

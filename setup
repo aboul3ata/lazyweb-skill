@@ -97,6 +97,16 @@ link_or_copy() {
   fi
 }
 
+skill_is_internal_or_deprecated() {
+  local skill_md="$1"
+  awk '
+    NR == 1 && $0 == "---" { in_fm = 1; next }
+    in_fm && $0 == "---" { exit found ? 0 : 1 }
+    in_fm && $0 ~ /(^|[^[:alnum:]_])(INTERNAL|DEPRECATED)([^[:alnum:]_]|$)/ { found = 1 }
+    END { exit found ? 0 : 1 }
+  ' "$skill_md"
+}
+
 ensure_token() {
   mkdir -p "$(dirname "$TOKEN_FILE")"
 
@@ -152,6 +162,10 @@ install_skills_to_root() {
   for skill_dir_path in "$ROOT/skills"/*/; do
     [ -d "$skill_dir_path" ] || continue
     skill_dir="$(basename "$skill_dir_path")"
+    if skill_is_internal_or_deprecated "$ROOT/skills/$skill_dir/SKILL.md"; then
+      rm -rf "$skills_root/$skill_dir"
+      continue
+    fi
     link_or_copy "$ROOT/skills/$skill_dir" "$skills_root/$skill_dir"
   done
 }
