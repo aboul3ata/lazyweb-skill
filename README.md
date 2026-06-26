@@ -38,20 +38,16 @@ a local shell script cannot configure those cloud UIs.
 
 ## Visible Skills
 
-The installer exposes a hybrid skill surface:
+The installer surfaces a **focused set of slash commands**. Every other mode stays
+in the repo and is reachable through the `/lazyweb` router and the Lazyweb MCP
+(`lazyweb_get_workflows`), but is intentionally **not** installed as its own slash
+command:
 
 | Skill | Use when |
 |---|---|
-| `/lazyweb` | You want the compatibility entry point or are unsure which Lazyweb mode fits. |
-| `/lazyweb-deep-design-research` | Deep competitive analysis, best-practices research, or a full report with references. |
-| `/lazyweb-lite-design-research` | Lite grouped examples, UI references, or screenshots without a full report. |
+| `/lazyweb` | Compatibility entry point / router — unsure which Lazyweb mode fits. |
+| `/lazyweb-design` | Optimize, improve, or design any product screen — paywall, pricing, landing, signup, onboarding, dashboard, settings, … Routes on objective. |
 | `/lazyweb-quick-search` | Quick direct `lazyweb_search` preflight before designing; no report. |
-| `/lazyweb-design-improve` | Improve, critique, or compare an existing design. |
-| `/lazyweb-design-brainstorm` | Creative cross-category ideas or unconventional directions. |
-| `/lazyweb-optimize-paywall` | Optimize a paywall screen for paid conversion. |
-| `/lazyweb-paywall-cta` | Rewrite, evaluate, or stress-test ONE paywall CTA (button copy, not layout). |
-| `/lazyweb-ab-test-research` | A/B tests, experiments, pricing, lifecycle, or monetization strategy. |
-| `/lazyweb-design-best-practices` | Design best practices for X — live review sweep (skills.sh, design Twitter/X, Reddit, forums) finds the top-rated skill, fetches its instructions, and applies them as context. No install. |
 | `/lazyweb-update` | Update the local Lazyweb skill pack and reinstall it into agentic IDEs. |
 
 `SKILL.md` at the repo root is the high-level router. The installer materializes

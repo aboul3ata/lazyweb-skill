@@ -33,7 +33,7 @@ hypotheses — not generic component advice.
 
 ## Objectives — pick INTENT-FIRST (read first)
 
-This skill (legacy name `optimize-paywall`) handles **any product screen**, not
+This skill handles **any product screen**, not
 just paywalls. Classify the **user's intent FIRST**, then act — never pick by
 whether an image happens to be available:
 
@@ -97,15 +97,13 @@ not). Everything after that is a single async call plus a poll. **Your job:**
 
 Do NOT hand-write frictions, candidate hypotheses, `evidence_ref`s,
 `experiment_verdicts`, `user_labels`, or the report HTML/CSS — the server owns all
-of it. Do NOT orchestrate synthesize → mockups → render yourself. The lower-level
-tools (`lazyweb_start_paywall_synthesize`/`lazyweb_get_paywall_synthesize`,
-`lazyweb_start_mockup`/`lazyweb_get_mockup`, `lazyweb_render_report`,
-`lazyweb_paywall_retrieve`, `lazyweb_paywall_score`) still exist but are
-**superseded by `lazyweb_generate_report`** for optimize/improve — do not call them
-on this path. After you get the URL, give it to the user (and mention any degraded
-slot from `failures`).
+of it. **`lazyweb_generate_report` is the ONLY supported call on this path** — it runs
+labelling, retrieval, diagnosis, synthesis, mockup generation, rendering, and hosting
+server-side. Do NOT try to run synthesis, mockup generation, or rendering yourself.
+After you get the URL, give it to the user (and mention any degraded slot from
+`failures`).
 
-The work dir convention is `$WORK = .lazyweb/optimize-paywall/{topic-slug}-{YYYY-MM-DD}`;
+The work dir convention is `$WORK = .lazyweb/lazyweb-design/{topic-slug}-{YYYY-MM-DD}`;
 save the current screenshot under `$WORK/references/`.
 
 ## Lazyweb MCP Setup
@@ -130,10 +128,6 @@ tools and run `lazyweb_health`. Required tools:
   `{ id, url, degraded, failures }` — `url` is the hosted deliverable. The agent
   does NOT synthesize, generate mockups, assemble `report_data`, or render. See
   Steps 2–3.
-- Lower-level tools — `lazyweb_start_paywall_synthesize`/`get_paywall_synthesize`,
-  `lazyweb_start_mockup`/`get_mockup`, `lazyweb_render_report` — still exist but are
-  **superseded by `lazyweb_generate_report`** on the optimize/improve path; do not
-  hand-orchestrate them here.
 
 **Pass `skill: "lazyweb-design"` and `version: "<x.y.z>"` on every call**
 (`lazyweb_generate_report`, `lazyweb_get_report`, image-upload, health — read
