@@ -93,8 +93,8 @@ one the user wants. Recommend `lazyweb-design` when they want to optimize,
 improve, or design a product screen, and `lazyweb-quick-search` when they need
 direct MCP search context or quick references before designing and do not want a
 report.
-Route CTA copy questions to `lazyweb-paywall-cta` only when the ask is about
-the button text itself; a broader paywall redesign goes to
+Route CTA copy questions to `lazyweb_paywall_cta_research` only when the ask is
+about the button text itself; a broader paywall redesign goes to
 `lazyweb-design` even if the CTA is part of it. `lazyweb-design` is the
 user-facing umbrella for ANY product screen and routes on `objective`. Pick by
 the user's INTENT, not by whether they have a screenshot: route an EXISTING
@@ -104,9 +104,10 @@ too (objective `create`, which hands off internally to the `lazyweb-design-creat
 backend — never route users straight to `lazyweb-design-create`). Route explicit
 install, update, refresh, or stale slash-command requests to `lazyweb-update`.
 Route "design best practices for X" / "what's the best skill for animation,
-landing pages, typography…" asks to `lazyweb-design-best-practices`, which
-researches live community reviews, fetches the winning skill's instructions
-from the internet, and applies them as context — nothing gets installed.
+landing pages, typography…" asks by fetching the
+`lazyweb-design-best-practices` workflow, which researches live community
+reviews, fetches the winning skill's instructions from the internet, and
+applies them as context — nothing gets installed.
 
 ## Mode Handoff
 

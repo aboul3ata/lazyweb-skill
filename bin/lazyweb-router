@@ -102,6 +102,7 @@ const SKILLS = process.env.LW_SKILLS;
 const ROOTSKILL = process.env.LW_ROOTSKILL;
 const HOME = process.env.LW_HOME;
 const BUDGET = parseInt(process.env.LW_BUDGET || '1800', 10);
+const FOCUSED_SKILLS = new Set(['lazyweb-design', 'lazyweb-quick-search', 'lazyweb-update']);
 const MANIFEST = path.join(HOME, 'router.manifest.json');
 const BEGIN = '<!-- LAZYWEB:ROUTER:BEGIN';
 const ENDM = '<!-- LAZYWEB:ROUTER:END -->';
@@ -142,7 +143,8 @@ function skillMeta(dir) {
 function orderedSkills() {
   const dirs = fs.readdirSync(SKILLS, { withFileTypes: true })
     .filter((e) => e.isDirectory() && fs.existsSync(path.join(SKILLS, e.name, 'SKILL.md')))
-    .map((e) => e.name);
+    .map((e) => e.name)
+    .filter((name) => FOCUSED_SKILLS.has(name));
   // Order by appearance in the root SKILL.md routing table (single source of
   // truth, spec §4.1); any skill not yet in that table is appended (alpha) so a
   // new mode is never stranded.

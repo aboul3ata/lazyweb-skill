@@ -38,27 +38,23 @@ a local shell script cannot configure those cloud UIs.
 
 ## Visible Skills
 
-The installer exposes a hybrid skill surface:
+The installer exposes a focused slash-command surface. Other Lazyweb workflows
+remain available through Lazyweb MCP tools or `lazyweb_get_workflows`, but are
+not installed as local slash commands.
 
 | Skill | Use when |
 |---|---|
 | `/lazyweb` | You want the compatibility entry point or are unsure which Lazyweb mode fits. |
-| `/lazyweb-deep-design-research` | Deep competitive analysis, best-practices research, or a full report with references. |
-| `/lazyweb-lite-design-research` | Lite grouped examples, UI references, or screenshots without a full report. |
 | `/lazyweb-quick-search` | Quick direct `lazyweb_search` preflight before designing; no report. |
-| `/lazyweb-design-improve` | Improve, critique, or compare an existing design. |
-| `/lazyweb-design-brainstorm` | Creative cross-category ideas or unconventional directions. |
-| `/lazyweb-optimize-paywall` | Optimize a paywall screen for paid conversion. |
-| `/lazyweb-paywall-cta` | Rewrite, evaluate, or stress-test ONE paywall CTA (button copy, not layout). |
-| `/lazyweb-ab-test-research` | A/B tests, experiments, pricing, lifecycle, or monetization strategy. |
-| `/lazyweb-design-best-practices` | Design best practices for X — live review sweep (skills.sh, design Twitter/X, Reddit, forums) finds the top-rated skill, fetches its instructions, and applies them as context. No install. |
+| `/lazyweb-design` | Optimize, improve, or design product screens; routes internally by objective. |
 | `/lazyweb-update` | Update the local Lazyweb skill pack and reinstall it into agentic IDEs. |
 
 `SKILL.md` at the repo root is the high-level router. The installer materializes
 that file into each local client as `lazyweb/SKILL.md`, while platforms that can
 download a single repo-level skill can use the root file directly. The router
-points to the mode skills under `skills/` and tells agents to read and run
-the selected mode instead of reimplementing the workflow.
+invokes installed skills by name, uses dedicated MCP tools for A/B and paywall
+CTA research, and fetches workflow-only modes over MCP instead of pointing at
+source-repo file paths.
 
 ## Verify
 
@@ -199,7 +195,8 @@ not a billing gate.
 ## Repository Structure
 
 - `SKILL.md` - canonical high-level Lazyweb router skill.
-- `skills/*/SKILL.md` - visible mode skills.
+- `skills/*/SKILL.md` - Lazyweb workflow skills; only the focused slash-command
+  set is installed locally.
 - `setup` - standalone multi-host installer.
 - `bin/` - helper scripts used by skills and setup, including
   `lazyweb-update` for refreshing an existing install.

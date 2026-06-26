@@ -4,16 +4,18 @@ import path from "node:path";
 
 const root = path.resolve(new URL("..", import.meta.url).pathname);
 
-// Discover mode skills by iterating skills/*/ instead of a hardcoded list.
-// A hardcoded list is the exact trap that left lazyweb-paywall-cta and
-// lazyweb-optimize-sign-up unvalidated (and undocumented) after 0.4.0:
-// a new mode must be picked up by adding its directory, nothing else.
+// Discover workflow skills by iterating skills/*/ instead of a hardcoded list.
+// Some workflows are intentionally MCP-fetched rather than installed as slash
+// commands, but every checked-in workflow should still be validated.
 const visibleModeSkillDirs = readdirSync(path.join(root, "skills"), { withFileTypes: true })
   .filter((entry) => entry.isDirectory() && existsSync(path.join(root, "skills", entry.name, "SKILL.md")))
   .map((entry) => `skills/${entry.name}`)
   .sort();
 
 assert.ok(visibleModeSkillDirs.length > 0, "no mode skills found under skills/");
+
+const installedModeSkillNames = ["lazyweb-design", "lazyweb-quick-search", "lazyweb-update"];
+const installedModeSkillDirs = installedModeSkillNames.map((name) => `skills/${name}`);
 
 const removedPluginPaths = [
   "plugins",
@@ -55,6 +57,12 @@ function assertSkillFile(relativePath, expectedName) {
   return text;
 }
 
+function isDeprecatedSkillDir(dir) {
+  return /\bDEPRECATED\b/.test(read(`${dir}/SKILL.md`));
+}
+
+const runnableModeSkillDirs = visibleModeSkillDirs.filter((dir) => !isDeprecatedSkillDir(dir));
+
 for (const removedPath of removedPluginPaths) {
   assert.equal(existsSync(path.join(root, removedPath)), false, `${removedPath} should not exist in standalone skill pack`);
 }
@@ -65,15 +73,21 @@ for (const dir of visibleModeSkillDirs) {
 }
 
 const router = assertSkillFile("SKILL.md", "lazyweb");
-for (const mode of visibleModeSkillDirs) {
-  assert.match(router, new RegExp(`${mode}/SKILL\\.md`), `router must point to ${mode}/SKILL.md`);
+assert.doesNotMatch(router, /skills\/[a-z0-9-]+\/SKILL\.md/, "root router must not point to source-repo skill file paths");
+for (const mode of installedModeSkillDirs) {
+  assert.match(router, new RegExp(`Invoke the \`${path.basename(mode)}\` skill`, "i"), `router must invoke installed skill ${path.basename(mode)} by name`);
 }
+assert.match(router, /lazyweb_search_ab_tests/, "router must send A/B research to the dedicated MCP tool");
+assert.match(router, /lazyweb_paywall_cta_research/, "router must send paywall CTA work to the dedicated MCP tool");
+assert.match(router, /workflow:"lazyweb-design-brainstorm"/, "router must fetch brainstorm workflow over MCP");
+assert.match(router, /workflow:"lazyweb-design-best-practices"/, "router must fetch best-practices workflow over MCP");
+assert.match(router, /lazyweb-design-create[\s\S]*over MCP/, "router must send create work to the lazyweb-design-create backend over MCP");
 for (const removedMode of ["lazyweb-welcome", "lazyweb-feedback", "lazyweb-flows", "lazyweb-add-inspo-source", "lazyweb-remove-inspo-source"]) {
   assert.doesNotMatch(router, new RegExp(removedMode), `router must not route to removed mode ${removedMode}`);
 }
 assert.match(router, /curl -fsSL https:\/\/www\.lazyweb\.com\/install\.sh \| bash/);
 
-for (const dir of visibleModeSkillDirs) {
+for (const dir of runnableModeSkillDirs) {
   const name = path.basename(dir);
   const text = assertSkillFile(`${dir}/SKILL.md`, name);
   assert.match(text, /lazyweb_health/, `${dir} should verify MCP health`);
@@ -120,7 +134,7 @@ function frontmatterOf(text) {
   const m = text.match(/^---\n([\s\S]*?)\n---\n/);
   return m ? m[1] : "";
 }
-for (const dir of visibleModeSkillDirs) {
+for (const dir of runnableModeSkillDirs) {
   const fm = frontmatterOf(read(`${dir}/SKILL.md`));
   const m = fm.match(/^route:\s*(.+)$/m);
   assert.ok(m, `${dir}/SKILL.md missing route: frontmatter (used by lazyweb-router to render the autorouter table)`);
@@ -128,16 +142,11 @@ for (const dir of visibleModeSkillDirs) {
   assert.ok(value.length > 0, `${dir}/SKILL.md has an empty route: value`);
 }
 
-// 2. Structural sync invariant: set-equality of skill identifiers between
-//    skills/*/ and the root SKILL.md routing table. (Direction "every dir is
-//    in the table" is asserted above; this is the inverse — the table must
-//    not reference a mode that does not exist on disk.) Deliberately NOT a
-//    prose diff: router rows are trigger-shaped, the root table is
-//    category-shaped (spec B3).
-const skillDirNames = new Set(visibleModeSkillDirs.map((dir) => path.basename(dir)));
-for (const match of router.matchAll(/skills\/([a-z0-9-]+)\/SKILL\.md/g)) {
-  assert.ok(skillDirNames.has(match[1]), `root SKILL.md routes to skills/${match[1]}/SKILL.md which does not exist on disk`);
-}
+// 2. Installed-skill sync invariant: setup and docs agree on the focused local
+//    slash-command set. Other workflows remain available through MCP fetches
+//    and dedicated tools, not local source paths.
+const setupText = read("setup");
+assert.match(setupText, /FOCUSED_SKILLS="lazyweb-design lazyweb-quick-search lazyweb-update"/, "setup focused slash-command set drifted from validation");
 
 // 3. Router template: required placeholders, markers, and the table rows left
 //    to the renderer ({{ROWS}}), never hardcoded mode rows that could strand a
@@ -160,13 +169,16 @@ for (const relativePath of ["SKILL.md", ...visibleModeSkillDirs.map((dir) => `${
   assert.doesNotMatch(body, /AskUserQuestion/, `${relativePath} body prose names Claude-only tool AskUserQuestion — use host-neutral phrasing ("ask the user one short clarifying question")`);
 }
 
-// Every discovered mode skill must be documented in the README "Visible
-// Skills" table, so the docs can't drift from disk the way they did before
-// (paywall-cta and signup-optimization were on disk but absent from README).
+// Every installed mode skill must be documented in the README "Visible Skills"
+// table. Workflow-only skills should not be presented as local slash commands.
 const readmeText = read("README.md");
-for (const dir of visibleModeSkillDirs) {
+for (const dir of installedModeSkillDirs) {
   const slashCommand = `/${path.basename(dir)}`;
   assert.match(readmeText, new RegExp(slashCommand.replace(/[-/]/g, "\\$&")), `README.md missing ${slashCommand} in the Visible Skills table`);
+}
+for (const dir of visibleModeSkillDirs.filter((dir) => !installedModeSkillDirs.includes(dir))) {
+  const slashCommand = `/${path.basename(dir)}`;
+  assert.doesNotMatch(readmeText, new RegExp(`\\|\\s*\`${slashCommand.replace(/[-/]/g, "\\$&")}\``), `README.md presents workflow-only ${slashCommand} as a visible skill`);
 }
 
 const pluginInstallPattern = /codex plugin marketplace|claude plugin install|lazyweb@lazyweb|plugins\/lazyweb|\.codex-plugin|\.claude-plugin/;
@@ -192,26 +204,25 @@ for (const relativePath of ["README.md", "SKILL.md", ...visibleModeSkillDirs.map
   }
 }
 
-const designResearchText = read("skills/lazyweb-deep-design-research/SKILL.md");
+const designResearchDir = "skills/lazyweb-design-create";
+const designResearchText = read(`${designResearchDir}/SKILL.md`);
 // The render-tested report skeleton/CSS/JS lives in the template file the
 // skill instructs agents to copy; component assertions check both.
-const designResearchTemplate = read("skills/lazyweb-deep-design-research/report-template.html");
+const designResearchTemplate = read(`${designResearchDir}/report-template.html`);
 const designResearchAll = designResearchText + "\n" + designResearchTemplate;
-assert.match(designResearchText, /report-template\.html/, "design-research skill must reference its report template");
+assert.ok(existsSync(path.join(root, designResearchDir, "report-template.html")), "design-research report template must exist");
 for (const scriptName of ["fetch-evidence.py", "generate-prototypes.py", "fill-report.py"]) {
-  const sp = path.join(root, "skills/lazyweb-deep-design-research", scriptName);
-  assert.ok(existsSync(sp), `missing skills/lazyweb-deep-design-research/${scriptName}`);
+  const sp = path.join(root, designResearchDir, scriptName);
+  assert.ok(existsSync(sp), `missing ${designResearchDir}/${scriptName}`);
   assert.ok(statSync(sp).mode & 0o111, `${scriptName} must be executable`);
-  assert.match(designResearchText, new RegExp(scriptName.replace(".", "\\.")), `design-research skill must reference ${scriptName}`);
 }
 for (const removedSkeletonToken of [/genbar/, /pending-ref/, /pending-strip/, /lazyweb-report-state/]) {
   assert.doesNotMatch(designResearchTemplate, removedSkeletonToken, `removed skeleton-publish markup must not reappear in the template: ${removedSkeletonToken}`);
 }
 assert.doesNotMatch(designResearchText, /Skeleton publish|publish a SKELETON/i, "skeleton-publish instructions must not reappear in the skill");
-assert.match(designResearchText, /in-progress leftovers/, "publish gate must reject in-progress markers in final reports");
-assert.match(designResearchText, /ONCE, when it is complete/, "publish section must state reports publish only when complete");
-assert.match(designResearchText, /unfilled template example content/, "publish gate must block unfilled template example content");
-assert.match(designResearchText, /picsum\\\.photos|picsum\.photos/, "publish gate must name picsum.photos as forbidden in final reports");
+assert.match(designResearchText, /server fills a fixed, render-tested template/i, "server render contract must replace the old local publish gate");
+assert.match(designResearchText, /missing fields.*REPORT_RENDER_ERROR/i, "server render contract must reject incomplete report data");
+assert.match(designResearchText, /Never hand-render HTML or fall back to a local file/i, "server render contract must forbid local report fallbacks");
 for (const templatePattern of [
   /data-ex=/,
   /picsum\.photos/,
@@ -284,13 +295,6 @@ for (const pattern of [
   /medium effort/i,
   /low effort/i,
   /Normal skill execution must not run full `npm test`/,
-  /REPORT_CONTRACT_OK/,
-  /REPORT_CONTRACT_FAILED/,
-  /option-tabs/,
-  /option-panel/,
-  /Reference Evidence/,
-  /Source Notes/,
-  /Never publish a `lazyweb-deep-design-research` report that fails this gate/,
   /Provider priority order/,
   /Capability probe/,
   /imagegen-capability\.json/,

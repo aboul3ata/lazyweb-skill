@@ -22,11 +22,13 @@ const BEGIN = "<!-- LAZYWEB:ROUTER:BEGIN";
 const END = "<!-- LAZYWEB:ROUTER:END -->";
 const BUDGET = 1800;
 
-// Skill dirs that must appear in every rendered table (router-exclude: true
-// opts a utility skill out — it must NOT appear).
+// Focused installed skill dirs must appear in every rendered table
+// (router-exclude: true opts a utility skill out — it must NOT appear).
+const focusedSkills = new Set(["lazyweb-design", "lazyweb-quick-search", "lazyweb-update"]);
 const allSkillDirs = readdirSync(path.join(root, "skills"), { withFileTypes: true })
   .filter((e) => e.isDirectory() && existsSync(path.join(root, "skills", e.name, "SKILL.md")))
-  .map((e) => e.name);
+  .map((e) => e.name)
+  .filter((name) => focusedSkills.has(name));
 const routedSkills = [];
 const excludedSkills = [];
 for (const dir of allSkillDirs) {
