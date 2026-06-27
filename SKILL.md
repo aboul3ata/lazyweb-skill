@@ -83,6 +83,24 @@ evidence is reached through the `lazyweb_search_ab_tests` MCP tool above. The
 backend over MCP. Never substitute a `skills/<name>/SKILL.md` file read for any
 of these — that path does not exist in the install.
 
+**Retired skills — route their intent to one of the two skills above.** These
+earlier Lazyweb skills no longer exist. Do NOT try to invoke or fetch the old
+name; route the *intent* instead:
+
+| Retired skill / intent | Use now |
+|---|---|
+| `lazyweb-optimize-paywall`, `lazyweb-design-improve`, `lazyweb-optimize-sign-up` — optimize or improve an existing screen | `lazyweb-design` (objective `optimize` / `improve`) |
+| `lazyweb-design-research`, `lazyweb-deep-design-research`, `lazyweb-design-brainstorm`, `lazyweb-design-best-practices` — research, competitive analysis, best practices, "what do top apps do", creative ideas | `lazyweb-quick-search` for references; `lazyweb-design` (objective `create`) for a full new-screen design |
+| `lazyweb-quick-references`, `lazyweb-lite-design-research` — quick examples / UI references | `lazyweb-quick-search` |
+| `lazyweb-paywall-cta` — CTA copy | `lazyweb-design` (the CTA is part of the screen) |
+| `lazyweb-ab-test-research` — A/B / experiment evidence | the `lazyweb_search_ab_tests` MCP tool |
+
+Calling `lazyweb_search` directly under one of these retired skill tags is no
+longer supported — the server rejects it and points back here. `lazyweb_search`
+is reached only INSIDE `lazyweb-quick-search` (references) and the server-side
+`lazyweb-design` pipeline (which searches internally); it is not a direct
+external tool for any retired skill.
+
 For a bare `/lazyweb` request, briefly explain the modes above and ask which
 one the user wants. Recommend `lazyweb-design` when they want to optimize,
 improve, or design a product screen, and `lazyweb-quick-search` when they need
