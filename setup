@@ -219,15 +219,16 @@ verify_prune() {
     done
     # 2. Any other lazyweb-* dir that is NOT in the focused set (catches skills
     #    we have not enumerated above, e.g. a future rename).
-    for entry in "$root_dir"/lazyweb-*/; do
-      [ -e "$entry" ] || continue
+    for entry in "$root_dir"/lazyweb-*; do
+      [ -e "$entry" ] || [ -L "$entry" ] || continue
+      [ -d "$entry" ] || [ -L "$entry" ] || continue
       name="$(basename "$entry")"
       case " $FOCUSED_SKILLS " in
         *" $name "*) continue ;;
       esac
       rm -rf "$entry" 2>/dev/null || true
       if [ -e "$entry" ] || [ -L "$entry" ]; then
-        leftover="$leftover ${entry%/}"
+        leftover="$leftover $entry"
       else
         log "removed stale skill: $name ($root_dir)"
       fi

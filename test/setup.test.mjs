@@ -180,6 +180,14 @@ test("setup verifies the prune: removes legacy + future-rename skill dirs and pr
   const futureDir = path.join(skillsRoot, "lazyweb-some-future-skill");
   mkdirSync(futureDir, { recursive: true });
   writeFileSync(path.join(futureDir, "SKILL.md"), "stale");
+  // Installed skills are usually symlinks; the verifier must prune stale
+  // symlinks too, including broken ones from removed repo skill dirs.
+  const oldSourceDir = path.join(dir, "old-source");
+  mkdirSync(oldSourceDir, { recursive: true });
+  const symlinkDir = path.join(skillsRoot, "lazyweb-symlinked-old-skill");
+  symlinkSync(oldSourceDir, symlinkDir, "dir");
+  const brokenSymlinkDir = path.join(skillsRoot, "lazyweb-broken-old-skill");
+  symlinkSync(path.join(dir, "missing-source"), brokenSymlinkDir, "dir");
 
   try {
     const result = runSetupHost(home, fakeBin, "claude", { quiet: false });
@@ -188,6 +196,8 @@ test("setup verifies the prune: removes legacy + future-rename skill dirs and pr
     // Both stale dirs gone.
     assert.equal(existsSync(legacyDir), false, "legacy skill dir should be pruned");
     assert.equal(existsSync(futureDir), false, "future-rename skill dir should be pruned");
+    assert.throws(() => lstatSync(symlinkDir), /ENOENT/, "stale skill symlink should be pruned");
+    assert.throws(() => lstatSync(brokenSymlinkDir), /ENOENT/, "broken stale skill symlink should be pruned");
 
     // Focused set installed.
     for (const skillName of ["lazyweb", "lazyweb-design", "lazyweb-quick-search", "lazyweb-update"]) {
@@ -197,6 +207,8 @@ test("setup verifies the prune: removes legacy + future-rename skill dirs and pr
     // Human-visible prune summary (non-quiet run).
     assert.match(result.stdout, /removed stale skill: lazyweb-design-research/);
     assert.match(result.stdout, /removed stale skill: lazyweb-some-future-skill/);
+    assert.match(result.stdout, /removed stale skill: lazyweb-symlinked-old-skill/);
+    assert.match(result.stdout, /removed stale skill: lazyweb-broken-old-skill/);
     assert.match(result.stdout, /stale skills remaining: none/);
     assert.doesNotMatch(result.stdout, /WARNING: stale Lazyweb skill dirs/);
   } finally {
