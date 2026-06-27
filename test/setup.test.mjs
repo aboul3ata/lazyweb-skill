@@ -145,6 +145,65 @@ test("setup installs visible skills and direct MCP config into detected local cl
   }
 });
 
+function runSetupHost(home, fakeBin, host, { quiet = false } = {}) {
+  const args = [setup, "--host", host];
+  if (quiet) args.push("--quiet");
+  return spawnSync("bash", args, {
+    cwd: root,
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      HOME: home,
+      PATH: `${fakeBin}:/usr/bin:/bin:/usr/sbin:/sbin`,
+      LAZYWEB_MCP_TOKEN: "11111111-1111-4111-8111-111111111111",
+      LAZYWEB_MCP_URL: "https://lazyweb.example.com/mcp",
+      CODEX_HOME: path.join(home, ".codex")
+    }
+  });
+}
+
+test("setup verifies the prune: removes legacy + future-rename skill dirs and prints a summary", () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "lazyweb-setup-prune-"));
+  const home = path.join(dir, "home");
+  const fakeBin = path.join(dir, "bin");
+  const skillsRoot = path.join(home, ".claude", "skills");
+  mkdirSync(fakeBin, { recursive: true });
+  mkdirSync(skillsRoot, { recursive: true });
+  symlinkSync(process.execPath, path.join(fakeBin, "node"));
+  makeExecutable(path.join(fakeBin, "claude"), "#!/usr/bin/env sh\nexit 0\n");
+
+  // A known retired dir from the hardcoded legacy list.
+  const legacyDir = path.join(skillsRoot, "lazyweb-design-research");
+  mkdirSync(legacyDir, { recursive: true });
+  writeFileSync(path.join(legacyDir, "SKILL.md"), "stale");
+  // A lazyweb-* dir NOT in the legacy list — the sweep must still catch it.
+  const futureDir = path.join(skillsRoot, "lazyweb-some-future-skill");
+  mkdirSync(futureDir, { recursive: true });
+  writeFileSync(path.join(futureDir, "SKILL.md"), "stale");
+
+  try {
+    const result = runSetupHost(home, fakeBin, "claude", { quiet: false });
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+
+    // Both stale dirs gone.
+    assert.equal(existsSync(legacyDir), false, "legacy skill dir should be pruned");
+    assert.equal(existsSync(futureDir), false, "future-rename skill dir should be pruned");
+
+    // Focused set installed.
+    for (const skillName of ["lazyweb", "lazyweb-design", "lazyweb-quick-search", "lazyweb-update"]) {
+      assert.ok(existsSync(path.join(skillsRoot, skillName, "SKILL.md")), `missing ${skillName}`);
+    }
+
+    // Human-visible prune summary (non-quiet run).
+    assert.match(result.stdout, /removed stale skill: lazyweb-design-research/);
+    assert.match(result.stdout, /removed stale skill: lazyweb-some-future-skill/);
+    assert.match(result.stdout, /stale skills remaining: none/);
+    assert.doesNotMatch(result.stdout, /WARNING: stale Lazyweb skill dirs/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test("setup reports manual MCP config when no local clients are detected", () => {
   const dir = mkdtempSync(path.join(tmpdir(), "lazyweb-setup-empty-"));
   const home = path.join(dir, "home");

@@ -11,6 +11,34 @@ QUIET=0
 AUTO_UPDATE_CHOICE=""
 ROUTER_CHOICE=""
 
+# Renamed or purged skill directories from older installs. These must never
+# linger in a client skill root after setup runs, or stale slash commands stay
+# visible and trapped users keep invoking server-retired skills. Used both to
+# prune at install time AND to assert (verify_prune) the prune actually took.
+LEGACY_SKILL_DIRS="
+lazyweb-design-research
+lazyweb-quick-references
+lazyweb-paywall-optimization
+lazyweb-signup-optimization
+lazyweb-optimize-sign-up
+lazyweb-optimize-paywall
+lazyweb-deep-design-research
+lazyweb-ab-test-research
+lazyweb-design-best-practices
+lazyweb-design-brainstorm
+lazyweb-design-improve
+lazyweb-lite-design-research
+lazyweb-paywall-cta
+"
+# The focused, user-facing slash-command set. Every other skill dir stays in the
+# repo (the server/router can still reach it via lazyweb_get_workflows) but is
+# intentionally NOT installed as a slash command, so anything else found in a
+# client skill root is stale and must be removed.
+FOCUSED_SKILLS="lazyweb-design lazyweb-quick-search lazyweb-update"
+# Skill roots install_skills_to_root touched this run, so verify_prune can
+# re-check every one of them after the host loop.
+INSTALLED_SKILL_ROOTS=""
+
 usage() {
   cat <<'USAGE'
 Usage: ./setup [--host auto|all|codex|claude|cursor|opencode|kiro|factory|slate|hermes|antigravity] [--quiet] [--auto-update|--no-auto-update] [--router|--no-router]
@@ -131,25 +159,19 @@ install_skills_to_root() {
   rm -rf "$skills_root/lazyweb"
   mkdir -p "$skills_root/lazyweb"
   link_or_copy "$ROOT/SKILL.md" "$skills_root/lazyweb/SKILL.md"
+  # Remember this root so verify_prune can re-check it after the host loop.
+  INSTALLED_SKILL_ROOTS="$INSTALLED_SKILL_ROOTS
+$skills_root"
   # Remove renamed or purged skill directories from older installs so stale
   # slash commands do not remain visible after `lazyweb-update` runs setup.
   local legacy_skill_dir
-  for legacy_skill_dir in \
-    lazyweb-design-research \
-    lazyweb-quick-references \
-    lazyweb-paywall-optimization \
-    lazyweb-signup-optimization \
-    lazyweb-optimize-sign-up \
-    lazyweb-optimize-paywall \
-    lazyweb-deep-design-research \
-    lazyweb-ab-test-research \
-    lazyweb-design-best-practices \
-    lazyweb-design-brainstorm \
-    lazyweb-design-improve \
-    lazyweb-lite-design-research \
-    lazyweb-paywall-cta
-  do
-    rm -rf "$skills_root/$legacy_skill_dir"
+  for legacy_skill_dir in $LEGACY_SKILL_DIRS; do
+    if [ -e "$skills_root/$legacy_skill_dir" ] || [ -L "$skills_root/$legacy_skill_dir" ]; then
+      # || true: never abort the install on a transient rm failure — verify_prune
+      # is the safety net that re-tries and downgrades any leftover to a warning.
+      rm -rf "$skills_root/$legacy_skill_dir" 2>/dev/null || true
+      [ -e "$skills_root/$legacy_skill_dir" ] || log "removed stale skill: $legacy_skill_dir ($skills_root)"
+    fi
   done
   # Surface only the focused, user-facing slash-command set. Every other skill
   # dir stays in the repo (the server/router can still reach it via
@@ -159,7 +181,6 @@ install_skills_to_root() {
   # has to happen here at install time. We iterate every dir so anything not in
   # the focused set is actively removed from the install root — no stale slash
   # commands linger (the original reason this loop avoided a hardcoded list).
-  local FOCUSED_SKILLS="lazyweb-design lazyweb-quick-search lazyweb-update"
   local skill_dir_path skill_dir
   for skill_dir_path in "$ROOT/skills"/*/; do
     [ -d "$skill_dir_path" ] || continue
@@ -168,9 +189,62 @@ install_skills_to_root() {
       *" $skill_dir "*)
         link_or_copy "$ROOT/skills/$skill_dir" "$skills_root/$skill_dir" ;;
       *)
-        rm -rf "$skills_root/$skill_dir" ;;
+        if [ -e "$skills_root/$skill_dir" ] || [ -L "$skills_root/$skill_dir" ]; then
+          rm -rf "$skills_root/$skill_dir" 2>/dev/null || true
+          [ -e "$skills_root/$skill_dir" ] || log "removed stale skill: $skill_dir ($skills_root)"
+        fi ;;
     esac
   done
+}
+
+# After the host loop, ASSERT the prune actually took in every skill root we
+# touched. The disk prune above runs per-root inside install_skills_to_root, but
+# we never trust that it worked — a partial rm, a permissions hiccup, or a
+# concurrently re-created dir would otherwise leave a trapped user invoking a
+# server-retired skill. So re-scan, try removal again, and print a clear summary.
+verify_prune() {
+  local root_dir legacy_skill_dir entry name leftover=""
+  for root_dir in $INSTALLED_SKILL_ROOTS; do
+    [ -d "$root_dir" ] || continue
+    # 1. Known renamed/purged dirs.
+    for legacy_skill_dir in $LEGACY_SKILL_DIRS; do
+      if [ -e "$root_dir/$legacy_skill_dir" ] || [ -L "$root_dir/$legacy_skill_dir" ]; then
+        rm -rf "$root_dir/$legacy_skill_dir" 2>/dev/null || true
+        if [ -e "$root_dir/$legacy_skill_dir" ] || [ -L "$root_dir/$legacy_skill_dir" ]; then
+          leftover="$leftover $root_dir/$legacy_skill_dir"
+        else
+          log "removed stale skill: $legacy_skill_dir ($root_dir)"
+        fi
+      fi
+    done
+    # 2. Any other lazyweb-* dir that is NOT in the focused set (catches skills
+    #    we have not enumerated above, e.g. a future rename).
+    for entry in "$root_dir"/lazyweb-*/; do
+      [ -e "$entry" ] || continue
+      name="$(basename "$entry")"
+      case " $FOCUSED_SKILLS " in
+        *" $name "*) continue ;;
+      esac
+      rm -rf "$entry" 2>/dev/null || true
+      if [ -e "$entry" ] || [ -L "$entry" ]; then
+        leftover="$leftover ${entry%/}"
+      else
+        log "removed stale skill: $name ($root_dir)"
+      fi
+    done
+  done
+  if [ -n "$leftover" ]; then
+    printf '%s\n' "WARNING: stale Lazyweb skill dirs could NOT be removed (remove manually, then restart the client):" >&2
+    local item
+    # A path can land in $leftover from both the legacy-list pass and the
+    # lazyweb-* sweep; collapse to one line each.
+    for item in $(printf '%s\n' $leftover | sort -u); do
+      printf '%s\n' "  - $item" >&2
+    done
+    return 1
+  fi
+  [ -z "$INSTALLED_SKILL_ROOTS" ] || log "stale skills remaining: none"
+  return 0
 }
 
 # Propagate the published pack version to a known location so the
@@ -364,6 +438,12 @@ else
         ;;
     esac
   done
+
+  # Assert the prune took across every skill root we touched. A leftover dir is
+  # only a WARNING (printed to stderr) — it must not abort the rest of setup
+  # (MCP config, router, version marker are already done above), so swallow the
+  # non-zero return under `set -e`.
+  verify_prune || true
 fi
 
 # Autorouter refresh (specs/autorouter.md §7.4): every consented routing block

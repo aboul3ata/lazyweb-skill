@@ -9,6 +9,9 @@ TARGET="${LAZYWEB_SKILL_DIR:-$HOME/.lazyweb/repos/lazyweb-skill}"
 HOST="${LAZYWEB_UPDATE_HOST:-all}"
 QUIET=0
 SETUP_FLAGS=()
+# Preserve the invocation's original args so a self-heal re-exec (see below) can
+# forward them verbatim — the parse loop below shifts them away.
+ORIG_ARGS=("$@")
 
 usage() {
   cat <<'USAGE'
@@ -84,6 +87,20 @@ else
 fi
 
 after="$(git -C "$TARGET" rev-parse --short HEAD 2>/dev/null || printf unknown)"
+
+# Self-heal a TRAPPED user. The ~/.lazyweb/bin/lazyweb-update they invoked may be
+# a frozen copy (no-symlink filesystem) or a symlink into a checkout that was
+# stale when this process started — i.e. running PRE-#108 updater logic. By now
+# the refresh above has landed the latest main in $TARGET, so re-exec the fresh
+# updater once (guarded against loops) so the rest of this run uses current
+# logic. This is what guarantees an already-trapped user ends up CLEAN.
+FRESH_UPDATER="$TARGET/bin/lazyweb-update"
+if [ -z "${LAZYWEB_UPDATE_REEXEC:-}" ] \
+  && [ -f "$FRESH_UPDATER" ] \
+  && ! cmp -s "$FRESH_UPDATER" "${BASH_SOURCE[0]}" 2>/dev/null; then
+  log "Re-running the refreshed updater from $TARGET."
+  LAZYWEB_UPDATE_REEXEC=1 exec bash "$FRESH_UPDATER" "${ORIG_ARGS[@]+"${ORIG_ARGS[@]}"}"
+fi
 
 log "Installing Lazyweb skills for host: $HOST"
 if [ "${#SETUP_FLAGS[@]}" -gt 0 ]; then

@@ -57,6 +57,12 @@ mean those are in sync. So:
 
 ## Run the update
 
+`~/.lazyweb/bin/lazyweb-update` is a trusted local binary the user already
+installed — it only refreshes the local checkout and reinstalls local skills. Do
+not stack up multiple permission gates around it: a single lightweight "Updating
+your local Lazyweb skills now." confirmation is enough (any client tool-approval
+prompt already covers the rest).
+
 Use the bundled updater when available:
 
 ```bash
@@ -66,15 +72,22 @@ Use the bundled updater when available:
 Use `--host auto` only when the user explicitly wants detected clients instead
 of every supported local skill root.
 
-If that file is missing because the install is old, bootstrap once from GitHub:
+If that file is missing because the install is old, bootstrap once from GitHub.
+Use `git fetch` + `git reset --hard`, never `git pull --ff-only`: a plain pull
+cannot escape a non-`main` checkout (the "branch trap" that left users stamped
+current but stale), whereas a hard reset to `origin/main` always lands on the
+latest no matter what branch or dirty state the checkout is in. Fall back to a
+clean re-clone if the fetch/reset cannot complete:
 
 ```bash
 set -euo pipefail
 REPO="${LAZYWEB_SKILL_REPO:-https://github.com/aboul3ata/lazyweb-skill}"
 TARGET="${LAZYWEB_SKILL_DIR:-$HOME/.lazyweb/repos/lazyweb-skill}"
 mkdir -p "$(dirname "$TARGET")"
-if [ -d "$TARGET/.git" ]; then
-  git -C "$TARGET" pull --ff-only
+if [ -d "$TARGET/.git" ] \
+  && git -C "$TARGET" fetch --depth 1 origin main \
+  && git -C "$TARGET" reset --hard FETCH_HEAD; then
+  :
 else
   rm -rf "$TARGET"
   git clone --depth 1 "$REPO" "$TARGET"
@@ -97,14 +110,59 @@ After the updater finishes:
 
 1. Print the before and after git commit for
    `~/.lazyweb/repos/lazyweb-skill` when available.
-2. Check that `lazyweb-update/SKILL.md` exists under any detected local skill
-   roots, especially `~/.codex/skills` and `~/.claude/skills`.
-3. Run `~/.lazyweb/bin/lazyweb-update-check`; it should print nothing when the
-   installed version is current.
-4. If Lazyweb MCP tools are available in the current client, run
-   `lazyweb_health`. If the current session cannot see MCP tools or newly
-   installed skills, tell the user to reload or restart the client; local skill
-   discovery is not always hot-loaded.
+2. **Assert the retired/legacy skill dirs are GONE from every detected skill
+   root** — not merely that `lazyweb-update/SKILL.md` exists. Trapped users keep
+   invoking server-retired skills (e.g. `lazyweb-design-research`) precisely
+   because the stale dir survived on disk. Check every root that exists
+   (`~/.claude/skills`, `~/.codex/skills`, `~/.cursor/skills`,
+   `~/.config/opencode/skills`, `~/.kiro/skills`, `~/.factory/skills`,
+   `~/.slate/skills`, `~/.hermes/skills`):
 
-Summarize the updated commit/version, which clients were refreshed, and any
-client that needs a restart.
+   ```bash
+   for root in "$HOME"/.claude/skills "$HOME"/.codex/skills \
+     "$HOME"/.cursor/skills "$HOME"/.config/opencode/skills \
+     "$HOME"/.kiro/skills "$HOME"/.factory/skills \
+     "$HOME"/.slate/skills "$HOME"/.hermes/skills; do
+     [ -d "$root" ] || continue
+     for legacy in lazyweb-design-research lazyweb-quick-references \
+       lazyweb-paywall-optimization lazyweb-signup-optimization \
+       lazyweb-optimize-sign-up lazyweb-optimize-paywall \
+       lazyweb-deep-design-research lazyweb-ab-test-research \
+       lazyweb-design-best-practices lazyweb-design-brainstorm \
+       lazyweb-design-improve lazyweb-lite-design-research lazyweb-paywall-cta; do
+       [ -e "$root/$legacy" ] && echo "STALE: $root/$legacy"
+     done
+     # Any lazyweb-* dir outside the focused set is also stale.
+     for d in "$root"/lazyweb-*/; do
+       [ -e "$d" ] || continue
+       name="$(basename "$d")"
+       case " lazyweb-design lazyweb-quick-search lazyweb-update " in
+         *" $name "*) : ;;
+         *) echo "STALE: ${d%/}" ;;
+       esac
+     done
+   done
+   ```
+
+3. **If that prints any `STALE:` line, re-run the updater** so setup's own
+   `verify_prune` removes them, then re-check:
+
+   ```bash
+   "$HOME/.lazyweb/bin/lazyweb-update" --host all --quiet
+   ```
+
+   `setup --host all` is idempotent and itself asserts the prune; if a dir still
+   survives (permissions, etc.) tell the user the exact path to `rm -rf` by hand.
+4. Run `~/.lazyweb/bin/lazyweb-update-check`; it should print nothing when the
+   installed version is current.
+5. If Lazyweb MCP tools are available in the current client, run
+   `lazyweb_health`.
+6. **Always tell the user to RESTART the client.** Skills are loaded at client
+   startup, so a disk-level prune does NOT fix the currently-running session —
+   the old slash commands stay visible and invokable until restart. This is the
+   one step that actually clears a trapped session; do not skip it even when the
+   disk looks clean.
+
+Summarize the updated commit/version, which clients were refreshed, whether any
+stale skill dirs were found and removed, and remind the user to restart the
+client so the changes take effect.
