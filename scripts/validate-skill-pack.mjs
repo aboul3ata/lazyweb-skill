@@ -220,10 +220,11 @@ for (const removedSkeletonToken of [/genbar/, /pending-ref/, /pending-strip/, /l
   assert.doesNotMatch(designResearchTemplate, removedSkeletonToken, `removed skeleton-publish markup must not reappear in the template: ${removedSkeletonToken}`);
 }
 assert.doesNotMatch(designResearchText, /Skeleton publish|publish a SKELETON/i, "skeleton-publish instructions must not reappear in the skill");
-assert.match(designResearchText, /in-progress leftovers/, "publish gate must reject in-progress markers in final reports");
-assert.match(designResearchText, /ONCE, when it is complete/, "publish section must state reports publish only when complete");
-assert.match(designResearchText, /unfilled template example content/, "publish gate must block unfilled template example content");
-assert.match(designResearchText, /picsum\\\.photos|picsum\.photos/, "publish gate must name picsum.photos as forbidden in final reports");
+assert.match(designResearchText, /REPORT_RENDER_ERROR/, "server render contract must name the validation failure code");
+assert.match(designResearchText, /server fills a fixed, render-tested template/i, "skill must state reports are server-rendered and validated");
+assert.match(designResearchText, /partial or skeleton\s+report can never be hosted/i, "skill must state incomplete reports cannot be hosted");
+assert.match(designResearchTemplate, /data-ex=/, "template fixture must retain example markers for validation tests");
+assert.match(designResearchTemplate, /picsum\.photos/, "template fixture must retain placeholder images for validation tests");
 for (const templatePattern of [
   /data-ex=/,
   /picsum\.photos/,
@@ -296,13 +297,6 @@ for (const pattern of [
   /medium effort/i,
   /low effort/i,
   /Normal skill execution must not run full `npm test`/,
-  /REPORT_CONTRACT_OK/,
-  /REPORT_CONTRACT_FAILED/,
-  /option-tabs/,
-  /option-panel/,
-  /Reference Evidence/,
-  /Source Notes/,
-  /Never publish a `lazyweb-deep-design-research` report that fails this gate/,
   /Provider priority order/,
   /Capability probe/,
   /imagegen-capability\.json/,

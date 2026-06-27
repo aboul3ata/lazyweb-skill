@@ -2,6 +2,7 @@
 name: lazyweb-design-create
 route: "INTERNAL — create/greenfield backend for lazyweb-design"
 router-terms: create, greenfield, new screen from scratch, design from scratch
+router-exclude: true
 description: |
   INTERNAL create / greenfield backend. NOT a user-facing slash command — it is
   reached via `/lazyweb-design` with `objective=create`, which redirects here for
@@ -97,6 +98,8 @@ The server fills a fixed, render-tested template and rejects an incomplete
 `report_data` (missing fields → `REPORT_RENDER_ERROR`), so a partial or skeleton
 report can never be hosted — that replaces the old client-side contract gate.
 Never hand-render HTML or fall back to a local file.
+The local `report-template.html` remains only as a render-tested fixture for
+repo validation and helper scripts; agents do not edit it or publish from it.
 
 ### Image references in report-data.json
 
