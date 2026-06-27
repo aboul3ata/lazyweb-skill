@@ -131,8 +131,8 @@ install_skills_to_root() {
   rm -rf "$skills_root/lazyweb"
   mkdir -p "$skills_root/lazyweb"
   link_or_copy "$ROOT/SKILL.md" "$skills_root/lazyweb/SKILL.md"
-  # Remove renamed skill directories from older installs so stale slash
-  # commands do not remain visible after `lazyweb-update` runs setup.
+  # Remove renamed or purged skill directories from older installs so stale
+  # slash commands do not remain visible after `lazyweb-update` runs setup.
   local legacy_skill_dir
   for legacy_skill_dir in \
     lazyweb-design-research \
@@ -141,7 +141,13 @@ install_skills_to_root() {
     lazyweb-signup-optimization \
     lazyweb-optimize-sign-up \
     lazyweb-optimize-paywall \
-    lazyweb-deep-design-research
+    lazyweb-deep-design-research \
+    lazyweb-ab-test-research \
+    lazyweb-design-best-practices \
+    lazyweb-design-brainstorm \
+    lazyweb-design-improve \
+    lazyweb-lite-design-research \
+    lazyweb-paywall-cta
   do
     rm -rf "$skills_root/$legacy_skill_dir"
   done

@@ -74,17 +74,12 @@ Choose exactly one mode:
 | Quick direct `lazyweb_search` preflight before designing, no report | **Invoke the `lazyweb-quick-search` skill** |
 | Update local Lazyweb skills, reinstall Lazyweb, or sync Lazyweb into agentic IDEs | **Invoke the `lazyweb-update` skill** |
 | A/B tests, experiment examples, pricing, trials, lifecycle, or monetization strategy | Use the `lazyweb_search_ab_tests` MCP tool (mobile A/B evidence) |
-| Rewrite, evaluate, or stress-test ONE paywall CTA (button copy, not layout) | Use the `lazyweb_paywall_cta_research` MCP tool |
-| Creative cross-category ideas or unconventional directions | Fetch its workflow: `lazyweb_get_workflows { operation:"fetch", workflow:"lazyweb-design-brainstorm" }` |
-| Design best practices for X — find the top community-rated skill online and apply it as context (no install) | Fetch its workflow: `lazyweb_get_workflows { operation:"fetch", workflow:"lazyweb-design-best-practices" }` |
 
 **How to run, explained.** Only `lazyweb-design`, `lazyweb-quick-search`, and
 `lazyweb-update` are installed as local skills — invoke them **by name**, which
-resolves regardless of how the host lays out skill directories. The remaining
-modes are intentionally not installed as slash commands: reach A/B-test and
-paywall-CTA work through their dedicated MCP tools above, and fetch brainstorm /
-best-practices methodology over MCP with `lazyweb_get_workflows`. The `create`
-objective inside `lazyweb-design` likewise fetches the `lazyweb-design-create`
+resolves regardless of how the host lays out skill directories. A/B-test
+evidence is reached through the `lazyweb_search_ab_tests` MCP tool above. The
+`create` objective inside `lazyweb-design` fetches the `lazyweb-design-create`
 backend over MCP. Never substitute a `skills/<name>/SKILL.md` file read for any
 of these — that path does not exist in the install.
 
@@ -92,10 +87,8 @@ For a bare `/lazyweb` request, briefly explain the modes above and ask which
 one the user wants. Recommend `lazyweb-design` when they want to optimize,
 improve, or design a product screen, and `lazyweb-quick-search` when they need
 direct MCP search context or quick references before designing and do not want a
-report.
-Route CTA copy questions to `lazyweb-paywall-cta` only when the ask is about
-the button text itself; a broader paywall redesign goes to
-`lazyweb-design` even if the CTA is part of it. `lazyweb-design` is the
+report. Paywall CTA copy is part of the screen, so it also goes to
+`lazyweb-design`. `lazyweb-design` is the
 user-facing umbrella for ANY product screen and routes on `objective`. Pick by
 the user's INTENT, not by whether they have a screenshot: route an EXISTING
 screen they want to optimize/improve to `lazyweb-design` (objectives `optimize`
@@ -103,10 +96,6 @@ and `improve`), and route designing a NEW screen FROM SCRATCH to `lazyweb-design
 too (objective `create`, which hands off internally to the `lazyweb-design-create`
 backend — never route users straight to `lazyweb-design-create`). Route explicit
 install, update, refresh, or stale slash-command requests to `lazyweb-update`.
-Route "design best practices for X" / "what's the best skill for animation,
-landing pages, typography…" asks to `lazyweb-design-best-practices`, which
-researches live community reviews, fetches the winning skill's instructions
-from the internet, and applies them as context — nothing gets installed.
 
 ## Mode Handoff
 

@@ -8,8 +8,16 @@ const root = path.resolve(new URL("..", import.meta.url).pathname);
 // A hardcoded list is the exact trap that left lazyweb-paywall-cta and
 // lazyweb-optimize-sign-up unvalidated (and undocumented) after 0.4.0:
 // a new mode must be picked up by adding its directory, nothing else.
+//
+// lazyweb-design-create is an INTERNAL backend: it is reached via
+// lazyweb_get_workflows and the design `create` objective, never surfaced as a
+// slash command (setup does not install it). So it is excluded from the
+// visible-mode checks (router row, README row, route: frontmatter) and is
+// validated separately below as the create/report backend.
+const INTERNAL_BACKEND_SKILLS = new Set(["lazyweb-design-create"]);
 const visibleModeSkillDirs = readdirSync(path.join(root, "skills"), { withFileTypes: true })
   .filter((entry) => entry.isDirectory() && existsSync(path.join(root, "skills", entry.name, "SKILL.md")))
+  .filter((entry) => !INTERNAL_BACKEND_SKILLS.has(entry.name))
   .map((entry) => `skills/${entry.name}`)
   .sort();
 
@@ -65,8 +73,12 @@ for (const dir of visibleModeSkillDirs) {
 }
 
 const router = assertSkillFile("SKILL.md", "lazyweb");
+// The router invokes installed modes BY NAME — it deliberately never references
+// skills/<name>/SKILL.md file paths (that layout exists only in the source repo,
+// not in the install). So assert the router names each visible mode.
 for (const mode of visibleModeSkillDirs) {
-  assert.match(router, new RegExp(`${mode}/SKILL\\.md`), `router must point to ${mode}/SKILL.md`);
+  const name = path.basename(mode);
+  assert.match(router, new RegExp(`\\b${name}\\b`), `router must route to ${name}`);
 }
 for (const removedMode of ["lazyweb-welcome", "lazyweb-feedback", "lazyweb-flows", "lazyweb-add-inspo-source", "lazyweb-remove-inspo-source"]) {
   assert.doesNotMatch(router, new RegExp(removedMode), `router must not route to removed mode ${removedMode}`);
@@ -192,15 +204,15 @@ for (const relativePath of ["README.md", "SKILL.md", ...visibleModeSkillDirs.map
   }
 }
 
-const designResearchText = read("skills/lazyweb-deep-design-research/SKILL.md");
+const designResearchText = read("skills/lazyweb-design-create/SKILL.md");
 // The render-tested report skeleton/CSS/JS lives in the template file the
 // skill instructs agents to copy; component assertions check both.
-const designResearchTemplate = read("skills/lazyweb-deep-design-research/report-template.html");
+const designResearchTemplate = read("skills/lazyweb-design-create/report-template.html");
 const designResearchAll = designResearchText + "\n" + designResearchTemplate;
 assert.match(designResearchText, /report-template\.html/, "design-research skill must reference its report template");
 for (const scriptName of ["fetch-evidence.py", "generate-prototypes.py", "fill-report.py"]) {
-  const sp = path.join(root, "skills/lazyweb-deep-design-research", scriptName);
-  assert.ok(existsSync(sp), `missing skills/lazyweb-deep-design-research/${scriptName}`);
+  const sp = path.join(root, "skills/lazyweb-design-create", scriptName);
+  assert.ok(existsSync(sp), `missing skills/lazyweb-design-create/${scriptName}`);
   assert.ok(statSync(sp).mode & 0o111, `${scriptName} must be executable`);
   assert.match(designResearchText, new RegExp(scriptName.replace(".", "\\.")), `design-research skill must reference ${scriptName}`);
 }

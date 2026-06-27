@@ -114,9 +114,8 @@ You never write HTML — you only choose image `src` values in `report-data.json
 
 ## When NOT to Use This
 
-- User just wants to see a few screenshots quickly -> route to `lazyweb-lite-design-research`
-- User has an existing design and wants improvement ideas -> route to `lazyweb-design-improve`
-- User wants creative/unconventional ideas -> route to `lazyweb-design-brainstorm`
+- User just wants to see a few screenshots quickly -> route to `lazyweb-quick-search`
+- User has an existing design and wants to optimize or improve it -> route to `lazyweb-design` (objective `optimize` or `improve`)
 
 ## Lazyweb MCP Setup
 
