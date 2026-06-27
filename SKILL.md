@@ -65,15 +65,25 @@ continue with web research only if they want a degraded fallback.
 
 ## Routing
 
-Choose exactly one mode:
+Choose exactly one mode. **`lazyweb-design` is the default for any design work** —
+design, redesign, optimize, improve, critique, or build any product screen (paywall,
+pricing, landing, onboarding, settings, dashboard, etc.). It runs the one-call
+server-side `lazyweb_generate_report` and hosts a full report. Route to
+`lazyweb-quick-search` ONLY when the user explicitly asks for a quick reference /
+examples lookup — never as the default for design work, and never as the way to
+produce a report.
 
 | User intent | How to run |
 |---|---|
-| Optimize (conversion), improve (design quality), or design from scratch ANY product screen — paywall, pricing, landing, signup, onboarding, dashboard, settings, etc. (routes on objective) | **Invoke the `lazyweb-design` skill** |
-| Quick grouped examples, UI references, or screenshots without a full report | **Invoke the `lazyweb-quick-search` skill** |
-| Quick direct `lazyweb_search` preflight before designing, no report | **Invoke the `lazyweb-quick-search` skill** |
+| **DEFAULT for design work** — design, redesign, optimize, improve, critique, or build ANY product screen (paywall, pricing, landing, signup, onboarding, dashboard, settings, etc.) | **Invoke the `lazyweb-design` skill** (one-call server-side `lazyweb_generate_report`) |
+| The user **explicitly** asks for a quick reference / examples lookup ("quick search", "just show me a few references", "look up examples first") — and does NOT want a report | **Invoke the `lazyweb-quick-search` skill** |
 | Update local Lazyweb skills, reinstall Lazyweb, or sync Lazyweb into agentic IDEs | **Invoke the `lazyweb-update` skill** |
 | A/B tests, experiment examples, pricing, trials, lifecycle, or monetization strategy | Use the `lazyweb_search_ab_tests` MCP tool (mobile A/B evidence) |
+
+When in doubt between the two, choose `lazyweb-design`: it is the default for
+producing anything (a redesign, a critique, a report). Reach for
+`lazyweb-quick-search` only on an explicit reference-lookup request, and never as a
+fallback for building a report.
 
 **How to run, explained.** Only `lazyweb-design`, `lazyweb-quick-search`, and
 `lazyweb-update` are installed as local skills — invoke them **by name**, which
@@ -102,11 +112,12 @@ is reached only INSIDE `lazyweb-quick-search` (references) and the server-side
 external tool for any retired skill.
 
 For a bare `/lazyweb` request, briefly explain the modes above and ask which
-one the user wants. Recommend `lazyweb-design` when they want to optimize,
-improve, or design a product screen, and `lazyweb-quick-search` when they need
-direct MCP search context or quick references before designing and do not want a
-report. Paywall CTA copy is part of the screen, so it also goes to
-`lazyweb-design`. `lazyweb-design` is the
+one the user wants. Default to `lazyweb-design` for any design/redesign/optimize/
+improve/critique/build work — it is the one-call server-side report path. Only
+recommend `lazyweb-quick-search` when the user has explicitly asked for a quick
+reference / examples lookup and does not want a report — never as the default for
+design work and never as a way to build a report. Paywall CTA copy is part of the
+screen, so it also goes to `lazyweb-design`. `lazyweb-design` is the
 user-facing umbrella for ANY product screen and routes on `objective`. Pick by
 the user's INTENT, not by whether they have a screenshot: route an EXISTING
 screen they want to optimize/improve to `lazyweb-design` (objectives `optimize`

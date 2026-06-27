@@ -28,17 +28,27 @@ report, publish HTML, or produce a deck. It runs the smallest useful
 `lazyweb_search`, reads the returned screenshots and metadata, then gives the
 builder concrete UI takeaways with image links.
 
+> **Use this ONLY for an explicit reference / examples lookup.** This is NOT the
+> default for design work and NOT a way to produce a report. If the user wants to
+> **redesign, optimize, improve, or critique a screen — or produce a report** —
+> use **`lazyweb-design`** instead. `lazyweb-design` runs the one-call,
+> server-side `lazyweb_generate_report`, which does its own searching and hosts a
+> full report; you do not search here first and hand the results off to build one.
+> Reach for quick-search only when the user explicitly asks for a quick reference
+> lookup or a few examples and does NOT want a report.
+
 ## When to Use This
 
-- Before designing a screen, component, flow, or page and the agent needs a
-  quick industry reality check
-- When the user asks for a few references, but not a full report
-- When another frontend skill is about to build something unfamiliar and should
-  inspect real examples first
-- When the user explicitly asks to use `lazyweb_search`
+- When the user **explicitly** asks for a few references / examples and does NOT
+  want a report
+- When the user explicitly asks for a "quick search" or to use `lazyweb_search`
+- When the user asks to inspect search coverage for a UI pattern
 
 ## When NOT to Use This
 
+- Any design / redesign / optimize / improve / critique / build work, or
+  producing a report → **`lazyweb-design`** (the default; one-call server-side
+  `lazyweb_generate_report`)
 - Full competitive analysis, ranked recommendations, or visual prototypes →
   `lazyweb-design`
 - Existing UI critique or before/after recommendations →
@@ -47,6 +57,8 @@ builder concrete UI takeaways with image links.
   `lazyweb-design` (objective optimize)
 - Sign-up conversion redesign →
   `lazyweb-design` (objective optimize)
+- As a search step to gather references BEFORE building a report —
+  `lazyweb-design` searches server-side itself; don't preflight here for it
 
 ## MCP Setup
 

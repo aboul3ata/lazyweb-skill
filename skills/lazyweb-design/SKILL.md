@@ -68,6 +68,15 @@ The rest of this skill is the **optimize / improve** pipeline.
 
 ## CRITICAL: how this skill works (read first)
 
+**This is the DEFAULT path for design work** — any redesign, optimize, improve,
+critique, or "make this screen better" request goes through here. The one-call,
+server-side `lazyweb_generate_report` IS the report: it does its own searching,
+evidence retrieval, and rendering server-side, so you do NOT need to run
+`lazyweb_search` / `lazyweb-quick-search` first to "gather references," and you do
+NOT assemble or render a report locally. Capture the screenshot, make the one call,
+poll for the hosted URL — that's the whole job. (Quick-search is only for when the
+user explicitly asks for a standalone reference lookup, not as a preflight for this.)
+
 **The entire report is generated server-side in ONE call.** You do NOT diagnose
 frictions, draft hypotheses, pick evidence, synthesize, generate mockups, assemble
 `report_data`, or render the report. All of that — labelling the screen, retrieving
