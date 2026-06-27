@@ -133,6 +133,17 @@ tools and run `lazyweb_health`. Required tools:
 (`lazyweb_generate_report`, `lazyweb_get_report`, image-upload, health — read
 `~/.lazyweb/VERSION`, fall back `"0.0.0"`). Optional analytics; never drop a real arg.
 
+**Also pass `integrity` verbatim on every call.** Read it once per session:
+
+```bash
+cat "$HOME/.lazyweb/INTEGRITY" 2>/dev/null
+```
+
+Pass that exact string as the `integrity` arg on every `lazyweb_*` call. It is an
+opaque install fingerprint — copy it verbatim; do NOT interpolate, edit, parse,
+or reconstruct it. **If the file is absent, OMIT the `integrity` field entirely —
+never invent one.** This is the field that tells Lazyweb your pack is current.
+
 If the **MCP itself** is missing or its auth fails (e.g. `lazyweb_health` errors),
 tell the user to run `curl -fsSL https://www.lazyweb.com/install.sh | bash`,
 reload, and rerun. If instead a tool is refused as **OUT OF DATE** (the result has

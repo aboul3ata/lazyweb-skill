@@ -136,6 +136,8 @@ Optional MCP tools:
 
 **Also pass `version: "<x.y.z>"` on every call.** Read `~/.lazyweb/VERSION` once per session at skill start (e.g. `cat "$HOME/.lazyweb/VERSION" 2>/dev/null || echo 0.0.0`); fall back to `"0.0.0"` if the file is missing or unreadable — never block on this. Include `"version": "<that-value>"` in the arguments of every `lazyweb_*` tool call alongside the existing `skill` arg — for example `{"query": "pricing page", "limit": 30, "skill": "lazyweb-design-create", "version": "0.4.5"}`. Optional analytics metadata Lazyweb uses to track which skill-pack versions are running; never drop or change a real argument for it.
 
+**Also pass `integrity` verbatim on every call.** Read it once per session at skill start (`cat "$HOME/.lazyweb/INTEGRITY" 2>/dev/null`). Pass that exact string as the `integrity` arg on every `lazyweb_*` tool call — it is an opaque install fingerprint; copy it verbatim and do NOT interpolate, edit, parse, or reconstruct it. **If the file is absent, OMIT the `integrity` field entirely — never invent one.** This is the field that tells Lazyweb your pack is current.
+
 These are the current public gateway names. Backend/internal surfaces may also
 expose canonical tools such as `search_screenshots`, `list_filters`,
 `vision_screenshots`, and `metadata_screenshots`; prefer the `lazyweb_*` names

@@ -258,6 +258,63 @@ install_version_marker() {
   fi
 }
 
+# Deterministic content hash over the repo's SHIPPED canonical lazyweb-* skill
+# set — the sorted, unique basenames of the `lazyweb-*` skill dirs present in
+# $ROOT/skills. We hash the REPO's shipped set (not the user's whole skills dir)
+# so the value is identical for every install of a given release (spec §6): the
+# server can compare it against the manifest's `expected_set` for that commit and
+# detect branch-trap / stale-dir installs WITHOUT trusting the per-client skill
+# layout (multi-root installs, custom skill dirs, OS listing order would all
+# perturb a per-client hash and cause false drift). Telemetry-only in v1.
+installed_skill_set_hash() {
+  local listing
+  listing="$( ls -1 "$ROOT/skills" 2>/dev/null | grep '^lazyweb-' | LC_ALL=C sort -u )"
+  if has_cmd shasum; then
+    printf '%s\n' "$listing" | shasum -a 256 | cut -d' ' -f1
+  elif has_cmd sha256sum; then
+    printf '%s\n' "$listing" | sha256sum | cut -d' ' -f1
+  else
+    # No sha tool available — emit empty so the marker degrades gracefully
+    # (server treats a missing/short set-hash as "unknown", never as drift).
+    printf '%s' ""
+  fi
+}
+
+# Stamp a single-line, fresh-read install fingerprint to ~/.lazyweb/INTEGRITY.
+# The agent forwards this opaque string verbatim as the `integrity` arg (spec
+# §3). Unlike the agent-typed `version`, a 40-hex commit SHA cannot be guessed
+# or reconstructed from memory, so the server can map a KNOWN SHA -> a real
+# released version and treat unknown/garbage/missing as untrusted.
+#
+# Format (v1): lw1.<sha40>.<version>.<setsha12>
+#   - lw1       scheme/version prefix (lets the server evolve the format)
+#   - <sha40>   git -C "$ROOT" rev-parse HEAD (full 40-hex) — load-bearing
+#   - <version> cat $ROOT/VERSION — redundant, human-legible, degradation anchor
+#   - <setsha12> first 12 hex of installed_skill_set_hash (branch-trap detector)
+# For a fork/zip checkout with no .git, emit lw1.nogit.<version>.<setsha12>
+# rather than fabricating a fake SHA — the server treats `nogit` as untrusted.
+#
+# Called right after install_version_marker. `lazyweb-update` already re-runs
+# setup, so the marker refreshes on every update with no change to the updater.
+install_integrity_marker() {
+  mkdir -p "$HOME/.lazyweb"
+  local sha ver setsha line
+  sha="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || true)"
+  if [ -f "$ROOT/VERSION" ]; then
+    ver="$(tr -d '[:space:]' < "$ROOT/VERSION" 2>/dev/null || true)"
+  fi
+  [ -n "$ver" ] || ver="0.0.0"
+  setsha="$(installed_skill_set_hash | cut -c1-12)"
+  # Only treat it as a real git checkout if rev-parse returned a 40-hex SHA.
+  case "$sha" in
+    [0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f])
+      line="lw1.${sha}.${ver}.${setsha}" ;;
+    *)
+      line="lw1.nogit.${ver}.${setsha}" ;;
+  esac
+  printf '%s\n' "$line" > "$HOME/.lazyweb/INTEGRITY"
+}
+
 install_lazyweb_bins() {
   mkdir -p "$HOME/.lazyweb/bin"
   # lazyweb-hosts.sh is sourced by lazyweb-router and must sit beside it.
@@ -388,6 +445,7 @@ selected_hosts() {
 TOKEN="$(ensure_token)"
 install_lazyweb_bins
 install_version_marker
+install_integrity_marker
 
 HOSTS="$(selected_hosts | awk '!seen[$0]++' || true)"
 if [ -z "$HOSTS" ]; then

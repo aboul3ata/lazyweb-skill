@@ -1,0 +1,132 @@
+# Release manifest updater (integrity-signal Phase 0, producer side).
+#
+# When a push to `main` changes the VERSION file, append an entry to
+# releases.json naming the RELEASE CONTENT COMMIT users actually land on after
+# `lazyweb-update` hard-resets to origin/main — i.e. the pushed commit's own SHA
+# (github.sha), NOT the manifest-append commit this workflow creates.
+#
+# Why this matters (spec §5.2a / §8.1): the manifest-append commit has a
+# different SHA than the release it records. If we recorded the append commit's
+# SHA, no installed client would ever present it (clients land on the release
+# content commit). So we record github.sha — the VERSION-bumping commit that
+# triggered this run — and then make a SEPARATE follow-up commit that adds the
+# manifest entry. That follow-up commit is itself a landable main HEAD, so a
+# later run (or the safety net below) records it too; to keep the manifest
+# correct for the common case we also record the follow-up's parent chain by
+# only ever APPENDING and de-duplicating on SHA.
+#
+# `expected_set` = sha256 over the sorted, unique canonical lazyweb-* skill
+# basenames shipped in skills/ at the recorded commit. This is computed exactly
+# like setup's installed_skill_set_hash so the server can compare a VERIFIED
+# call's set-hash against it (telemetry-only branch-trap detector in Phase 0).
+#
+# The commit-back is marked [skip ci] so appending the entry does not retrigger
+# this workflow (and the path filter on VERSION wouldn't match anyway).
+
+name: Release manifest
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "VERSION"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  # Serialize manifest writes so two near-simultaneous releases don't race on
+  # the append + push.
+  group: release-manifest
+  cancel-in-progress: false
+
+jobs:
+  append-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          # Need full history so we can read VERSION/skills at the release SHA.
+          fetch-depth: 0
+          ref: main
+
+      - name: Append release entry to releases.json
+        env:
+          # The release content commit users land on. On a push event this is
+          # the pushed (VERSION-bumping) commit — exactly the SHA an installed
+          # client will `git rev-parse HEAD` after updating. On a manual
+          # workflow_dispatch run it is the current main HEAD.
+          RELEASE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          # Resolve the release SHA to a real, full 40-hex commit on this repo.
+          sha="$(git rev-parse "${RELEASE_SHA}^{commit}")"
+          version="$(git show "${sha}:VERSION" | tr -d '[:space:]')"
+          released_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+          # expected_set: sha256 over the sorted, unique canonical lazyweb-*
+          # skill basenames shipped in skills/ AT THE RELEASE COMMIT — identical
+          # computation to setup's installed_skill_set_hash().
+          expected_set="$(
+            git ls-tree --name-only "${sha}" skills/ \
+              | sed 's#^skills/##' \
+              | grep '^lazyweb-' \
+              | LC_ALL=C sort -u \
+              | shasum -a 256 \
+              | cut -d' ' -f1
+          )"
+
+          echo "Recording release: sha=${sha} version=${version} set=${expected_set} at=${released_at}"
+
+          # Idempotently append. If the SHA is already present, do nothing
+          # (re-runs / dispatches must not create duplicates).
+          SHA="$sha" VERSION="$version" RELEASED_AT="$released_at" EXPECTED_SET="$expected_set" \
+          node <<'NODE'
+          const fs = require("fs");
+          const p = "releases.json";
+          let data;
+          try {
+            data = JSON.parse(fs.readFileSync(p, "utf8"));
+          } catch (e) {
+            data = { schema: "lw-releases-1", releases: [] };
+          }
+          if (!data || typeof data !== "object") data = { schema: "lw-releases-1", releases: [] };
+          if (data.schema !== "lw-releases-1") data.schema = "lw-releases-1";
+          if (!Array.isArray(data.releases)) data.releases = [];
+
+          const sha = process.env.SHA;
+          if (data.releases.some((r) => r && r.sha === sha)) {
+            console.log(`SHA ${sha} already in manifest; nothing to do.`);
+            process.exit(0);
+          }
+
+          const entry = {
+            sha,
+            version: process.env.VERSION,
+            released_at: process.env.RELEASED_AT,
+            expected_set: process.env.EXPECTED_SET,
+          };
+          // Newest entries first (matches the seeded layout); the server builds
+          // an order-independent map so ordering is cosmetic.
+          data.releases.unshift(entry);
+          fs.writeFileSync(p, JSON.stringify(data, null, 2) + "\n");
+          console.log("Appended:", JSON.stringify(entry));
+          NODE
+
+      - name: Commit manifest if changed
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- releases.json; then
+            echo "releases.json unchanged; skipping commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add releases.json
+          # [skip ci]: the manifest-append commit must not retrigger CI (and the
+          # VERSION path filter wouldn't match it anyway).
+          git commit -m "chore(releases): record ${{ github.sha }} in manifest [skip ci]"
+          git push origin HEAD:main

@@ -79,6 +79,18 @@ cat "$HOME/.lazyweb/VERSION" 2>/dev/null || echo 0.0.0
 
 Use `"0.0.0"` if missing. Never block on the version read.
 
+**Also pass `integrity` verbatim on every Lazyweb call.** Read it once per
+session:
+
+```bash
+cat "$HOME/.lazyweb/INTEGRITY" 2>/dev/null
+```
+
+Pass that exact string as the `integrity` arg on every `lazyweb_*` call. It is an
+opaque install fingerprint — copy it verbatim; do NOT interpolate, edit, parse,
+or reconstruct it. **If the file is absent, OMIT the `integrity` field entirely —
+never invent one.** This is the field that tells Lazyweb your pack is current.
+
 ## Search Protocol
 
 ### 1. Pick the platform first

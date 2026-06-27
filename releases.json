@@ -1,0 +1,60 @@
+{
+  "schema": "lw-releases-1",
+  "comment": "Append-only manifest of released lazyweb-skill commits. Maps the SHA an installed client reports (git rev-parse HEAD after lazyweb-update hard-resets to origin/main) to the released version. The server fetches this raw from https://raw.githubusercontent.com/aboul3ata/lazyweb-skill/main/releases.json and builds an O(1) sha->{version,expected_set} map (cached/last-good like the existing VERSION probe). A known SHA is VERIFIED; unknown/missing is UNTRUSTED. `expected_set` = sha256 over the sorted, unique canonical lazyweb-* skill basenames shipped in skills/ at that commit (same computation as setup's installed_skill_set_hash); used as a telemetry-only branch-trap detector in Phase 0. New entries are appended by the release CI on push to main that changes VERSION (.github/workflows/release-manifest.yml). The current main HEAD entry is first; it is the load-bearing SHA currently-installed clients present.",
+  "releases": [
+    {
+      "sha": "0690e117241ea9af09e84ef5ed7d0a8c293712e0",
+      "version": "0.13.7",
+      "released_at": "2026-06-27T14:25:12Z",
+      "expected_set": "b19acb98270a01a22bef91e6093bde36484a6139771907d6f61370ad1abc7059"
+    },
+    {
+      "sha": "19172b29fe556947316e96bebb9c8b7ebcde6587",
+      "version": "0.13.7",
+      "released_at": "2026-06-27T04:25:13Z",
+      "expected_set": "b19acb98270a01a22bef91e6093bde36484a6139771907d6f61370ad1abc7059"
+    },
+    {
+      "sha": "a824cb03aefb4a529a67e5bca44271fa1a296b98",
+      "version": "0.13.6",
+      "released_at": "2026-06-27T02:45:10Z",
+      "expected_set": "780d13f61637c69c14c266e6f1952e345ffd2e8de976b24f39d333ecec8acee6"
+    },
+    {
+      "sha": "fe15c48f0b6848b8530a226fc1fe9879a3e70297",
+      "version": "0.13.5",
+      "released_at": "2026-06-26T21:58:43Z",
+      "expected_set": "780d13f61637c69c14c266e6f1952e345ffd2e8de976b24f39d333ecec8acee6"
+    },
+    {
+      "sha": "99067f0709c9142bf1874abd43f6199317af6355",
+      "version": "0.13.4",
+      "released_at": "2026-06-26T19:21:42Z",
+      "expected_set": "780d13f61637c69c14c266e6f1952e345ffd2e8de976b24f39d333ecec8acee6"
+    },
+    {
+      "sha": "797b6a72d28899e056842fc3e054e2fce46aa3a5",
+      "version": "0.13.3",
+      "released_at": "2026-06-26T14:48:45Z",
+      "expected_set": "780d13f61637c69c14c266e6f1952e345ffd2e8de976b24f39d333ecec8acee6"
+    },
+    {
+      "sha": "862c4b59fe5befb78eefe43c67d2fa2780266d3b",
+      "version": "0.13.2",
+      "released_at": "2026-06-26T01:04:27Z",
+      "expected_set": "780d13f61637c69c14c266e6f1952e345ffd2e8de976b24f39d333ecec8acee6"
+    },
+    {
+      "sha": "d823bab099f66b99a2d14ffef8bc7110715a1307",
+      "version": "0.13.1",
+      "released_at": "2026-06-26T00:08:40Z",
+      "expected_set": "780d13f61637c69c14c266e6f1952e345ffd2e8de976b24f39d333ecec8acee6"
+    },
+    {
+      "sha": "3359901ebd64adcb38a59043a41debe8d4fcfbca",
+      "version": "0.13.0",
+      "released_at": "2026-06-25T21:22:51Z",
+      "expected_set": "01c30bbef28a8e15a86fbfc46e500dae4475ee3f33fa4f23f140d99099a758bb"
+    }
+  ]
+}
