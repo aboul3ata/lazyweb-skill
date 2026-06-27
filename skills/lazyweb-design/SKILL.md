@@ -269,8 +269,8 @@ The done result is `{ id, url, degraded, failures }`:
 
 1. Give the user the report URL.
 2. If `degraded`, note which slot(s) shipped without a mockup (from `failures`).
-3. Suggest next steps: implement a recommendation, or ask `/lazyweb-ab-test-research`
-   to mine the experiment corpus deeper.
+3. Suggest next steps: implement a recommendation, or use the `lazyweb_search_ab_tests`
+   MCP tool to mine the experiment corpus deeper.
 
 ## Operating principles
 
