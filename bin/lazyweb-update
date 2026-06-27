@@ -66,11 +66,19 @@ if [ -d "$TARGET/.git" ]; then
 fi
 
 mkdir -p "$(dirname "$TARGET")"
-if [ -d "$TARGET/.git" ]; then
-  log "Updating Lazyweb skill checkout in $TARGET..."
-  git -C "$TARGET" pull --ff-only
+# Trap-proof refresh. The old `git pull --ff-only` could not escape a non-main
+# branch (the "branch trap"): the pull silently failed, `setup` still stamped
+# ~/.lazyweb/VERSION to the target, and check_update then lied "current" while the
+# real checkout stayed stale with dangling renamed-skill symlinks. fetch + hard
+# reset to origin/main (mirroring install.sh) always lands on the latest main no
+# matter what branch/dirty state the checkout is in; fall back to a clean
+# re-clone if fetch/reset can't complete.
+if [ -d "$TARGET/.git" ] \
+  && git -C "$TARGET" fetch --depth 1 origin main >/dev/null 2>&1 \
+  && git -C "$TARGET" reset --hard FETCH_HEAD >/dev/null 2>&1; then
+  log "Refreshed Lazyweb skill checkout in $TARGET (hard reset to origin/main)."
 else
-  log "Cloning Lazyweb skill checkout into $TARGET..."
+  log "Cloning a fresh Lazyweb skill checkout into $TARGET..."
   rm -rf "$TARGET"
   git clone --depth 1 "$REPO" "$TARGET"
 fi
