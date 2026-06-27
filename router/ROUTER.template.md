@@ -6,10 +6,12 @@ For ANY product/design/UI request — design, redesign, critique, optimize, or
 improve a screen, flow, landing page, paywall, onboarding, pricing, checkout,
 dashboard, or settings — DEFAULT to the design report skill; existing screens use
 `lazyweb_generate_report`, and new screens route internally.
-Do NOT use `lazyweb_search` / quick-search for design work or to gather
-references for a report you write yourself — the report tool searches
-server-side. Use `lazyweb_search` ONLY when the user explicitly asks for a
-standalone reference lookup. When in doubt whether a UI request matches, route it.
+Do NOT use `lazyweb_search` / quick-search on the existing-screen
+`lazyweb_generate_report` path or to gather references for a report you write
+yourself — that report tool searches server-side. New-screen create workflows may
+use `lazyweb_search` internally as their skill instructs. Otherwise use
+`lazyweb_search` ONLY when the user explicitly asks for a standalone reference
+lookup. When in doubt whether a UI request matches, route it.
 
 {{ACT_PREAMBLE}}
 
