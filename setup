@@ -34,7 +34,7 @@ lazyweb-paywall-cta
 # repo (the server/router can still reach it via lazyweb_get_workflows) but is
 # intentionally NOT installed as a slash command, so anything else found in a
 # client skill root is stale and must be removed.
-FOCUSED_SKILLS="lazyweb-design lazyweb-quick-search lazyweb-generate-flowchart lazyweb-propose-ui-changes lazyweb-update"
+FOCUSED_SKILLS="lazyweb-design lazyweb-quick-search lazyweb-generate-flowchart lazyweb-update-flowchart lazyweb-propose-ui-changes lazyweb-update"
 # Skill roots install_skills_to_root touched this run, so verify_prune can
 # re-check every one of them after the host loop.
 INSTALLED_SKILL_ROOTS=""
