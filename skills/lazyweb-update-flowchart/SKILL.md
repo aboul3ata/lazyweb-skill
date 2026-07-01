@@ -1,6 +1,6 @@
 ---
 name: lazyweb-update-flowchart
-route: "Update a saved flow chart to match the current code (direct upsert)"
+route: "Refresh stale flow chart"
 router-terms: update the flow chart, update the flowchart, refresh the flowchart, the chart is stale, sync the flow chart with the code, bring the diagram up to date, refresh the diagram, chart out of date, resync the flow chart
 description: |
   UPDATE a product's saved Lazyweb flow chart to match the current code: look at
