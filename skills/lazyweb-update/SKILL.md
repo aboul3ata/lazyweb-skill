@@ -136,7 +136,7 @@ After the updater finishes:
      for d in "$root"/lazyweb-*/; do
        [ -e "$d" ] || continue
        name="$(basename "$d")"
-       case " lazyweb-design lazyweb-quick-search lazyweb-update " in
+       case " lazyweb-design lazyweb-generate-flowchart lazyweb-propose-ui-changes lazyweb-quick-search lazyweb-update " in
          *" $name "*) : ;;
          *) echo "STALE: ${d%/}" ;;
        esac

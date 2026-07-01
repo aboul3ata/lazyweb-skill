@@ -87,13 +87,15 @@ producing anything (a redesign, a critique, a report). Reach for
 `lazyweb-quick-search` only on an explicit reference-lookup request, and never as a
 fallback for building a report.
 
-**How to run, explained.** Only `lazyweb-design`, `lazyweb-quick-search`, and
-`lazyweb-update` are installed as local skills — invoke them **by name**, which
-resolves regardless of how the host lays out skill directories. A/B-test
-evidence is reached through the `lazyweb_search_ab_tests` MCP tool above. The
-`create` objective inside `lazyweb-design` fetches the `lazyweb-design-create`
-backend over MCP. Never substitute a `skills/<name>/SKILL.md` file read for any
-of these — that path does not exist in the install.
+**How to run, explained.** Only `lazyweb-design`,
+`lazyweb-generate-flowchart`, `lazyweb-propose-ui-changes`,
+`lazyweb-quick-search`, and `lazyweb-update` are installed as local skills —
+invoke them **by name**, which resolves regardless of how the host lays out
+skill directories. A/B-test evidence is reached through the
+`lazyweb_search_ab_tests` MCP tool above. The `create` objective inside
+`lazyweb-design` fetches the `lazyweb-design-create` backend over MCP. Never
+substitute a `skills/<name>/SKILL.md` file read for any of these — that path
+does not exist in the install.
 
 **Retired skills — route their intent to one of the two skills above.** These
 earlier Lazyweb skills no longer exist. Do NOT try to invoke or fetch the old
@@ -142,12 +144,12 @@ When a mode is clear:
 4. Embed Lazyweb database images directly with returned `imageUrl`/`image_url` values, and save only current-state or web-captured screenshots locally when the selected mode requires them.
 5. Cite whether each reference came from Lazyweb or the web.
 
-The installed mode skills (`lazyweb-design`, `lazyweb-quick-search`,
-`lazyweb-update`) may also be called directly by the user from the slash menu.
-This `/lazyweb` skill remains the entry point for hosts that show only one
-downloaded skill or where the user is not sure which mode to use — there, reach
-the unsurfaced modes via their MCP tool or `lazyweb_get_workflows`, never a
-local file path.
+The installed mode skills (`lazyweb-design`, `lazyweb-generate-flowchart`,
+`lazyweb-propose-ui-changes`, `lazyweb-quick-search`, `lazyweb-update`) may
+also be called directly by the user from the slash menu. This `/lazyweb` skill
+remains the entry point for hosts that show only one downloaded skill or where
+the user is not sure which mode to use — there, reach the unsurfaced modes via
+their MCP tool or `lazyweb_get_workflows`, never a local file path.
 
 ## Autorouter Check (one-time, after the request is served)
 
