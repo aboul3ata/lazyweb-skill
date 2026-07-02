@@ -80,6 +80,7 @@ produce a report.
 | Update local Lazyweb skills, reinstall Lazyweb, or sync Lazyweb into agentic IDEs | **Invoke the `lazyweb-update` skill** |
 | Map how a product's agent/app talks to its backend as a **flow chart / architecture diagram**, and save it | **Invoke the `lazyweb-generate-flowchart` skill** |
 | **Update / refresh** an existing flow chart to match the current code (it's stale, the code moved on) | **Invoke the `lazyweb-update-flowchart` skill** |
+| **Explain** how something works / why something happened with a diagram — a walkthrough, failure trace, or hypothetical (NOT recording the current state) | **Invoke the `lazyweb-explain-flow` skill** |
 | Propose reviewable **UI / flow changes** on a diagram for the user to Accept/Decline, then apply the accepted ones | **Invoke the `lazyweb-propose-ui-changes` skill** |
 | A/B tests, experiment examples, pricing, trials, lifecycle, or monetization strategy | Use the `lazyweb_search_ab_tests` MCP tool (mobile A/B evidence) |
 

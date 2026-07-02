@@ -31,6 +31,25 @@ Saved via the Lazyweb MCP: `lazyweb_save_flowchart({ product, diagram })` →
 returns `{ flowchart_id, flowchart_url }`. Re-running for the same `product`
 UPDATES that one chart in place (stable id + URL); it is not duplicated.
 
+## Matter of fact — never for explaining
+
+The canonical chart is the **system of record**: a matter-of-fact map of the
+product's **current state**, derived from the real code, shown on the user's
+Architecture dashboard. It is NOT a communication device.
+
+- **Never** use this skill (or `lazyweb_save_flowchart`) to explain a concept,
+  answer a question, trace a failure, teach, or illustrate a hypothetical. A
+  diagram shaped around a question is an *explanation*, and saving it here
+  **overwrites the one canonical chart** (same product upserts in place) or
+  hijacks the user's dashboard (latest chart wins).
+- Explanations go through **`/lazyweb-explain-flow`** (`lazyweb_explain_flow`) —
+  separate insert-only storage at `/explainer/<id>/`; it cannot collide with the
+  canonical chart. You may copy the canonical chart as a starting point there.
+- Litmus test: *would this diagram be identical no matter what question the user
+  just asked?* If no, it's an explanation — wrong skill.
+- Content here states what IS: real sections, real payloads, real timings. No
+  emphasis added for a narrative, no "what went wrong" sections, no hypotheticals.
+
 ## MCP Setup
 
 Use the hosted Lazyweb MCP tools at `https://www.lazyweb.com/mcp`.

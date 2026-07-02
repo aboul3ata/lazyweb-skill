@@ -50,6 +50,7 @@ command:
 | `/lazyweb-quick-search` | Quick direct `lazyweb_search` preflight before designing; no report. |
 | `/lazyweb-generate-flowchart` | Map how a product's agent/app talks to its backend as a canonical flow chart and save it (one per product; re-run updates in place). |
 | `/lazyweb-update-flowchart` | Refresh an existing flow chart to match the current code — reads the chart, pulls the diffs since last update, upserts in place. Direct update, no proposal. |
+| `/lazyweb-explain-flow` | Explain how something works (walkthrough, failure trace, hypothetical) with a hosted diagram — separate storage; never touches the canonical chart. |
 | `/lazyweb-propose-ui-changes` | Propose reviewable UI/flow changes on a saved chart; the user Accepts/Declines on a hosted page, then you apply them. |
 | `/lazyweb-update` | Update the local Lazyweb skill pack and reinstall it into agentic IDEs. |
 
