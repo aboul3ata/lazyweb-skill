@@ -116,36 +116,54 @@ After the updater finishes:
    because the stale dir survived on disk. Check every root that exists
    (`~/.claude/skills`, `~/.codex/skills`, `~/.cursor/skills`,
    `~/.config/opencode/skills`, `~/.kiro/skills`, `~/.factory/skills`,
-   `~/.slate/skills`, `~/.hermes/skills`):
+   `~/.slate/skills`, `~/.hermes/skills`), plus the two retired distribution
+   channels: the legacy `~/.agents/skills` root and the old Claude Code
+   plugin install (`~/.claude/plugins`):
 
    ```bash
+   # Read the focused slash-command set from the installed setup script so this
+   # check can never drift from what setup actually installs. The fallback list
+   # is only for broken installs with no repo checkout.
+   FOCUSED="$(sed -n 's/^FOCUSED_SKILLS="\(.*\)"$/\1/p' \
+     "$HOME/.lazyweb/repos/lazyweb-skill/setup" 2>/dev/null)"
+   [ -n "$FOCUSED" ] || FOCUSED="lazyweb-design lazyweb-quick-search \
+     lazyweb-generate-flowchart lazyweb-update-flowchart lazyweb-explain-flow \
+     lazyweb-propose-ui-changes lazyweb-update"
    for root in "$HOME"/.claude/skills "$HOME"/.codex/skills \
      "$HOME"/.cursor/skills "$HOME"/.config/opencode/skills \
      "$HOME"/.kiro/skills "$HOME"/.factory/skills \
      "$HOME"/.slate/skills "$HOME"/.hermes/skills; do
      [ -d "$root" ] || continue
-     for legacy in lazyweb-design-research lazyweb-quick-references \
-       lazyweb-paywall-optimization lazyweb-signup-optimization \
-       lazyweb-optimize-sign-up lazyweb-optimize-paywall \
-       lazyweb-deep-design-research lazyweb-ab-test-research \
-       lazyweb-design-best-practices lazyweb-design-brainstorm \
-       lazyweb-design-improve lazyweb-lite-design-research lazyweb-paywall-cta; do
-       [ -e "$root/$legacy" ] && echo "STALE: $root/$legacy"
-     done
-     # Any lazyweb-* dir outside the focused set is also stale.
+     # Any lazyweb-* dir outside the focused set is stale (this sweep subsumes
+     # the old hardcoded legacy-name list).
      for d in "$root"/lazyweb-*/; do
        [ -e "$d" ] || continue
        name="$(basename "$d")"
-       case " lazyweb-design lazyweb-quick-search lazyweb-update " in
+       case " $FOCUSED " in
          *" $name "*) : ;;
          *) echo "STALE: ${d%/}" ;;
        esac
      done
    done
+   # Legacy cross-agent roots: the installer no longer writes here at all, so
+   # ANY lazyweb dir — including the `lazyweb` entry skill — is stale.
+   for root in "$HOME"/.agents/skills; do
+     for d in "$root"/lazyweb "$root"/lazyweb-*/; do
+       [ -e "${d%/}" ] && echo "STALE: ${d%/}"
+     done
+   done
+   # Retired Claude Code PLUGIN distribution: its cached copy re-surfaces old
+   # skills as `lazyweb:*` slash commands until the plugin itself is removed.
+   [ -e "$HOME/.claude/plugins/cache/lazyweb" ] \
+     && echo "STALE: claude plugin cache ($HOME/.claude/plugins/cache/lazyweb)"
+   grep -q '"lazyweb@lazyweb"' \
+     "$HOME/.claude/plugins/installed_plugins.json" 2>/dev/null \
+     && echo "STALE: claude plugin registration (lazyweb@lazyweb)"
    ```
 
 3. **If that prints any `STALE:` line, re-run the updater** so setup's own
-   `verify_prune` removes them, then re-check:
+   prune passes (`verify_prune`, `prune_legacy_skill_roots`,
+   `prune_claude_plugin_install`) remove them, then re-check:
 
    ```bash
    "$HOME/.lazyweb/bin/lazyweb-update" --host all --quiet

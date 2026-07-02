@@ -35,6 +35,14 @@ lazyweb-paywall-cta
 # intentionally NOT installed as a slash command, so anything else found in a
 # client skill root is stale and must be removed.
 FOCUSED_SKILLS="lazyweb-design lazyweb-quick-search lazyweb-generate-flowchart lazyweb-update-flowchart lazyweb-explain-flow lazyweb-propose-ui-changes lazyweb-update"
+# Skill roots older installer generations wrote to but the current installer no
+# longer targets AT ALL. Nothing installs there anymore, so ANY Lazyweb dir
+# found in one — including the `lazyweb` entry skill itself — is stale by
+# definition and must be removed, or clients that read these roots keep
+# surfacing retired skills forever.
+LEGACY_SKILL_ROOTS="
+$HOME/.agents/skills
+"
 # Skill roots install_skills_to_root touched this run, so verify_prune can
 # re-check every one of them after the host loop.
 INSTALLED_SKILL_ROOTS=""
@@ -244,6 +252,130 @@ verify_prune() {
     return 1
   fi
   [ -z "$INSTALLED_SKILL_ROOTS" ] || log "stale skills remaining: none"
+  return 0
+}
+
+# Purge Lazyweb content from LEGACY_SKILL_ROOTS. install_skills_to_root never
+# touches these roots, so its per-root prune cannot reach them — a user who
+# installed with an older generation keeps stale slash commands there forever
+# unless we sweep explicitly. Everything lazyweb-shaped goes, including the
+# `lazyweb` entry skill: the current installer never writes here, so whatever
+# exists is from a retired install.
+prune_legacy_skill_roots() {
+  local root_dir entry leftover=""
+  for root_dir in $LEGACY_SKILL_ROOTS; do
+    [ -d "$root_dir" ] || continue
+    for entry in "$root_dir/lazyweb" "$root_dir"/lazyweb-*/; do
+      entry="${entry%/}"
+      { [ -e "$entry" ] || [ -L "$entry" ]; } || continue
+      rm -rf "$entry" 2>/dev/null || true
+      if [ -e "$entry" ] || [ -L "$entry" ]; then
+        leftover="$leftover $entry"
+      else
+        log "removed stale skill: $(basename "$entry") ($root_dir)"
+      fi
+    done
+  done
+  if [ -n "$leftover" ]; then
+    printf '%s\n' "WARNING: stale Lazyweb dirs in legacy skill roots could NOT be removed (remove manually, then restart the client):" >&2
+    local item
+    for item in $leftover; do
+      printf '%s\n' "  - $item" >&2
+    done
+    return 1
+  fi
+  return 0
+}
+
+# Remove the retired Claude Code PLUGIN distribution (plugin `lazyweb@lazyweb`
+# installed from the old `lazyweb` marketplace). The plugin's cached copy ships
+# a frozen, pre-skill-pack skill set that Claude Code surfaces as `lazyweb:*`
+# slash commands — no skill-root prune can reach it, so deregister the plugin,
+# delete its cache, and drop the marketplace entry. JSON surgery goes through
+# node via stdin/stdout (never node-side paths, which break under MSYS on
+# Windows); file removal stays in bash. Only entries that verifiably belong to
+# Lazyweb are touched, and any failure is a warning — never abort setup.
+prune_claude_plugin_install() {
+  local plugins_dir="$HOME/.claude/plugins"
+  [ -d "$plugins_dir" ] || return 0
+  local failed=""
+
+  # 1. Deregister the plugin from installed_plugins.json.
+  local installed_json="$plugins_dir/installed_plugins.json"
+  if [ -f "$installed_json" ] && grep -q '"lazyweb@lazyweb"' "$installed_json" 2>/dev/null; then
+    if node -e '
+      let s = "";
+      process.stdin.on("data", (d) => (s += d));
+      process.stdin.on("end", () => {
+        const j = JSON.parse(s);
+        if (j && j.plugins && typeof j.plugins === "object") delete j.plugins["lazyweb@lazyweb"];
+        process.stdout.write(JSON.stringify(j, null, 2));
+      });' < "$installed_json" > "$installed_json.lazyweb-prune.tmp" 2>/dev/null \
+      && [ -s "$installed_json.lazyweb-prune.tmp" ]; then
+      mv "$installed_json.lazyweb-prune.tmp" "$installed_json"
+      log "removed legacy Claude Code plugin registration: lazyweb@lazyweb"
+    else
+      rm -f "$installed_json.lazyweb-prune.tmp"
+      failed="$failed installed_plugins.json"
+    fi
+  fi
+
+  # 2. Delete the cached plugin copies (the cache dir is keyed by marketplace).
+  if [ -e "$plugins_dir/cache/lazyweb" ]; then
+    rm -rf "$plugins_dir/cache/lazyweb" 2>/dev/null || true
+    if [ -e "$plugins_dir/cache/lazyweb" ]; then
+      failed="$failed cache/lazyweb"
+    else
+      log "removed legacy Claude Code plugin cache: $plugins_dir/cache/lazyweb"
+    fi
+  fi
+
+  # 3. Deregister the old marketplace — only when it points at lazyweb-skill,
+  #    so an unrelated marketplace that happens to be named `lazyweb` survives.
+  local known_json="$plugins_dir/known_marketplaces.json"
+  if [ -f "$known_json" ] && grep -q '"lazyweb"' "$known_json" 2>/dev/null \
+    && grep -q 'lazyweb-skill' "$known_json" 2>/dev/null; then
+    # Exit code 0 = entry was ours and got deleted (JSON on stdout);
+    # 3 = entry absent or not ours (leave everything alone); else = failure.
+    local rc=0
+    node -e '
+      let s = "";
+      process.stdin.on("data", (d) => (s += d));
+      process.stdin.on("end", () => {
+        const j = JSON.parse(s);
+        const entry = j && typeof j === "object" ? j.lazyweb : null;
+        if (!entry || !/lazyweb-skill/.test(JSON.stringify(entry.source || ""))) {
+          process.exitCode = 3;
+          return;
+        }
+        delete j.lazyweb;
+        process.stdout.write(JSON.stringify(j, null, 2));
+      });' < "$known_json" > "$known_json.lazyweb-prune.tmp" 2>/dev/null || rc=$?
+    case "$rc" in
+      0)
+        if [ -s "$known_json.lazyweb-prune.tmp" ]; then
+          mv "$known_json.lazyweb-prune.tmp" "$known_json"
+          rm -rf "$plugins_dir/marketplaces/lazyweb" 2>/dev/null || true
+          log "removed legacy Claude Code plugin marketplace: lazyweb"
+        else
+          rm -f "$known_json.lazyweb-prune.tmp"
+          failed="$failed known_marketplaces.json"
+        fi
+        ;;
+      3)
+        rm -f "$known_json.lazyweb-prune.tmp"
+        ;;
+      *)
+        rm -f "$known_json.lazyweb-prune.tmp"
+        failed="$failed known_marketplaces.json"
+        ;;
+    esac
+  fi
+
+  if [ -n "$failed" ]; then
+    printf '%s\n' "WARNING: could not fully remove the legacy Claude Code lazyweb plugin ($failed). Remove it with: claude plugin uninstall lazyweb@lazyweb" >&2
+    return 1
+  fi
   return 0
 }
 
@@ -503,6 +635,13 @@ else
   # non-zero return under `set -e`.
   verify_prune || true
 fi
+
+# Purge remnants of retired distribution channels UNCONDITIONALLY — even when
+# no supported client was detected, stale files must not survive an update:
+# legacy skill roots the installer no longer targets, and the old Claude Code
+# plugin whose cache re-surfaces retired skills as `lazyweb:*` slash commands.
+prune_legacy_skill_roots || true
+prune_claude_plugin_install || true
 
 # Autorouter refresh (specs/autorouter.md §7.4): every consented routing block
 # is silently re-rendered so the injected table stays in lockstep with the

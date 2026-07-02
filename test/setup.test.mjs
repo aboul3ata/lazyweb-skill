@@ -204,6 +204,122 @@ test("setup verifies the prune: removes legacy + future-rename skill dirs and pr
   }
 });
 
+test("setup purges retired distribution channels: legacy ~/.agents/skills root and the Claude Code plugin install", () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "lazyweb-setup-legacy-"));
+  const home = path.join(dir, "home");
+  const fakeBin = path.join(dir, "bin");
+  mkdirSync(fakeBin, { recursive: true });
+  symlinkSync(process.execPath, path.join(fakeBin, "node"));
+  makeExecutable(path.join(fakeBin, "claude"), "#!/usr/bin/env sh\nexit 0\n");
+
+  // Legacy cross-agent root: the installer never writes here anymore, so even
+  // `lazyweb` itself is stale. A non-lazyweb neighbor must survive.
+  const agentsRoot = path.join(home, ".agents", "skills");
+  for (const name of ["lazyweb", "lazyweb-design-improve", "lazyweb-quick-references", "free-trial-best-practices"]) {
+    mkdirSync(path.join(agentsRoot, name), { recursive: true });
+    writeFileSync(path.join(agentsRoot, name, "SKILL.md"), "stale");
+  }
+
+  // Retired Claude Code plugin install: registration + cache + marketplace.
+  const pluginsDir = path.join(home, ".claude", "plugins");
+  const cacheDir = path.join(pluginsDir, "cache", "lazyweb", "lazyweb", "0.1.1", "skills", "lazyweb-design-improve");
+  mkdirSync(cacheDir, { recursive: true });
+  writeFileSync(path.join(cacheDir, "SKILL.md"), "stale");
+  const marketplaceDir = path.join(pluginsDir, "marketplaces", "lazyweb");
+  mkdirSync(marketplaceDir, { recursive: true });
+  writeFileSync(
+    path.join(pluginsDir, "installed_plugins.json"),
+    JSON.stringify({
+      version: 2,
+      plugins: {
+        "lazyweb@lazyweb": [{ scope: "user", installPath: cacheDir, version: "0.1.1" }],
+        "other@somewhere": [{ scope: "user", installPath: path.join(pluginsDir, "cache", "other"), version: "1.0.0" }]
+      }
+    }, null, 2)
+  );
+  writeFileSync(
+    path.join(pluginsDir, "known_marketplaces.json"),
+    JSON.stringify({
+      lazyweb: {
+        source: { source: "git", url: "https://github.com/aboul3ata/lazyweb-skill.git" },
+        installLocation: marketplaceDir
+      },
+      "claude-plugins-official": {
+        source: { source: "github", repo: "anthropics/claude-plugins-official" },
+        installLocation: path.join(pluginsDir, "marketplaces", "claude-plugins-official")
+      }
+    }, null, 2)
+  );
+
+  try {
+    const result = runSetupHost(home, fakeBin, "claude", { quiet: false });
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+
+    // Legacy root: every lazyweb dir gone, unrelated neighbor untouched.
+    for (const name of ["lazyweb", "lazyweb-design-improve", "lazyweb-quick-references"]) {
+      assert.equal(existsSync(path.join(agentsRoot, name)), false, `${name} should be purged from ~/.agents/skills`);
+    }
+    assert.ok(existsSync(path.join(agentsRoot, "free-trial-best-practices")), "non-lazyweb skill must survive the legacy-root sweep");
+
+    // Plugin: cache + marketplace dirs gone.
+    assert.equal(existsSync(path.join(pluginsDir, "cache", "lazyweb")), false, "plugin cache should be deleted");
+    assert.equal(existsSync(marketplaceDir), false, "plugin marketplace checkout should be deleted");
+
+    // Registration surgically removed; unrelated plugin + marketplace survive.
+    const installed = JSON.parse(readFileSync(path.join(pluginsDir, "installed_plugins.json"), "utf8"));
+    assert.equal(installed.plugins["lazyweb@lazyweb"], undefined, "lazyweb@lazyweb should be deregistered");
+    assert.ok(installed.plugins["other@somewhere"], "unrelated plugin registration must survive");
+    const known = JSON.parse(readFileSync(path.join(pluginsDir, "known_marketplaces.json"), "utf8"));
+    assert.equal(known.lazyweb, undefined, "lazyweb marketplace should be deregistered");
+    assert.ok(known["claude-plugins-official"], "unrelated marketplace must survive");
+
+    // Human-visible summary lines.
+    assert.match(result.stdout, /removed stale skill: lazyweb \(/);
+    assert.match(result.stdout, /removed legacy Claude Code plugin registration: lazyweb@lazyweb/);
+    assert.match(result.stdout, /removed legacy Claude Code plugin marketplace: lazyweb/);
+    assert.doesNotMatch(result.stderr, /WARNING: could not fully remove/);
+
+    // Idempotent: a second run finds nothing to do and still succeeds.
+    const second = runSetupHost(home, fakeBin, "claude", { quiet: false });
+    assert.equal(second.status, 0, second.stderr || second.stdout);
+    assert.doesNotMatch(second.stdout, /removed legacy Claude Code plugin/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("setup leaves a lazyweb-named marketplace alone when it does not point at lazyweb-skill", () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "lazyweb-setup-foreign-mp-"));
+  const home = path.join(dir, "home");
+  const fakeBin = path.join(dir, "bin");
+  mkdirSync(fakeBin, { recursive: true });
+  symlinkSync(process.execPath, path.join(fakeBin, "node"));
+  makeExecutable(path.join(fakeBin, "claude"), "#!/usr/bin/env sh\nexit 0\n");
+
+  const pluginsDir = path.join(home, ".claude", "plugins");
+  const marketplaceDir = path.join(pluginsDir, "marketplaces", "lazyweb");
+  mkdirSync(marketplaceDir, { recursive: true });
+  writeFileSync(
+    path.join(pluginsDir, "known_marketplaces.json"),
+    JSON.stringify({
+      lazyweb: {
+        source: { source: "git", url: "https://github.com/someone-else/unrelated-repo.git" },
+        installLocation: marketplaceDir
+      }
+    }, null, 2)
+  );
+
+  try {
+    const result = runSetupHost(home, fakeBin, "claude", { quiet: true });
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const known = JSON.parse(readFileSync(path.join(pluginsDir, "known_marketplaces.json"), "utf8"));
+    assert.ok(known.lazyweb, "foreign lazyweb-named marketplace must survive");
+    assert.ok(existsSync(marketplaceDir), "foreign marketplace checkout must survive");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 // --- Integrity marker (~/.lazyweb/INTEGRITY) — H5 Phase 0 producer ---
 
 // Compute the expected skill-set hash the way setup's installed_skill_set_hash
