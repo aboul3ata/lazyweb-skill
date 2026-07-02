@@ -298,7 +298,10 @@ test("setup leaves a lazyweb-named marketplace alone when it does not point at l
 
   const pluginsDir = path.join(home, ".claude", "plugins");
   const marketplaceDir = path.join(pluginsDir, "marketplaces", "lazyweb");
+  const cacheDir = path.join(pluginsDir, "cache", "lazyweb", "other-plugin", "1.0.0");
   mkdirSync(marketplaceDir, { recursive: true });
+  mkdirSync(cacheDir, { recursive: true });
+  writeFileSync(path.join(cacheDir, "plugin.json"), "{}");
   writeFileSync(
     path.join(pluginsDir, "known_marketplaces.json"),
     JSON.stringify({
@@ -315,6 +318,7 @@ test("setup leaves a lazyweb-named marketplace alone when it does not point at l
     const known = JSON.parse(readFileSync(path.join(pluginsDir, "known_marketplaces.json"), "utf8"));
     assert.ok(known.lazyweb, "foreign lazyweb-named marketplace must survive");
     assert.ok(existsSync(marketplaceDir), "foreign marketplace checkout must survive");
+    assert.ok(existsSync(cacheDir), "foreign lazyweb-named marketplace cache must survive");
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

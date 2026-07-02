@@ -299,10 +299,12 @@ prune_claude_plugin_install() {
   local plugins_dir="$HOME/.claude/plugins"
   [ -d "$plugins_dir" ] || return 0
   local failed=""
+  local remove_lazyweb_cache=0
 
   # 1. Deregister the plugin from installed_plugins.json.
   local installed_json="$plugins_dir/installed_plugins.json"
   if [ -f "$installed_json" ] && grep -q '"lazyweb@lazyweb"' "$installed_json" 2>/dev/null; then
+    remove_lazyweb_cache=1
     if node -e '
       let s = "";
       process.stdin.on("data", (d) => (s += d));
@@ -320,17 +322,7 @@ prune_claude_plugin_install() {
     fi
   fi
 
-  # 2. Delete the cached plugin copies (the cache dir is keyed by marketplace).
-  if [ -e "$plugins_dir/cache/lazyweb" ]; then
-    rm -rf "$plugins_dir/cache/lazyweb" 2>/dev/null || true
-    if [ -e "$plugins_dir/cache/lazyweb" ]; then
-      failed="$failed cache/lazyweb"
-    else
-      log "removed legacy Claude Code plugin cache: $plugins_dir/cache/lazyweb"
-    fi
-  fi
-
-  # 3. Deregister the old marketplace — only when it points at lazyweb-skill,
+  # 2. Deregister the old marketplace — only when it points at lazyweb-skill,
   #    so an unrelated marketplace that happens to be named `lazyweb` survives.
   local known_json="$plugins_dir/known_marketplaces.json"
   if [ -f "$known_json" ] && grep -q '"lazyweb"' "$known_json" 2>/dev/null \
@@ -356,6 +348,7 @@ prune_claude_plugin_install() {
         if [ -s "$known_json.lazyweb-prune.tmp" ]; then
           mv "$known_json.lazyweb-prune.tmp" "$known_json"
           rm -rf "$plugins_dir/marketplaces/lazyweb" 2>/dev/null || true
+          remove_lazyweb_cache=1
           log "removed legacy Claude Code plugin marketplace: lazyweb"
         else
           rm -f "$known_json.lazyweb-prune.tmp"
@@ -370,6 +363,18 @@ prune_claude_plugin_install() {
         failed="$failed known_marketplaces.json"
         ;;
     esac
+  fi
+
+  # 3. Delete the cached plugin copies only after confirming this is the old
+  # Lazyweb plugin/marketplace. A foreign marketplace can also be named
+  # `lazyweb`, and its cache must survive.
+  if [ "$remove_lazyweb_cache" -eq 1 ] && [ -e "$plugins_dir/cache/lazyweb" ]; then
+    rm -rf "$plugins_dir/cache/lazyweb" 2>/dev/null || true
+    if [ -e "$plugins_dir/cache/lazyweb" ]; then
+      failed="$failed cache/lazyweb"
+    else
+      log "removed legacy Claude Code plugin cache: $plugins_dir/cache/lazyweb"
+    fi
   fi
 
   if [ -n "$failed" ]; then
