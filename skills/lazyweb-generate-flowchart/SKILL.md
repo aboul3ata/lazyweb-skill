@@ -120,10 +120,11 @@ choose from, not a mold to force everything into.
   ],
   "nodes": [
     // Each node: short label + short sub (a couple words / a timing — it clips if long),
-    // a `note` (specific, PM-useful: what it does + why + failure/latency), and for a
-    // step that TRANSFORMS content, real `data: { input, output }` pulled from the code.
+    // a `note` (specific, PM-useful: what it does + why + failure/latency), and real
+    // `data: { input, output }` pulled from the code — on EVERY node (see "Make it useful").
     { "id": "s_ask",  "actor": "client", "section": 1, "col": 0, "label": "Search",
-      "sub": "one call", "note": "The client sends a UI query + filters to find reference screens." },
+      "sub": "one call", "note": "The client sends a UI query + filters to find reference screens.",
+      "data": { "input": { "query": "mobile paywall", "limit": 20 } } },
     { "id": "s_ans",  "actor": "api",    "section": 1, "col": 1, "label": "Ranked results",
       "sub": "~2s", "note": "Embeddings + ranked DB lookups; returns matches with signed image URLs, deduped.",
       "data": { "output": { "results": [ { "id": 1024, "company": "Peloton", "similarity": 0.74 } ] } } },
@@ -152,9 +153,17 @@ choose from, not a mold to force everything into.
 
 ## Make it useful (this is what separates a good chart from a shape)
 Written for a PM who thinks in systems but not syntax — so:
-- **Show real content in/out.** Every message gets `data: { request, response }`; every
-  step that transforms content gets `data: { input, output }`. Pull the **actual**
-  shapes from the codebase (grep the handlers) — never invent generic payloads.
+- **EVERY node and EVERY edge gets `data`.** Not just "transform" steps — a user taps
+  ANY box or arrow expecting a real content snippet. Every message gets
+  `data: { request, response }`; every step gets `data: { input, output }` (whichever
+  of the two actually exists — a step that only receives shows `input`, one that only
+  emits shows `output`). Pull the **actual** shapes from the codebase (grep the
+  handlers) — never invent generic payloads. If genuinely NO content crosses an
+  element, say so explicitly in its `note` (e.g. "fire-and-forget signal; no payload").
+- **Completeness gate before you're done:** `lazyweb_save_flowchart` returns
+  `data_coverage` naming every node/edge without `data` (+ a `data_hint`). Treat a
+  non-empty list as a TO-DO: backfill the real payloads from the code and re-save
+  (same product → updates in place). Don't stop while elements users will tap are hollow.
 - **Keep values real and complete — do NOT collapse a field to an ellipsis.** Storing
   `"instructions": "# Welcome to Lazyweb …"` throws the content away: there is nothing
   left to read. The viewer already **clamps long blocks to ~10 lines with a "Show more"
