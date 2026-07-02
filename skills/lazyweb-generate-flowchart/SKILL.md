@@ -170,6 +170,14 @@ Written for a PM who thinks in systems but not syntax — so:
   toggle**, so paste the *actual* value (trim a genuinely enormous blob to a
   representative slice, but never lop it to `…`). The only legitimate use of `…` is to
   **redact a secret** (e.g. `"Authorization": "Bearer 3f9c…"`), never to shorten real content.
+- **Slicing a long ARRAY keeps full-shape items.** When a list is too long to store
+  whole (30 tools, 100 results), keep the first item(s) with **every real field
+  intact** — the slice must show the true shape of one element — and state in the
+  element's `note` how many entries were omitted (e.g. "response carries 31 tools;
+  first shown in full, rest elided"). Never strip kept items down to one field (a
+  name-only tool list misrepresents the payload as bare names when the real entries
+  carry `description` + `inputSchema` too) and never insert a bare `"…"` as an
+  array entry: truncation is *stated* in the `note`, not faked in-band.
 - **`bidirectional: true`** on any true request→response message (→ double-headed
   arrow). Leave one-way signals single.
 - **`note` on every node/edge** — specific and grounded: what it does, **why it works

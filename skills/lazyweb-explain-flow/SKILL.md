@@ -55,7 +55,11 @@ the user to run `curl -fsSL https://www.lazyweb.com/install.sh | bash`, reload, 
 3. **Build the explanatory diagram** in the same schema as the canonical chart
    (sections, actors, nodes/edges with `note`s and real `data` payloads,
    `bidirectional` on round trips — the lazyweb-generate-flowchart conventions all
-   apply; an explanation earns its keep with REAL content, not boxes).
+   apply; an explanation earns its keep with REAL content, not boxes). Data
+   snippets meet the same exactness bar as the canonical chart: actual payloads
+   from the code/logs, `…` only to redact secrets (never to shorten content), and
+   a sliced array keeps its first item(s) full-shape with the omission count in
+   the `note`.
    Shape it for the QUESTION: order sections as the narrative, name the section
    titles as claims (e.g. "Where the run died — no model call"), put the "so what"
    in each node's `note`.

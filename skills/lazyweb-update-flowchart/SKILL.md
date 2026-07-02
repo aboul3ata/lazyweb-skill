@@ -59,9 +59,30 @@ If Lazyweb MCP is missing, tell the user to run
    archetype (see the lazyweb-generate-flowchart conventions). **Keep node `id`s
    stable** where a step is unchanged (so any pinned proposals still resolve). Save
    with `lazyweb_save_flowchart({ product, diagram })` — same `product`, so it
-   UPSERTS this same chart.
+   UPSERTS this same chart. The save response's `data_coverage` names every
+   node/edge still missing `data` — treat a non-empty list as a TO-DO: backfill
+   from the code and re-save before reporting.
 4. **Report.** A short summary: N commits since last update, and what changed in the
    chart. Share the (unchanged) `flowchart_url`.
+
+## Data exactness (same bar as generating from scratch)
+
+A refresh must never erode payload fidelity. Every element a user taps shows a real
+content snippet, and the snippets you touch (or inherit) obey the
+lazyweb-generate-flowchart "Make it useful" rules:
+
+- **EVERY node and edge keeps (or gains) `data`** — `{ request, response }` on
+  messages, `{ input, output }` on steps — pulled from the current handlers, never
+  invented. A truly payload-free element says so in its `note`.
+- **Never collapse real content to `…`.** The viewer clamps long blocks with a
+  "Show more" toggle, so paste actual values. `…` is ONLY for redacting secrets
+  (e.g. `"Bearer 3f9c…"`), never for shortening.
+- **Slicing a long array keeps full-shape items:** first item(s) with every real
+  field intact, plus a `note` stating how many entries were omitted. No name-only
+  item lists, no bare `"…"` array entries.
+- **While you're in there:** if an unchanged node/edge you're reading violates
+  these rules (hollow `data`, in-band `…`, one-field array items), fix it in the
+  same save — staleness isn't the only defect worth repairing.
 
 ## Notes
 - Unchanged? Say so — if `git log` since the last update shows nothing that touches
