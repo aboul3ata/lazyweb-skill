@@ -154,11 +154,32 @@ After the updater finishes:
    done
    # Retired Claude Code PLUGIN distribution: its cached copy re-surfaces old
    # skills as `lazyweb:*` slash commands until the plugin itself is removed.
-   [ -e "$HOME/.claude/plugins/cache/lazyweb" ] \
-     && echo "STALE: claude plugin cache ($HOME/.claude/plugins/cache/lazyweb)"
+   stale_lazyweb_plugin=0
    grep -q '"lazyweb@lazyweb"' \
      "$HOME/.claude/plugins/installed_plugins.json" 2>/dev/null \
+     && stale_lazyweb_plugin=1 \
      && echo "STALE: claude plugin registration (lazyweb@lazyweb)"
+   if [ "$stale_lazyweb_plugin" -eq 0 ] \
+     && [ -f "$HOME/.claude/plugins/known_marketplaces.json" ]; then
+     lazyweb_marketplace_rc=0
+     node -e '
+       let s = "";
+       process.stdin.on("data", (d) => (s += d));
+       process.stdin.on("end", () => {
+         try {
+           const j = JSON.parse(s);
+           const entry = j && typeof j === "object" ? j.lazyweb : null;
+           if (entry && /lazyweb-skill/.test(JSON.stringify(entry.source || ""))) process.exitCode = 7;
+         } catch {
+           process.exitCode = 0;
+         }
+       });' < "$HOME/.claude/plugins/known_marketplaces.json" 2>/dev/null \
+       || lazyweb_marketplace_rc=$?
+     [ "$lazyweb_marketplace_rc" -eq 7 ] && stale_lazyweb_plugin=1
+   fi
+   [ "$stale_lazyweb_plugin" -eq 1 ] \
+     && [ -e "$HOME/.claude/plugins/cache/lazyweb" ] \
+     && echo "STALE: claude plugin cache ($HOME/.claude/plugins/cache/lazyweb)"
    ```
 
 3. **If that prints any `STALE:` line, re-run the updater** so setup's own
