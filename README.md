@@ -77,6 +77,8 @@ After setup, reload or restart the client, then:
 Lazyweb MCP tokens are free no-billing bearer tokens for UI reference tools.
 They do not authorize purchases, paid spend, private user data, or destructive
 actions. Keep tokens out of public git, but ignored local MCP config is fine.
+The hosted MCP enforces abuse controls, including per-token transport quotas;
+clients that ignore backoff may receive `429 mcp_rate_limited`.
 
 ## Manual Setup
 
