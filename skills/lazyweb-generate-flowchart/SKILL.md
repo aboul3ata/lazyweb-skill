@@ -68,6 +68,21 @@ curl -fsSL https://www.lazyweb.com/install.sh | bash
 
 Then reload the client and rerun the skill.
 
+### MCP plan responses
+
+Inspect every data-bearing tool result before applying its normal schema:
+
+- `MCP_PRO_REQUIRED`: relay the server message and returned intent-bound
+  `upgrade_url` to the user, then stop. Do not retry another data tool or fall
+  back to web/manual output.
+- `FREE_REPORT_DAILY_LIMIT`: relay the server message and returned intent-bound
+  `upgrade_url` to the user, then stop. Do not retry another data tool or fall
+  back to web/manual output.
+- Successful `status: "locked_preview"`: relay `display_to_user` verbatim (or
+  the returned MCP text if that is all the client exposes), including the
+  preview and upgrade links. It is terminal: do not poll, retry another data
+  tool, reconstruct output, or fall back.
+
 ## The model (the convention that makes charts consistent)
 A product ⇄ backend story breaks into **sections**, stacked top→bottom — one per
 capability ("skill").

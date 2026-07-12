@@ -122,6 +122,30 @@ printf '%s\\n' 'upstream unavailable' '402'
   }
 });
 
+test("setup accepts a valid token from any successful 2xx response", () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "lazyweb-setup-2xx-token-"));
+  const home = path.join(dir, "home");
+  const fakeBin = path.join(dir, "bin");
+  const userId = "56565656-5656-4656-8656-565656565656";
+  mkdirSync(fakeBin, { recursive: true });
+  mkdirSync(home, { recursive: true });
+  symlinkSync(process.execPath, path.join(fakeBin, "node"));
+  makeExecutable(path.join(fakeBin, "curl"), `#!/usr/bin/env bash
+printf '%s\\n' '{"ok":true,"token":"${userId}","userId":"${userId}"}' '201'
+`);
+
+  try {
+    const result = runSetupWithoutToken(home, fakeBin);
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    assert.equal(
+      readFileSync(path.join(home, ".lazyweb", "lazyweb_mcp_token"), "utf8").trim(),
+      userId
+    );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test("setup mints a plan-bound token without claiming the token is free", () => {
   const dir = mkdtempSync(path.join(tmpdir(), "lazyweb-setup-plan-token-"));
   const home = path.join(dir, "home");

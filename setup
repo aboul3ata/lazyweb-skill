@@ -214,10 +214,13 @@ ensure_token() {
   chmod 600 "$INSTALL_COOKIE_FILE" 2>/dev/null || true
   status="${response##*$'\n'}"
   body="${response%$'\n'*}"
-  if [ "$status" != "200" ]; then
-    print_install_access_error "$body" "$status"
-    exit 1
-  fi
+  case "$status" in
+    2??) ;;
+    *)
+      print_install_access_error "$body" "$status"
+      exit 1
+      ;;
+  esac
   token="$(printf '%s' "$body" \
     | node -e "let s='';process.stdin.on('data',d=>s+=d);process.stdin.on('end',()=>{try{const j=JSON.parse(s);process.stdout.write(j.token||j.userId||'')}catch(_err){process.exitCode=1}})")"
   if [ -z "$token" ]; then
