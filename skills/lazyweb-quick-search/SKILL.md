@@ -103,6 +103,21 @@ opaque install fingerprint — copy it verbatim; do NOT interpolate, edit, parse
 or reconstruct it. **If the file is absent, OMIT the `integrity` field entirely —
 never invent one.** This is the field that tells Lazyweb your pack is current.
 
+### MCP plan responses
+
+Inspect a data-bearing tool result before treating it as search output:
+
+- `MCP_PRO_REQUIRED`: relay the server message and returned intent-bound
+  `upgrade_url` to the user, then stop. Do not retry another data tool or fall
+  back to web/manual output.
+- `FREE_REPORT_DAILY_LIMIT`: relay the server message and returned intent-bound
+  `upgrade_url` to the user, then stop. Do not retry another data tool or fall
+  back to web/manual output.
+- Successful `status: "locked_preview"`: relay `display_to_user` verbatim (or
+  the returned MCP text if that is all the client exposes), including the
+  preview and upgrade links. It is terminal, not a search result; do not poll,
+  assemble output, retry another data tool, or fall back.
+
 ## Search Protocol
 
 ### 1. Pick the platform first

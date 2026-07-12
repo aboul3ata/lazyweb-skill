@@ -46,8 +46,14 @@ The installer creates or reuses `~/.lazyweb/lazyweb_mcp_token`, installs the
 visible Lazyweb skills into supported local coding clients, and configures the
 Lazyweb MCP server at `https://www.lazyweb.com/mcp`.
 
-Lazyweb MCP tokens are free no-billing bearer tokens for UI reference tools.
-They do not authorize purchases, paid spend, private user data, or destructive
+Downloading or updating the skill pack, installing or configuring a client,
+and creating or reusing a bearer token are available to everyone without
+charge. Setup, health, and workflow discovery remain usable regardless
+of plan; real data-bearing MCP tool availability and usage limits depend on the
+account's persisted experiment assignment and plan.
+
+A Lazyweb MCP token is a bearer setup credential, not proof of paid access. It
+does not authorize purchases, paid spend, private user data, or destructive
 actions. Keep tokens out of public git, but ignored local MCP config is fine.
 
 After setup, show the user what Lazyweb can do:
@@ -62,6 +68,23 @@ separate tool for ordered product journeys.
 
 If MCP tools are unavailable, tell the user to run the installer above, then
 continue with web research only if they want a degraded fallback.
+
+### MCP plan responses
+
+Inspect every data-bearing tool result before applying its normal schema. These
+are terminal access outcomes, not missing-tool or coverage failures:
+
+- `MCP_PRO_REQUIRED`: relay the server message and returned intent-bound
+  `upgrade_url` to the user, then stop. Do not retry another data tool or fall
+  back to web/manual output.
+- `FREE_REPORT_DAILY_LIMIT`: relay the server message and returned intent-bound
+  `upgrade_url` to the user, then stop. Do not retry another data tool or fall
+  back to web/manual output.
+- Successful `status: "locked_preview"`: relay `display_to_user` verbatim (or
+  the returned MCP text if that is all the client exposes), including the
+  preview and upgrade links. It is a terminal success with no generated
+  research; do not poll, reconstruct a report, retry another data tool, or fall
+  back.
 
 ## Routing
 
@@ -213,11 +236,12 @@ These rules apply to every `lazyweb_search` call in every mode:
   `paywall_design_run` / `paywall_design_check_status` (and the parallel
   `signup_design_run` / `signup_design_check_status`) are gated behind
   env flags and may also be exposed — check the live tool list.
-- All current public Lazyweb MCP tools and visible workflow skills are free,
-  including `lazyweb_search_ab_tests`, `lazyweb_paywall_cta_research`,
-  `paywall_design_run`, and `signup_design_run` when those run tools are
-  exposed by the live schema. If a tool is missing or returns no matching
-  evidence, treat that as an availability or coverage issue, not a billing gate.
+- Installing visible workflow skills and configuring MCP do not determine tool
+  entitlement. Real data-bearing tool availability and usage limits follow the
+  account's persisted experiment assignment and plan. Inspect the live schema
+  and honor the server response; a missing tool can reflect plan, experiment,
+  rollout, or availability, while an empty authorized result is a coverage
+  outcome.
 - Richer internal/backend surfaces may expose `lazyweb_find_experiments`,
   `lazyweb_recent_experiments`, or
   `list_companies_by_categories`; use them only when the live tool schema shows

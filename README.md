@@ -20,6 +20,12 @@ reuses `~/.lazyweb/lazyweb_mcp_token`, installs the visible Lazyweb skills into
 detected local clients, and configures Lazyweb MCP at
 `https://www.lazyweb.com/mcp`.
 
+Downloading or updating the skill pack, installing or configuring a client,
+and creating or reusing a bearer token are available to everyone without
+charge. Setup, health, and workflow discovery remain usable regardless
+of plan; real data-bearing MCP tool availability and usage limits depend on the
+account's persisted experiment assignment and plan.
+
 Supported local skill roots:
 
 - Codex: `~/.codex/skills`
@@ -74,9 +80,11 @@ After setup, reload or restart the client, then:
 
 4. Summarize the returned workflows as Lazyweb's super powers. Do not call `lazyweb_get_flows` for this first-run capability guide; that is a separate tool for ordered product journeys.
 
-Lazyweb MCP tokens are free no-billing bearer tokens for UI reference tools.
-They do not authorize purchases, paid spend, private user data, or destructive
-actions. Keep tokens out of public git, but ignored local MCP config is fine.
+A Lazyweb MCP token is a bearer setup credential, not proof of paid access.
+Creating or reusing one does not charge the user, but data-bearing tools still
+follow the account's persisted experiment assignment and plan. Tokens do not
+authorize purchases, paid spend, private user data, or destructive actions.
+Keep tokens out of public git, but ignored local MCP config is fine.
 The hosted MCP enforces abuse controls, including per-token transport quotas;
 clients that ignore backoff may receive `429 mcp_rate_limited`.
 
@@ -181,7 +189,7 @@ Current public gateway tools:
 | `lazyweb_list_categories` | List public company categories. |
 | `lazyweb_get_workflows` | Discover and fetch current Lazyweb workflow instructions. |
 | `lazyweb_get_flows` | Fetch ordered multi-screen product journeys with optimized step image URLs. |
-| `lazyweb_search_ab_tests` | Free mobile-only A/B Test Agent wrapper for PM-facing research; `category` is the industry filter and product/company names are forwarded as target context. When `include_images` is true, evidence includes optimized control/variant image URLs. |
+| `lazyweb_search_ab_tests` | Mobile-only A/B Test Agent wrapper for PM-facing research; `category` is the industry filter and product/company names are forwarded as target context. When `include_images` is true, evidence includes optimized control/variant image URLs. |
 
 All Lazyweb screenshot-bearing tools return usable optimized URLs for screenshots.
 Supabase storage-backed image URLs are signed for 365 days. Do not ask tools for
@@ -193,10 +201,12 @@ Richer backend/internal surfaces may also expose `lazyweb_find_experiments`,
 `lazyweb_recent_experiments`, and
 `list_companies_by_categories`. Use those only when the live schema shows them.
 
-All current Lazyweb MCP tools and visible workflow skills are free, including
-the A/B Test Agent and paywall CTA research wrappers. If a live MCP tool is
-missing or returns no evidence, treat that as an availability or coverage issue,
-not a billing gate.
+Installing the workflow skills and configuring MCP do not determine tool
+entitlement. Inspect the live tool list and honor the server response: real
+data-bearing MCP tool availability and usage limits depend on the account's
+persisted experiment assignment and plan. A missing tool can reflect plan,
+experiment, rollout, or availability; an empty authorized result is a coverage
+outcome.
 
 ## Repository Structure
 
