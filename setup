@@ -5,6 +5,8 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 MCP_URL="${LAZYWEB_MCP_URL:-https://www.lazyweb.com/mcp}"
 INSTALL_TOKEN_URL="${LAZYWEB_INSTALL_TOKEN_URL:-https://www.lazyweb.com/api/mcp/install-token}"
 TOKEN_FILE="${LAZYWEB_TOKEN_FILE:-$HOME/.lazyweb/lazyweb_mcp_token}"
+INSTALL_ID_FILE="${LAZYWEB_INSTALL_ID_FILE:-$HOME/.lazyweb/install_id}"
+INSTALL_COOKIE_FILE="${LAZYWEB_INSTALL_COOKIE_FILE:-$HOME/.lazyweb/install_cookies}"
 AUTO_UPDATE_MARKER="${LAZYWEB_AUTO_UPDATE_MARKER:-$HOME/.lazyweb/auto_update}"
 HOST="auto"
 QUIET=0
@@ -133,6 +135,53 @@ link_or_copy() {
   fi
 }
 
+ensure_install_id() {
+  local install_id=""
+  mkdir -p "$(dirname "$INSTALL_ID_FILE")"
+  if [ -s "$INSTALL_ID_FILE" ]; then
+    install_id="$(tr -d '[:space:]' < "$INSTALL_ID_FILE")"
+  fi
+  if ! printf '%s' "$install_id" | node -e "let s='';process.stdin.on('data',d=>s+=d);process.stdin.on('end',()=>process.exit(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(s)?0:1))"; then
+    install_id="$(node -e "process.stdout.write(require('node:crypto').randomUUID())")"
+    umask 077
+    printf '%s\n' "$install_id" > "$INSTALL_ID_FILE"
+  fi
+  chmod 600 "$INSTALL_ID_FILE" 2>/dev/null || true
+  printf '%s' "$install_id"
+}
+
+prepare_install_cookie_file() {
+  mkdir -p "$(dirname "$INSTALL_COOKIE_FILE")"
+  umask 077
+  touch "$INSTALL_COOKIE_FILE"
+  chmod 600 "$INSTALL_COOKIE_FILE" 2>/dev/null || true
+}
+
+print_install_access_error() {
+  local body="$1"
+  local status="$2"
+  printf '%s' "$body" | node -e '
+    let raw = "";
+    process.stdin.on("data", (chunk) => { raw += chunk; });
+    process.stdin.on("end", () => {
+      const endpoint = process.argv[1];
+      const status = process.argv[2];
+      let payload = null;
+      try { payload = JSON.parse(raw); } catch (_err) {}
+      const message = payload && typeof payload.message === "string"
+        ? payload.message
+        : `Lazyweb MCP setup failed with HTTP ${status}.`;
+      process.stderr.write(`${message}\n`);
+      const upgrade = payload && (payload.upgrade_intent_url || payload.upgrade_url || payload.upgrade_base_url);
+      if (typeof upgrade === "string" && upgrade) {
+        try {
+          process.stderr.write(`Upgrade securely: ${new URL(upgrade, endpoint).toString()}\n`);
+        } catch (_err) {}
+      }
+    });
+  ' "$INSTALL_TOKEN_URL" "$status"
+}
+
 ensure_token() {
   mkdir -p "$(dirname "$TOKEN_FILE")"
 
@@ -148,12 +197,34 @@ ensure_token() {
     return 0
   fi
 
-  [ "$QUIET" -eq 1 ] || printf '%s\n' "Creating a free Lazyweb MCP token..." >&2
-  local token
-  token="$(curl -fsS -X POST "$INSTALL_TOKEN_URL" -H "content-type: application/json" -d '{}' \
-    | node -e "let s='';process.stdin.on('data',d=>s+=d);process.stdin.on('end',()=>{const j=JSON.parse(s); process.stdout.write(j.token || j.userId || '');})")"
+  [ "$QUIET" -eq 1 ] || printf '%s\n' "Creating a Lazyweb MCP setup credential..." >&2
+  local token response body status install_id
+  install_id="$(ensure_install_id)"
+  prepare_install_cookie_file
+  if ! response="$(curl -sS -X POST "$INSTALL_TOKEN_URL" \
+    -H "content-type: application/json" \
+    -H "X-Lazyweb-Install-Id: $install_id" \
+    -b "$INSTALL_COOKIE_FILE" \
+    -c "$INSTALL_COOKIE_FILE" \
+    -d '{}' \
+    -w $'\n%{http_code}')"; then
+    echo "Lazyweb MCP setup could not reach $INSTALL_TOKEN_URL. Please retry." >&2
+    exit 1
+  fi
+  chmod 600 "$INSTALL_COOKIE_FILE" 2>/dev/null || true
+  status="${response##*$'\n'}"
+  body="${response%$'\n'*}"
+  case "$status" in
+    2??) ;;
+    *)
+      print_install_access_error "$body" "$status"
+      exit 1
+      ;;
+  esac
+  token="$(printf '%s' "$body" \
+    | node -e "let s='';process.stdin.on('data',d=>s+=d);process.stdin.on('end',()=>{try{const j=JSON.parse(s);process.stdout.write(j.token||j.userId||'')}catch(_err){process.exitCode=1}})")"
   if [ -z "$token" ]; then
-    echo "Failed to create Lazyweb MCP token from $INSTALL_TOKEN_URL" >&2
+    echo "Lazyweb MCP setup returned no usable token. Please retry." >&2
     exit 1
   fi
   printf '%s\n' "$token" > "$TOKEN_FILE"

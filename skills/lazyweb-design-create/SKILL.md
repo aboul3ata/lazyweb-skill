@@ -31,6 +31,23 @@ People learn by seeing. Every claim in the report is carried by a large, legible
 visual; nothing important hides behind a click. Chrome stays quiet: no chip
 clutter, no legend tables, no explanatory paragraphs next to the proof.
 
+## MCP plan responses — check before the normal workflow
+
+Inspect every data-bearing tool result before applying its normal search,
+render, or report schema:
+
+- `MCP_PRO_REQUIRED`: relay the server message and returned intent-bound
+  `upgrade_url` to the user, then stop. Do not retry another data tool or fall
+  back to web/manual output.
+- `FREE_REPORT_DAILY_LIMIT`: relay the server message and returned intent-bound
+  `upgrade_url` to the user, then stop. Do not retry another data tool or fall
+  back to web/manual output.
+- Successful `status: "locked_preview"`: relay `display_to_user` verbatim (or
+  the returned MCP text if that is all the client exposes), including the
+  preview and upgrade links. It is terminal and contains no generated research;
+  do not poll, render or assemble a report, retry another data tool, or fall
+  back.
+
 ## CRITICAL: Output Behavior
 
 **This skill produces FILES, not a plan.** Regardless of whether you are in plan mode
@@ -121,6 +138,12 @@ You never write HTML — you only choose image `src` values in `report-data.json
 
 Use the hosted Lazyweb MCP tools at `https://www.lazyweb.com/mcp` for all Lazyweb database access.
 
+Downloading or updating the skill pack, installing or configuring a client,
+and creating or reusing a bearer token are available to everyone without
+charge. Setup, health, and workflow discovery remain usable regardless
+of plan; real data-bearing MCP tool availability and usage limits depend on the
+account's persisted experiment assignment and plan.
+
 Required MCP tools:
 - `lazyweb_search` - text search over mobile and desktop screenshots
 - `lazyweb_find_similar` - more results like a returned Lazyweb `imageUrl` or image payload
@@ -152,7 +175,7 @@ Before searching, verify MCP is available by listing tools and running
 **If a Lazyweb tool is refused as OUT OF DATE** — the result has `code: "skill_deprecated"` / `action_required: "upgrade"` / `do_not_fallback: true`, or says your skill pack is below the required version — this is a **HARD STOP, not a fallback case**. Do NOT proceed in web-research-only or any degraded mode; that output is deprecated and ungrounded. STOP the task, tell the user they must upgrade, and have them run `/lazyweb-update` (or `curl -fsSL https://www.lazyweb.com/install.sh | bash`), reload the client, and retry. The design tools are now unified under `/lazyweb-design`.
 
 **If Lazyweb MCP is genuinely not installed or auth fails** (a connection/auth error — NOT a version refusal):
-Tell the user: "Lazyweb MCP is not installed. Run `curl -fsSL https://www.lazyweb.com/install.sh | bash`, reload this client, then rerun this skill. Lazyweb is free; the bearer token is only for no-billing UI reference tools and is okay in ignored local config."
+Tell the user: "Lazyweb MCP is not installed. Run `curl -fsSL https://www.lazyweb.com/install.sh | bash`, reload this client, then rerun this skill. Installing and receiving a bearer token do not require payment; real data-bearing MCP access and limits depend on your assigned experiment and plan. Keep the token in ignored local config."
 Then proceed with web research only - the skill still works, just without Lazyweb's database.
 
 ## Browse Setup (run BEFORE any web capture)

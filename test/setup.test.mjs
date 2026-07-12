@@ -27,6 +27,161 @@ function runSetup(home, fakeBin) {
   });
 }
 
+function runSetupWithoutToken(home, fakeBin, extraEnv = {}) {
+  return spawnSync("bash", [setup, "--host", "auto", "--quiet", "--no-auto-update", "--no-router"], {
+    cwd: root,
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      HOME: home,
+      PATH: `${fakeBin}:/usr/bin:/bin:/usr/sbin:/sbin`,
+      LAZYWEB_MCP_TOKEN: "",
+      LAZYWEB_MCP_URL: "https://lazyweb.example.com/mcp",
+      LAZYWEB_INSTALL_TOKEN_URL: "https://lazyweb.example.com/api/mcp/install-token",
+      CODEX_HOME: path.join(home, ".codex"),
+      ...extraEnv
+    }
+  });
+}
+
+test("setup keeps cookie-less retries sticky and still mints a treatment setup credential", () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "lazyweb-setup-mcp-pro-"));
+  const home = path.join(dir, "home");
+  const fakeBin = path.join(dir, "bin");
+  const curlLog = path.join(dir, "curl.log");
+  const attemptFile = path.join(dir, "attempt");
+  const userId = "34343434-3434-4343-8343-343434343434";
+  mkdirSync(fakeBin, { recursive: true });
+  mkdirSync(home, { recursive: true });
+  symlinkSync(process.execPath, path.join(fakeBin, "node"));
+  makeExecutable(path.join(fakeBin, "curl"), `#!/usr/bin/env bash
+printf '%s\\n' "$*" >> "${curlLog}"
+attempt=0
+[ -f "${attemptFile}" ] && attempt="$(tr -d '[:space:]' < "${attemptFile}")"
+attempt=$((attempt + 1))
+printf '%s\\n' "$attempt" > "${attemptFile}"
+if [ "$attempt" -eq 1 ]; then
+  printf '%s\\n' '{"ok":false,"message":"Lazyweb MCP setup is temporarily unavailable. Please retry."}' '503'
+else
+  printf '%s\\n' '{"ok":true,"token":"${userId}","userId":"${userId}","experiment_key":"mcp_new_user_paywall_v1","variant":"pro_paywall"}' '200'
+fi
+`);
+
+  try {
+    const first = runSetupWithoutToken(home, fakeBin);
+    const second = runSetupWithoutToken(home, fakeBin);
+
+    assert.equal(first.status, 1, first.stderr || first.stdout);
+    assert.match(first.stderr, /setup is temporarily unavailable/i);
+    assert.equal(second.status, 0, second.stderr || second.stdout);
+    assert.equal(
+      readFileSync(path.join(home, ".lazyweb", "lazyweb_mcp_token"), "utf8").trim(),
+      userId
+    );
+    assert.doesNotMatch(`${first.stderr}\n${second.stderr}`, /MCP Pro is required|Upgrade securely/);
+    assert.doesNotMatch(`${first.stderr}\n${second.stderr}`, /SyntaxError|Failed to create Lazyweb MCP token/);
+
+    const installIdPath = path.join(home, ".lazyweb", "install_id");
+    const cookieJarPath = path.join(home, ".lazyweb", "install_cookies");
+    assert.match(readFileSync(installIdPath, "utf8").trim(), /^[0-9a-f]{8}-[0-9a-f-]{27}$/);
+    assert.ok(existsSync(cookieJarPath), "treatment cookie jar must survive for a sticky retry");
+    assert.equal(existsSync(path.join(home, ".lazyweb", "lazyweb_mcp_token")), true);
+
+    const installId = readFileSync(installIdPath, "utf8").trim();
+    const calls = readFileSync(curlLog, "utf8").trim().split("\n")
+      .filter((call) => call.includes("/api/mcp/install-token"));
+    assert.equal(calls.length, 2);
+    for (const call of calls) {
+      assert.match(call, new RegExp(`X-Lazyweb-Install-Id: ${installId}`));
+      assert.match(call, /install_cookies/);
+      assert.doesNotMatch(call, /(?:^|\s)-f(?:sS)?(?:\s|$)/);
+    }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("setup reports the actual HTTP status when token creation returns a non-JSON error", () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "lazyweb-setup-http-error-"));
+  const home = path.join(dir, "home");
+  const fakeBin = path.join(dir, "bin");
+  mkdirSync(fakeBin, { recursive: true });
+  mkdirSync(home, { recursive: true });
+  symlinkSync(process.execPath, path.join(fakeBin, "node"));
+  makeExecutable(path.join(fakeBin, "curl"), `#!/usr/bin/env bash
+printf '%s\\n' 'upstream unavailable' '402'
+`);
+
+  try {
+    const result = runSetupWithoutToken(home, fakeBin);
+    assert.equal(result.status, 1, result.stderr || result.stdout);
+    assert.match(result.stderr, /Lazyweb MCP setup failed with HTTP 402\./);
+    assert.doesNotMatch(result.stderr, /HTTP https:\/\//);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("setup accepts a valid token from any successful 2xx response", () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "lazyweb-setup-2xx-token-"));
+  const home = path.join(dir, "home");
+  const fakeBin = path.join(dir, "bin");
+  const userId = "56565656-5656-4656-8656-565656565656";
+  mkdirSync(fakeBin, { recursive: true });
+  mkdirSync(home, { recursive: true });
+  symlinkSync(process.execPath, path.join(fakeBin, "node"));
+  makeExecutable(path.join(fakeBin, "curl"), `#!/usr/bin/env bash
+printf '%s\\n' '{"ok":true,"token":"${userId}","userId":"${userId}"}' '201'
+`);
+
+  try {
+    const result = runSetupWithoutToken(home, fakeBin);
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    assert.equal(
+      readFileSync(path.join(home, ".lazyweb", "lazyweb_mcp_token"), "utf8").trim(),
+      userId
+    );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("setup mints a plan-bound token without claiming the token is free", () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "lazyweb-setup-plan-token-"));
+  const home = path.join(dir, "home");
+  const fakeBin = path.join(dir, "bin");
+  const curlLog = path.join(dir, "curl.log");
+  const userId = "12121212-1212-4121-8121-121212121212";
+  mkdirSync(fakeBin, { recursive: true });
+  mkdirSync(home, { recursive: true });
+  symlinkSync(process.execPath, path.join(fakeBin, "node"));
+  makeExecutable(path.join(fakeBin, "curl"), `#!/usr/bin/env bash
+printf '%s\\n' "$*" >> "${curlLog}"
+case "$*" in
+  *"/api/mcp/install-token"*) printf '%s\\n' '{"ok":true,"token":"${userId}","userId":"${userId}"}' '200' ;;
+  *) exit 0 ;;
+esac
+`);
+
+  try {
+    const result = runSetupWithoutToken(home, fakeBin);
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    assert.equal(
+      readFileSync(path.join(home, ".lazyweb", "lazyweb_mcp_token"), "utf8").trim(),
+      userId
+    );
+    assert.doesNotMatch(`${result.stdout}\n${result.stderr}`, /Creating a free Lazyweb MCP token/);
+    const installId = readFileSync(path.join(home, ".lazyweb", "install_id"), "utf8").trim();
+    const installCall = readFileSync(curlLog, "utf8").split("\n")
+      .find((call) => call.includes("/api/mcp/install-token"));
+    assert.ok(installCall);
+    assert.match(installCall, new RegExp(`X-Lazyweb-Install-Id: ${installId}`));
+    assert.match(installCall, /install_cookies/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test("setup installs visible skills and direct MCP config into detected local clients", () => {
   const dir = mkdtempSync(path.join(tmpdir(), "lazyweb-setup-"));
   const home = path.join(dir, "home");

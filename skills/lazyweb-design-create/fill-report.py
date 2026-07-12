@@ -253,7 +253,7 @@ def main():
   </div>
 </section>
 {inspo_html(data.get("inspo"))}
-<footer class="lw-foot">Powered by <a href="https://www.lazyweb.com">Lazyweb</a> &mdash; turn your agent into a design researcher... for free!</footer>
+<footer class="lw-foot">Powered by <a href="https://www.lazyweb.com">Lazyweb</a> &mdash; agent-ready design research. MCP data access and usage limits depend on your plan.</footer>
 </main>
 
 <div id="lb" aria-hidden="true"><button type="button" class="x" aria-label="Close">×</button><img alt="Expanded image"></div>

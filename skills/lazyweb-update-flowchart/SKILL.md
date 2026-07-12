@@ -41,6 +41,21 @@ Required tools:
 If Lazyweb MCP is missing, tell the user to run
 `curl -fsSL https://www.lazyweb.com/install.sh | bash`, then reload and rerun.
 
+### MCP plan responses
+
+Inspect every data-bearing tool result before applying its normal schema:
+
+- `MCP_PRO_REQUIRED`: relay the server message and returned intent-bound
+  `upgrade_url` to the user, then stop. Do not retry another data tool or fall
+  back to web/manual output.
+- `FREE_REPORT_DAILY_LIMIT`: relay the server message and returned intent-bound
+  `upgrade_url` to the user, then stop. Do not retry another data tool or fall
+  back to web/manual output.
+- Successful `status: "locked_preview"`: relay `display_to_user` verbatim (or
+  the returned MCP text if that is all the client exposes), including the
+  preview and upgrade links. It is terminal: do not poll, retry another data
+  tool, reconstruct output, or fall back.
+
 ## Steps (in this order)
 
 1. **Look at the current chart FIRST.** `lazyweb_get_flowchart({ product })` (or

@@ -31,6 +31,23 @@ allowed-tools:
 Optimize a paywall with an evidence-backed, slot-diverse portfolio of conversion
 hypotheses — not generic component advice.
 
+## MCP plan responses — check before the normal workflow
+
+Before reading `job_id`, inspect the decoded/structured tool result:
+
+- `MCP_PRO_REQUIRED`: relay the server message and returned intent-bound
+  `upgrade_url` to the user, then stop. Do not retry another data tool or fall
+  back to web/manual output.
+- `FREE_REPORT_DAILY_LIMIT`: relay the server message and returned intent-bound
+  `upgrade_url` to the user, then stop. Do not retry another data tool or fall
+  back to web/manual output.
+- Successful `status: "locked_preview"`: this is a successful terminal result,
+  not a malformed generation response. Relay `display_to_user` verbatim (or the
+  returned MCP text if that is all the client exposes), including its preview
+  and upgrade links. It intentionally has no `job_id`: do not call
+  `lazyweb_get_report`, do not poll, generate or reconstruct a report, retry
+  another data tool, or fall back.
+
 ## Objectives — pick INTENT-FIRST (read first)
 
 This skill handles **any product screen**, not
@@ -262,6 +279,9 @@ lazyweb_generate_report({
   version: "<x.y.z>"
 })
 ```
+
+Apply the terminal plan-response branch above before reading `job_id`. Only a
+non-terminal successful generation reaches the pending-job flow below.
 
 It returns immediately with `{ job_id, status:"pending",
 poll_with:"lazyweb_get_report", eta_seconds }`. Keep the `job_id` for Step 3.
