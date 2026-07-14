@@ -101,9 +101,7 @@ produce a report.
 | **DEFAULT for design work** — design, redesign, optimize, improve, critique, or build ANY product screen (paywall, pricing, landing, signup, onboarding, dashboard, settings, etc.) | **Invoke the `lazyweb-design` skill** (one-call server-side `lazyweb_generate_report`) |
 | The user **explicitly** asks for a quick reference / examples lookup ("quick search", "just show me a few references", "look up examples first") — and does NOT want a report | **Invoke the `lazyweb-quick-search` skill** |
 | Update local Lazyweb skills, reinstall Lazyweb, or sync Lazyweb into agentic IDEs | **Invoke the `lazyweb-update` skill** |
-| Map how a product's agent/app talks to its backend as a **flow chart / architecture diagram**, and save it | **Invoke the `lazyweb-generate-flowchart` skill** |
-| **Update / refresh** an existing flow chart to match the current code (it's stale, the code moved on) | **Invoke the `lazyweb-update-flowchart` skill** |
-| **Explain** how something works / why something happened with a diagram — a walkthrough, failure trace, or hypothetical (NOT recording the current state) | **Invoke the `lazyweb-explain-flow` skill** |
+| **Explain** how something works / why something happened with a diagram — a walkthrough, failure trace, or hypothetical | **Invoke the `lazyweb-explain-flow` skill** |
 | Propose reviewable **UI / flow changes** on a diagram for the user to Accept/Decline, then apply the accepted ones | **Invoke the `lazyweb-propose-ui-changes` skill** |
 | A/B tests, experiment examples, pricing, trials, lifecycle, or monetization strategy | Use the `lazyweb_search_ab_tests` MCP tool (mobile A/B evidence) |
 
