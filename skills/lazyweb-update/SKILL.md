@@ -127,8 +127,7 @@ After the updater finishes:
    FOCUSED="$(sed -n 's/^FOCUSED_SKILLS="\(.*\)"$/\1/p' \
      "$HOME/.lazyweb/repos/lazyweb-skill/setup" 2>/dev/null)"
    [ -n "$FOCUSED" ] || FOCUSED="lazyweb-design lazyweb-quick-search \
-     lazyweb-generate-flowchart lazyweb-update-flowchart lazyweb-explain-flow \
-     lazyweb-propose-ui-changes lazyweb-update"
+     lazyweb-explain-flow lazyweb-propose-ui-changes lazyweb-update"
    for root in "$HOME"/.claude/skills "$HOME"/.codex/skills \
      "$HOME"/.cursor/skills "$HOME"/.config/opencode/skills \
      "$HOME"/.kiro/skills "$HOME"/.factory/skills \

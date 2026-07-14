@@ -16,8 +16,6 @@ const instructionSurfaces = [
   "skills/lazyweb-design/SKILL.md",
   "skills/lazyweb-quick-search/SKILL.md",
   "skills/lazyweb-design-create/SKILL.md",
-  "skills/lazyweb-generate-flowchart/SKILL.md",
-  "skills/lazyweb-update-flowchart/SKILL.md",
   "skills/lazyweb-explain-flow/SKILL.md",
   "skills/lazyweb-propose-ui-changes/SKILL.md"
 ];
