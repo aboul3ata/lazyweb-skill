@@ -93,6 +93,10 @@ fi
     assert.equal(calls.length, 2);
     for (const call of calls) {
       assert.match(call, new RegExp(`X-Lazyweb-Install-Id: ${installId}`));
+      assert.ok(
+        call.includes(`{"install_id":"${installId}"}`),
+        "install_id must ride in the JSON body (the server's durable-identity contract)"
+      );
       assert.match(call, /install_cookies/);
       assert.doesNotMatch(call, /(?:^|\s)-f(?:sS)?(?:\s|$)/);
     }
@@ -176,6 +180,10 @@ esac
       .find((call) => call.includes("/api/mcp/install-token"));
     assert.ok(installCall);
     assert.match(installCall, new RegExp(`X-Lazyweb-Install-Id: ${installId}`));
+    assert.ok(
+      installCall.includes(`{"install_id":"${installId}"}`),
+      "install_id must ride in the JSON body (the server's durable-identity contract)"
+    );
     assert.match(installCall, /install_cookies/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
