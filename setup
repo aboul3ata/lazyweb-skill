@@ -201,12 +201,17 @@ ensure_token() {
   local token response body status install_id
   install_id="$(ensure_install_id)"
   prepare_install_cookie_file
+  # install_id rides in the JSON body — that is the server's durable-identity
+  # contract (body-only, never the URL): presenting a known install_id returns
+  # the ORIGINAL user/token instead of minting a fresh identity, so re-runs on
+  # the same machine keep one account even if the token file was lost. The
+  # X-Lazyweb-Install-Id header stays for older deployments that only log it.
   if ! response="$(curl -sS -X POST "$INSTALL_TOKEN_URL" \
     -H "content-type: application/json" \
     -H "X-Lazyweb-Install-Id: $install_id" \
     -b "$INSTALL_COOKIE_FILE" \
     -c "$INSTALL_COOKIE_FILE" \
-    -d '{}' \
+    -d "{\"install_id\":\"$install_id\"}" \
     -w $'\n%{http_code}')"; then
     echo "Lazyweb MCP setup could not reach $INSTALL_TOKEN_URL. Please retry." >&2
     exit 1
