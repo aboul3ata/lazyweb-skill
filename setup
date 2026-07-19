@@ -672,19 +672,35 @@ HOSTS="$(selected_hosts | awk '!seen[$0]++' || true)"
 # perform their own handshake when the user actually starts a session, which
 # lands a second, more specific row.
 #
-# Best-effort and strictly non-fatal: any failure leaves the install untouched.
+# OPT-IN ONLY. This reports which coding clients are installed on the machine,
+# which is device inventory, and the pack already gates analytics behind
+# ~/.lazyweb/telemetry-consent reading "community" (see
+# bin/lazyweb-telemetry-flush). Sending it regardless would override a user who
+# deliberately opted out, so the same gate applies here. Without consent this
+# is skipped entirely — no request, no stall.
+#
+# Backgrounded with tight budgets: a server that accepts the connection but
+# never answers must not hold up setup (or a cached-token `lazyweb-update`,
+# which otherwise needs no network at all).
 mcp_initialize_handshake() {
   has_cmd curl || return 0
+  local consent_file="${LAZYWEB_CONSENT_FILE:-$HOME/.lazyweb/telemetry-consent}"
+  local consent=""
+  [ -r "$consent_file" ] && consent="$(tr -d '[:space:]' < "$consent_file" 2>/dev/null || true)"
+  [ "$consent" = "community" ] || return 0
+
   local token="$1" hosts_label version
   hosts_label="$(printf '%s' "$2" | tr '\n' ',' | sed 's/,$//')"
   [ -n "$hosts_label" ] || hosts_label="no-client-detected"
   version="$(cat "$ROOT/VERSION" 2>/dev/null || echo 0.0.0)"
-  curl -fsS --max-time 15 -X POST "$MCP_URL" \
-    -H 'content-type: application/json' \
-    -H 'accept: application/json, text/event-stream' \
-    -H "authorization: Bearer $token" \
-    -d "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2025-06-18\",\"capabilities\":{},\"clientInfo\":{\"name\":\"lazyweb-installer (${hosts_label})\",\"version\":\"${version}\"}}}" \
-    >/dev/null 2>&1 || true
+  (
+    curl -fsS --connect-timeout 3 --max-time 8 -X POST "$MCP_URL" \
+      -H 'content-type: application/json' \
+      -H 'accept: application/json, text/event-stream' \
+      -H "authorization: Bearer $token" \
+      -d "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2025-06-18\",\"capabilities\":{},\"clientInfo\":{\"name\":\"lazyweb-installer (${hosts_label})\",\"version\":\"${version}\"}}}" \
+      >/dev/null 2>&1 || true
+  ) &
 }
 mcp_initialize_handshake "$TOKEN" "$HOSTS" || true
 
