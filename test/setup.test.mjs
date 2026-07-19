@@ -227,6 +227,7 @@ test("setup installs visible skills and direct MCP config into detected local cl
         "lazyweb",
         "lazyweb-design",
         "lazyweb-quick-search",
+        "lazyweb-apply-design-best-practices",
         "lazyweb-update"
       ]) {
         const skillPath = path.join(skillsRoot, skillName, "SKILL.md");
@@ -353,7 +354,7 @@ test("setup verifies the prune: removes legacy + future-rename skill dirs and pr
     assert.equal(existsSync(futureDir), false, "future-rename skill dir should be pruned");
 
     // Focused set installed.
-    for (const skillName of ["lazyweb", "lazyweb-design", "lazyweb-quick-search", "lazyweb-update"]) {
+    for (const skillName of ["lazyweb", "lazyweb-design", "lazyweb-quick-search", "lazyweb-apply-design-best-practices", "lazyweb-update"]) {
       assert.ok(existsSync(path.join(skillsRoot, skillName, "SKILL.md")), `missing ${skillName}`);
     }
 

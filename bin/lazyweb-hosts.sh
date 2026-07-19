@@ -90,8 +90,8 @@ host_act_preamble() {
     claude)
       printf '%s' 'To act on a row, invoke that skill (e.g. /lazyweb-design).'
       ;;
-    codex)
-      printf 'To act on a row, invoke that skill by name, or read %s/<skill>/SKILL.md and follow it.' "$(_lw_tilde "$(host_skills_root codex)")"
+    codex|opencode)
+      printf '%s' 'To act on a row, invoke the named skill.'
       ;;
     project)
       # Project-level block (spec §7.3): read by whichever host opens the repo,
