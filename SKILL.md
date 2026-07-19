@@ -121,7 +121,7 @@ evidence is reached through the `lazyweb_search_ab_tests` MCP tool above. The
 backend over MCP. Never substitute a `skills/<name>/SKILL.md` file read for any
 of these — that path does not exist in the install.
 
-**Retired skills — route their intent to one of the two skills above.** These
+**Retired skills — route their intent to the current skills above.** These
 earlier Lazyweb skills no longer exist. Do NOT try to invoke or fetch the old
 name; route the *intent* instead:
 
