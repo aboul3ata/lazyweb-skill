@@ -100,6 +100,7 @@ produce a report.
 |---|---|
 | **DEFAULT for design work** — design, redesign, optimize, improve, critique, or build ANY product screen (paywall, pricing, landing, signup, onboarding, dashboard, settings, etc.) | **Invoke the `lazyweb-design` skill** (one-call server-side `lazyweb_generate_report`) |
 | The user **explicitly** asks for a quick reference / examples lookup ("quick search", "just show me a few references", "look up examples first") — and does NOT want a report | **Invoke the `lazyweb-quick-search` skill** |
+| Apply expert best practices for a specific design craft — motion, typography, color, accessibility, forms, dashboards, Figma handoff, etc. | **Invoke the `lazyweb-apply-design-best-practices` skill**; it fetches the best-ranked expert skill and applies it as context |
 | Update local Lazyweb skills, reinstall Lazyweb, or sync Lazyweb into agentic IDEs | **Invoke the `lazyweb-update` skill** |
 | **Explain** how something works / why something happened with a diagram — a walkthrough, failure trace, or hypothetical | **Invoke the `lazyweb-explain-flow` skill** |
 | Propose reviewable **UI / flow changes** on a diagram for the user to Accept/Decline, then apply the accepted ones | **Invoke the `lazyweb-propose-ui-changes` skill** |
@@ -110,22 +111,25 @@ producing anything (a redesign, a critique, a report). Reach for
 `lazyweb-quick-search` only on an explicit reference-lookup request, and never as a
 fallback for building a report.
 
-**How to run, explained.** Only `lazyweb-design`, `lazyweb-quick-search`, and
-`lazyweb-update` are installed as local skills — invoke them **by name**, which
+**How to run, explained.** The focused user-facing modes, including
+`lazyweb-design`, `lazyweb-quick-search`,
+`lazyweb-apply-design-best-practices`, and `lazyweb-update`, are installed as
+local skills — invoke them **by name**, which
 resolves regardless of how the host lays out skill directories. A/B-test
 evidence is reached through the `lazyweb_search_ab_tests` MCP tool above. The
 `create` objective inside `lazyweb-design` fetches the `lazyweb-design-create`
 backend over MCP. Never substitute a `skills/<name>/SKILL.md` file read for any
 of these — that path does not exist in the install.
 
-**Retired skills — route their intent to one of the two skills above.** These
+**Retired skills — route their intent to the current skills above.** These
 earlier Lazyweb skills no longer exist. Do NOT try to invoke or fetch the old
 name; route the *intent* instead:
 
 | Retired skill / intent | Use now |
 |---|---|
 | `lazyweb-optimize-paywall`, `lazyweb-design-improve`, `lazyweb-optimize-sign-up` — optimize or improve an existing screen | `lazyweb-design` (objective `optimize` / `improve`) |
-| `lazyweb-design-research`, `lazyweb-deep-design-research`, `lazyweb-design-brainstorm`, `lazyweb-design-best-practices` — research, competitive analysis, best practices, "what do top apps do", creative ideas | `lazyweb-quick-search` for references; `lazyweb-design` (objective `create`) for a full new-screen design |
+| `lazyweb-design-research`, `lazyweb-deep-design-research`, `lazyweb-design-brainstorm` — research, competitive analysis, "what do top apps do", creative ideas | `lazyweb-quick-search` for references; `lazyweb-design` (objective `create`) for a full new-screen design |
+| `lazyweb-design-best-practices` — old best-practices skill name | `lazyweb-apply-design-best-practices` |
 | `lazyweb-quick-references`, `lazyweb-lite-design-research` — quick examples / UI references | `lazyweb-quick-search` |
 | `lazyweb-paywall-cta` — CTA copy | `lazyweb-design` (the CTA is part of the screen) |
 | `lazyweb-ab-test-research` — A/B / experiment evidence | the `lazyweb_search_ab_tests` MCP tool |
@@ -166,7 +170,8 @@ When a mode is clear:
 5. Cite whether each reference came from Lazyweb or the web.
 
 The installed mode skills (`lazyweb-design`, `lazyweb-quick-search`,
-`lazyweb-update`) may also be called directly by the user from the slash menu.
+`lazyweb-apply-design-best-practices`, `lazyweb-update`, and the focused flow
+skills) may also be called directly by the user from the slash menu.
 This `/lazyweb` skill remains the entry point for hosts that show only one
 downloaded skill or where the user is not sure which mode to use — there, reach
 the unsurfaced modes via their MCP tool or `lazyweb_get_workflows`, never a
