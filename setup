@@ -656,6 +656,38 @@ install_version_marker
 install_integrity_marker
 
 HOSTS="$(selected_hosts | awk '!seen[$0]++' || true)"
+
+# Perform a real MCP `initialize` handshake once, from the installer.
+#
+# The curl/bash install population never completes an MCP handshake — the July
+# 2026 D1 analysis found their tokens only ever appear on tools/call — so the
+# server had no idea which client, if any, a curl install ends up feeding. This
+# registers that: clientInfo carries the installer plus the clients actually
+# detected on this machine, so `mcp_initialize_events` can distinguish "curl
+# install that configured Claude Code" from "curl install that configured
+# nothing and will only ever be scripted against".
+#
+# Scope note: this identifies the INSTALL, it does not put instructions into any
+# agent's context — a shell script has no model reading it. Real clients still
+# perform their own handshake when the user actually starts a session, which
+# lands a second, more specific row.
+#
+# Best-effort and strictly non-fatal: any failure leaves the install untouched.
+mcp_initialize_handshake() {
+  has_cmd curl || return 0
+  local token="$1" hosts_label version
+  hosts_label="$(printf '%s' "$2" | tr '\n' ',' | sed 's/,$//')"
+  [ -n "$hosts_label" ] || hosts_label="no-client-detected"
+  version="$(cat "$ROOT/VERSION" 2>/dev/null || echo 0.0.0)"
+  curl -fsS --max-time 15 -X POST "$MCP_URL" \
+    -H 'content-type: application/json' \
+    -H 'accept: application/json, text/event-stream' \
+    -H "authorization: Bearer $token" \
+    -d "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"protocolVersion\":\"2025-06-18\",\"capabilities\":{},\"clientInfo\":{\"name\":\"lazyweb-installer (${hosts_label})\",\"version\":\"${version}\"}}}" \
+    >/dev/null 2>&1 || true
+}
+mcp_initialize_handshake "$TOKEN" "$HOSTS" || true
+
 if [ -z "$HOSTS" ]; then
   printf '%s\n' "No supported local coding clients were detected."
 else
