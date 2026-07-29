@@ -54,7 +54,7 @@ command:
 | `/lazyweb` | Compatibility entry point / router — unsure which Lazyweb mode fits. |
 | `/lazyweb-design` | Optimize, improve, or design any product screen — paywall, pricing, landing, signup, onboarding, dashboard, settings, … Routes on objective. |
 | `/lazyweb-quick-search` | Quick direct `lazyweb_search` preflight before designing; no report. |
-| `/lazyweb-growth-experiment` | Turn growth, pricing, trial, paywall, and monetization questions into a ranked coding handoff grounded in real control/variant evidence. |
+| `/lazyweb-growth-experiments` | Turn growth, pricing, trial, paywall, and monetization questions into a ranked coding handoff grounded in real control/variant evidence. |
 | `/lazyweb-apply-design-best-practices` | Apply the top community-rated design skill for a specific craft — motion, typography, color, accessibility, forms, dashboards, Figma handoff, and more. Fetches the expert instructions as context; installs nothing. |
 | `/lazyweb-explain-flow` | Explain how something works (walkthrough, failure trace, hypothetical) with a hosted diagram. |
 | `/lazyweb-propose-ui-changes` | Propose reviewable UI/flow changes on a diagram; the user Accepts/Declines on a hosted page, then you apply them. |

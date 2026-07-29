@@ -4,14 +4,15 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 
 const root = path.resolve(import.meta.dirname, "..");
-const skillPath = path.join(root, "skills", "lazyweb-growth-experiment", "SKILL.md");
+const skillPath = path.join(root, "skills", "lazyweb-growth-experiments", "SKILL.md");
 const text = readFileSync(skillPath, "utf8");
 
 test("growth experiment skill stays a small MCP operating guide", () => {
-  assert.match(text, /^name: lazyweb-growth-experiment$/m);
+  assert.match(text, /^name: lazyweb-growth-experiments$/m);
   assert.match(text, /^route:\s*.+$/m);
   assert.ok(text.split("\n").length <= 180, "skill should remain skeletal");
   assert.doesNotMatch(text, /\bCreed\b|\$9\.99|7-day journey/i);
+  assert.doesNotMatch(text, /\blazyweb-growth-experiment\b(?!s)/);
 });
 
 test("uses A/B evidence first and visual search only as secondary evidence", () => {
