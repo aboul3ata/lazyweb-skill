@@ -1,4 +1,4 @@
-# Claude CLI eval — lazyweb-growth-experiment 0.14.8
+# Claude CLI eval — lazyweb-growth-experiments 0.14.9
 
 - Date: 2026-07-29
 - Client: Claude Code 2.1.167
@@ -8,7 +8,7 @@
 
 ## Prompt
 
-> Use $lazyweb-growth-experiment to research ways to improve the supplied
+> Use $lazyweb-growth-experiments to research ways to improve the supplied
 > mobile subscription screen by adding a family plan. Do not implement code.
 > Give the coding handoff the skill calls for.
 
@@ -19,6 +19,7 @@ Pass.
 The fresh session:
 
 - used A/B evidence before general screenshot search;
+- discovered and invoked the plural `$lazyweb-growth-experiments` skill;
 - reported that no experiment isolated adding a family plan;
 - kept adjacent pricing experiments separate from direct mechanism evidence;
 - used visual search only to quantify pattern prevalence;
@@ -27,6 +28,5 @@ The fresh session:
 - labeled the recommendation directional instead of claiming measured lift;
 - did not implement code or generate a report.
 
-The first harness attempt was invalid because it launched one directory above
-the temporary project, so Claude did not load the candidate skill. The passing
-run launched from the project root with the screenshot linked into that project.
+The passing run launched from the isolated project root with the screenshot
+linked into that project and no permission denials affecting the research.

@@ -19,3 +19,7 @@ Shared report furniture (use the existing tokens `--ink:#1f2328; --mut:#57606a; 
 CSS gotcha (applies to every skill's CSS contract): `font:700 10px/1 inherit` is INVALID — `inherit` is not a legal font-family inside the `font` shorthand, so browsers drop the whole declaration and chips/badges render at body size. Write longhands instead (`font-weight:700;font-size:10px;line-height:1`); font-family inherits by default.
 
 These principles live in each skill's report contract. When editing a skill, keep its local component rules internally consistent. For `lazyweb-deep-design-research`, keep the report v3 side-by-side compare, option deck, and inspo map components in sync with this file; for the other skills, keep their existing shared evidence components in sync.
+
+## Agent learnings
+
+- Treat an explicitly supplied skill name as exact. Do not silently normalize an apparent typo or change singular/plural naming; ask before changing the requested identifier.

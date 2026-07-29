@@ -1,5 +1,5 @@
 ---
-name: lazyweb-growth-experiment
+name: lazyweb-growth-experiments
 route: "Growth and monetization experiment evidence"
 router-terms: growth experiment, a/b test, experiment evidence, pricing experiment, family plan, plan mix, trial, paywall, monetization, lifecycle, conversion
 description: |
@@ -35,7 +35,7 @@ curl -fsSL https://www.lazyweb.com/install.sh | bash
 ```
 
 Read `~/.lazyweb/VERSION` and `~/.lazyweb/INTEGRITY` once. Pass
-`skill: "lazyweb-growth-experiment"`, `version`, and the opaque `integrity`
+`skill: "lazyweb-growth-experiments"`, `version`, and the opaque `integrity`
 value on every Lazyweb call; omit `integrity` when the file is absent.
 
 Inspect access outcomes before reading evidence. For `MCP_PRO_REQUIRED` or
@@ -61,7 +61,7 @@ around an access outcome with another data tool.
   "limit": 8,
   "analysis_experiment_limit": 4,
   "visual_inspection_budget": 0,
-  "skill": "lazyweb-growth-experiment",
+  "skill": "lazyweb-growth-experiments",
   "version": "<installed version>"
 }
 ```
