@@ -104,7 +104,7 @@ produce a report.
 | Update local Lazyweb skills, reinstall Lazyweb, or sync Lazyweb into agentic IDEs | **Invoke the `lazyweb-update` skill** |
 | **Explain** how something works / why something happened with a diagram — a walkthrough, failure trace, or hypothetical | **Invoke the `lazyweb-explain-flow` skill** |
 | Propose reviewable **UI / flow changes** on a diagram for the user to Accept/Decline, then apply the accepted ones | **Invoke the `lazyweb-propose-ui-changes` skill** |
-| A/B tests, experiment examples, pricing, trials, lifecycle, or monetization strategy | Use the `lazyweb_search_ab_tests` MCP tool (mobile A/B evidence) |
+| A/B tests, experiment examples, pricing, trials, lifecycle, plan changes, or monetization strategy | **Invoke the `lazyweb-growth-experiment` skill**; it operates `lazyweb_search_ab_tests` and filters the evidence for a coding handoff |
 
 When in doubt between the two, choose `lazyweb-design`: it is the default for
 producing anything (a redesign, a critique, a report). Reach for
@@ -113,10 +113,12 @@ fallback for building a report.
 
 **How to run, explained.** The focused user-facing modes, including
 `lazyweb-design`, `lazyweb-quick-search`,
-`lazyweb-apply-design-best-practices`, and `lazyweb-update`, are installed as
+`lazyweb-growth-experiment`, `lazyweb-apply-design-best-practices`, and
+`lazyweb-update`, are installed as
 local skills — invoke them **by name**, which
 resolves regardless of how the host lays out skill directories. A/B-test
-evidence is reached through the `lazyweb_search_ab_tests` MCP tool above. The
+evidence is reached through `lazyweb-growth-experiment`, which operates the
+`lazyweb_search_ab_tests` MCP tool. The
 `create` objective inside `lazyweb-design` fetches the `lazyweb-design-create`
 backend over MCP. Never substitute a `skills/<name>/SKILL.md` file read for any
 of these — that path does not exist in the install.
@@ -132,7 +134,7 @@ name; route the *intent* instead:
 | `lazyweb-design-best-practices` — old best-practices skill name | `lazyweb-apply-design-best-practices` |
 | `lazyweb-quick-references`, `lazyweb-lite-design-research` — quick examples / UI references | `lazyweb-quick-search` |
 | `lazyweb-paywall-cta` — CTA copy | `lazyweb-design` (the CTA is part of the screen) |
-| `lazyweb-ab-test-research` — A/B / experiment evidence | the `lazyweb_search_ab_tests` MCP tool |
+| `lazyweb-ab-test-research` — A/B / experiment evidence | `lazyweb-growth-experiment` |
 
 Calling `lazyweb_search` directly under one of these retired skill tags is no
 longer supported — the server rejects it and points back here. `lazyweb_search`
@@ -160,7 +162,8 @@ install, update, refresh, or stale slash-command requests to `lazyweb-update`.
 When a mode is clear:
 
 1. Reach the mode by the mechanism in the table above — **invoke the installed
-   skill by name** (`lazyweb-design`, `lazyweb-quick-search`, `lazyweb-update`),
+   skill by name** (`lazyweb-design`, `lazyweb-quick-search`,
+   `lazyweb-growth-experiment`, `lazyweb-update`),
    use the mode's **dedicated MCP tool**, or **fetch its workflow** with
    `lazyweb_get_workflows`. Do NOT read a `skills/<name>/SKILL.md` file path —
    that layout exists only in the source repo, not in the install.
@@ -170,8 +173,9 @@ When a mode is clear:
 5. Cite whether each reference came from Lazyweb or the web.
 
 The installed mode skills (`lazyweb-design`, `lazyweb-quick-search`,
-`lazyweb-apply-design-best-practices`, `lazyweb-update`, and the focused flow
-skills) may also be called directly by the user from the slash menu.
+`lazyweb-growth-experiment`, `lazyweb-apply-design-best-practices`,
+`lazyweb-update`, and the focused flow skills) may also be called directly by
+the user from the slash menu.
 This `/lazyweb` skill remains the entry point for hosts that show only one
 downloaded skill or where the user is not sure which mode to use — there, reach
 the unsurfaced modes via their MCP tool or `lazyweb_get_workflows`, never a
