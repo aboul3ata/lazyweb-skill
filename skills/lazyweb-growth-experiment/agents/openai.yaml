@@ -1,0 +1,4 @@
+interface:
+  display_name: "Lazyweb Growth Experiment"
+  short_description: "Find growth ideas backed by real A/B evidence"
+  default_prompt: "Use $lazyweb-growth-experiment to research evidence-backed growth changes for this screen."
