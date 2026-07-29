@@ -3,6 +3,12 @@
   "comment": "Append-only manifest of released lazyweb-skill commits. Maps the SHA an installed client reports (git rev-parse HEAD after lazyweb-update hard-resets to origin/main) to the released version. The server fetches this raw from https://raw.githubusercontent.com/aboul3ata/lazyweb-skill/main/releases.json and builds an O(1) sha->{version,expected_set} map (cached/last-good like the existing VERSION probe). A known SHA is VERIFIED; unknown/missing is UNTRUSTED. `expected_set` = sha256 over the sorted, unique canonical lazyweb-* skill basenames shipped in skills/ at that commit (same computation as setup's installed_skill_set_hash); used as a telemetry-only branch-trap detector in Phase 0. New entries are appended by the release CI on push to main that changes VERSION (.github/workflows/release-manifest.yml). The current main HEAD entry is first; it is the load-bearing SHA currently-installed clients present.",
   "releases": [
     {
+      "sha": "4160c6bc5ad6b5c85aa728fddcaa229f2ffd7a75",
+      "version": "0.14.8",
+      "released_at": "2026-07-29T22:54:14Z",
+      "expected_set": "061e4d9da821f369a5183958699bc763a9f6042c6cc692a7c60f1ecab0921431"
+    },
+    {
       "sha": "28aed5d94667a94f621bb8d15407621a43de1835",
       "version": "0.14.7",
       "released_at": "2026-07-19T03:36:40Z",
