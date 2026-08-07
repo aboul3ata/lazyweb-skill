@@ -23,3 +23,4 @@ These principles live in each skill's report contract. When editing a skill, kee
 ## Agent learnings
 
 - Treat an explicitly supplied skill name as exact. Do not silently normalize an apparent typo or change singular/plural naming; ask before changing the requested identifier.
+- When a client supports remote MCP natively, configure the server as direct Streamable HTTP. Do not insert an `mcp-remote` stdio bridge; verify the current client CLI and config schema before publishing installer output.
