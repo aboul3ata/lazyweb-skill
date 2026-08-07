@@ -250,7 +250,10 @@ install_skills_to_root() {
   mkdir -p "$skills_root"
   rm -rf "$skills_root/lazyweb"
   mkdir -p "$skills_root/lazyweb"
-  link_or_copy "$ROOT/SKILL.md" "$skills_root/lazyweb/SKILL.md"
+  # Codex's skill catalog ignores a directory whose SKILL.md entrypoint is a
+  # symlink, even though it follows whole-directory symlinks for mode skills.
+  # Keep the generic router as a regular file; every setup/update refreshes it.
+  cp "$ROOT/SKILL.md" "$skills_root/lazyweb/SKILL.md"
   # Remember this root so verify_prune can re-check it after the host loop.
   INSTALLED_SKILL_ROOTS="$INSTALLED_SKILL_ROOTS
 $skills_root"
@@ -652,6 +655,24 @@ selected_hosts() {
       printf '%s\n' "$HOST"
       ;;
     auto)
+      # A client-launched install must configure that client only. Scanning all
+      # binaries is still useful from a plain terminal, but is surprising and
+      # potentially destructive when Codex or Claude invokes the installer on
+      # a machine where several agent CLIs happen to be installed.
+      case "${LAZYWEB_ACTIVE_HOST:-}" in
+        codex|claude|cursor|opencode|kiro|factory|slate|hermes|antigravity)
+          printf '%s\n' "$LAZYWEB_ACTIVE_HOST"
+          return
+          ;;
+      esac
+      if [ -n "${CODEX_THREAD_ID:-}${CODEX_CI:-}${CODEX_SHELL:-}" ]; then
+        printf '%s\n' codex
+        return
+      fi
+      if [ -n "${CLAUDECODE:-}${CLAUDE_CODE_ENTRYPOINT:-}" ]; then
+        printf '%s\n' claude
+        return
+      fi
       { has_cmd codex || [ -d "$HOME/.codex" ]; } && printf '%s\n' codex
       { has_cmd claude || [ -d "$HOME/.claude" ]; } && printf '%s\n' claude
       { has_cmd cursor || [ -d "$HOME/.cursor" ]; } && printf '%s\n' cursor

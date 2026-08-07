@@ -22,7 +22,12 @@ function runSetup(home, fakeBin) {
       PATH: `${fakeBin}:/usr/bin:/bin:/usr/sbin:/sbin`,
       LAZYWEB_MCP_TOKEN: "11111111-1111-4111-8111-111111111111",
       LAZYWEB_MCP_URL: "https://lazyweb.example.com/mcp",
-      CODEX_HOME: path.join(home, ".codex")
+      CODEX_HOME: path.join(home, ".codex"),
+      CODEX_THREAD_ID: "",
+      CODEX_CI: "",
+      CODEX_SHELL: "",
+      CLAUDECODE: "",
+      CLAUDE_CODE_ENTRYPOINT: ""
     }
   });
 }
@@ -39,10 +44,82 @@ function runSetupWithoutToken(home, fakeBin, extraEnv = {}) {
       LAZYWEB_MCP_URL: "https://lazyweb.example.com/mcp",
       LAZYWEB_INSTALL_TOKEN_URL: "https://lazyweb.example.com/api/mcp/install-token",
       CODEX_HOME: path.join(home, ".codex"),
+      CODEX_THREAD_ID: "",
+      CODEX_CI: "",
+      CODEX_SHELL: "",
+      CLAUDECODE: "",
+      CLAUDE_CODE_ENTRYPOINT: "",
       ...extraEnv
     }
   });
 }
+
+test("auto setup targets the invoking Codex host before scanning other installed clients", () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "lazyweb-setup-active-codex-"));
+  const home = path.join(dir, "home");
+  const fakeBin = path.join(dir, "bin");
+  mkdirSync(fakeBin, { recursive: true });
+  mkdirSync(home, { recursive: true });
+  symlinkSync(process.execPath, path.join(fakeBin, "node"));
+  makeExecutable(path.join(fakeBin, "codex"), "#!/usr/bin/env sh\nexit 0\n");
+  makeExecutable(path.join(fakeBin, "claude"), `#!/usr/bin/env sh\nprintf '%s\\n' "$*" >> "${dir}/claude.log"\nexit 0\n`);
+
+  try {
+    const result = spawnSync("bash", [setup, "--host", "auto", "--quiet", "--no-auto-update", "--no-router"], {
+      cwd: root,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        HOME: home,
+        PATH: `${fakeBin}:/usr/bin:/bin:/usr/sbin:/sbin`,
+        LAZYWEB_MCP_TOKEN: "11111111-1111-4111-8111-111111111111",
+        LAZYWEB_MCP_URL: "https://lazyweb.example.com/mcp",
+        CODEX_HOME: path.join(home, ".codex"),
+        CODEX_THREAD_ID: "fresh-codex-eval",
+        CLAUDECODE: ""
+      }
+    });
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    assert.ok(existsSync(path.join(home, ".codex", "skills", "lazyweb", "SKILL.md")));
+    assert.equal(existsSync(path.join(home, ".claude", "skills", "lazyweb", "SKILL.md")), false);
+    assert.equal(existsSync(path.join(dir, "claude.log")), false, "Claude MCP must not be changed by a Codex-hosted install");
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("an explicit active Claude host overrides ambient Codex signals", () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "lazyweb-setup-active-claude-"));
+  const home = path.join(dir, "home");
+  const fakeBin = path.join(dir, "bin");
+  mkdirSync(fakeBin, { recursive: true });
+  mkdirSync(home, { recursive: true });
+  symlinkSync(process.execPath, path.join(fakeBin, "node"));
+  makeExecutable(path.join(fakeBin, "codex"), "#!/usr/bin/env sh\nexit 0\n");
+  makeExecutable(path.join(fakeBin, "claude"), "#!/usr/bin/env sh\nexit 0\n");
+
+  try {
+    const result = spawnSync("bash", [setup, "--host", "auto", "--quiet", "--no-auto-update", "--no-router"], {
+      cwd: root,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        HOME: home,
+        PATH: `${fakeBin}:/usr/bin:/bin:/usr/sbin:/sbin`,
+        LAZYWEB_MCP_TOKEN: "11111111-1111-4111-8111-111111111111",
+        LAZYWEB_MCP_URL: "https://lazyweb.example.com/mcp",
+        LAZYWEB_ACTIVE_HOST: "claude",
+        CODEX_HOME: path.join(home, ".codex"),
+        CODEX_THREAD_ID: "ambient-codex-host"
+      }
+    });
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    assert.ok(existsSync(path.join(home, ".claude", "skills", "lazyweb", "SKILL.md")));
+    assert.equal(existsSync(path.join(home, ".codex", "skills", "lazyweb", "SKILL.md")), false);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
 
 test("setup keeps cookie-less retries sticky and still mints a treatment setup credential", () => {
   const dir = mkdtempSync(path.join(tmpdir(), "lazyweb-setup-mcp-pro-"));
@@ -236,7 +313,7 @@ test("setup installs visible skills and direct MCP config into detected local cl
         const skillPath = path.join(skillsRoot, skillName, "SKILL.md");
         assert.ok(existsSync(skillPath), `missing installed skill ${skillPath}`);
         if (skillName === "lazyweb") {
-          assert.ok(lstatSync(skillPath).isSymbolicLink(), "root lazyweb SKILL.md should be symlinked for updates");
+          assert.equal(lstatSync(skillPath).isSymbolicLink(), false, "root lazyweb SKILL.md must be a regular file so Codex catalogs it");
         } else {
           assert.ok(lstatSync(path.dirname(skillPath)).isSymbolicLink(), `${skillName} should be symlinked for updates`);
         }
