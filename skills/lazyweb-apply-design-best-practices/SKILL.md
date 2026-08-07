@@ -2,6 +2,7 @@
 name: lazyweb-apply-design-best-practices
 route: "UI craft"
 router-terms: best practices
+router-exclude: true
 description: |
   Apply the best available expert design guidance to the user's actual UI
   task. Lazyweb curates 19 design aspects (web animation, frontend

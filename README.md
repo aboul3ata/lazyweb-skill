@@ -51,20 +51,20 @@ command:
 
 | Skill | Use when |
 |---|---|
-| `/lazyweb` | Compatibility entry point / router — unsure which Lazyweb mode fits. |
-| `/lazyweb-design` | Optimize, improve, or design any product screen — paywall, pricing, landing, signup, onboarding, dashboard, settings, … Routes on objective. |
-| `/lazyweb-quick-search` | Quick direct `lazyweb_search` preflight before designing; no report. |
-| `/lazyweb-growth-experiments` | Turn growth, pricing, trial, paywall, and monetization questions into a ranked coding handoff grounded in real control/variant evidence. |
-| `/lazyweb-apply-design-best-practices` | Apply the top community-rated design skill for a specific craft — motion, typography, color, accessibility, forms, dashboards, Figma handoff, and more. Fetches the expert instructions as context; installs nothing. |
-| `/lazyweb-explain-flow` | Explain how something works (walkthrough, failure trace, hypothetical) with a hosted diagram. |
-| `/lazyweb-propose-ui-changes` | Propose reviewable UI/flow changes on a diagram; the user Accepts/Declines on a hosted page, then you apply them. |
+| `/lazyweb` | Generic router and safe capability discovery. |
+| `/lazyweb-growth-score` | Get, explicitly generate, or compare website Growth Scores. |
+| `/lazyweb-growth-report` | Generate, poll, or iterate the unchanged report pipeline; renamed from `/lazyweb-design`. |
+| `/lazyweb-growth-backlog` | List product Backlog items or add an idempotent growth spec. |
+| `/lazyweb-search-experiments` | Research growth and monetization experiments and accumulate selected evidence. |
+| `/lazyweb-search-flows` | Research ordered product journeys and accumulate selected evidence. |
+| `/lazyweb-search-screens` | Research UI screens and accumulate selected evidence. |
 | `/lazyweb-update` | Update the local Lazyweb skill pack and reinstall it into agentic IDEs. |
 
 `SKILL.md` at the repo root is the high-level router. The installer materializes
 that file into each local client as `lazyweb/SKILL.md`, while platforms that can
 download a single repo-level skill can use the root file directly. The router
-points to the mode skills under `skills/` and tells agents to read and run
-the selected mode instead of reimplementing the workflow.
+points to thin mode skills under `skills/`. Live MCP schemas own the contracts;
+the skills contain only routing and link-handling guidance.
 
 ## Verify
 
@@ -183,13 +183,25 @@ Current public gateway tools:
 | MCP tool | Use |
 |---|---|
 | `lazyweb_health` | Check Lazyweb backend connectivity. |
-| `lazyweb_search` | Search mobile and desktop screenshots by text; screenshot results include optimized `imageUrl`/`image_url` values. |
+| `lazyweb_growth_score` | Get, explicitly generate, or compare immutable Growth Scores in batches. |
+| `lazyweb_growth_report` | Naming façade over the unchanged report generator and poller. |
+| `lazyweb_growth_backlog` | List or add owner/product-scoped Backlog specs. |
+| `lazyweb_search_screens` | Search screens and automatically record stable result references in Agentic Search. |
+| `lazyweb_search_flows` | Search ordered flows and accumulate them into the same Agentic Search. |
+| `lazyweb_search_experiments` | Search growth experiments and accumulate them into the same Agentic Search. |
+| `lazyweb_agentic_search_finalize` | Finalize ordered selected `result_ref` values and return private/public web links. |
+| `lazyweb_products` | Safe product CRUD; deletion requires an exact matching confirmation. |
+| `lazyweb_connections` | Read connection status or open canonical setup. |
+| `lazyweb_reports` | List/open reports or save owner-authorized feedback. |
+| `lazyweb_account` | Read-only account and plan status. |
 | `lazyweb_compare_image` | Find visually similar screenshots from an image URL or base64 image; results include optimized image URLs. |
 | `lazyweb_find_similar` | Find visually similar screenshots from a returned Lazyweb `imageUrl` or an image payload; do not pass screenshot IDs. |
 | `lazyweb_list_categories` | List public company categories. |
 | `lazyweb_get_workflows` | Discover and fetch current Lazyweb workflow instructions. |
-| `lazyweb_get_flows` | Fetch ordered multi-screen product journeys with optimized step image URLs. |
-| `lazyweb_search_ab_tests` | Mobile-only A/B Test Agent wrapper for PM-facing research; `category` is the industry filter and product/company names are forwarded as target context. When `include_images` is true, evidence includes optimized control/variant image URLs. |
+
+Legacy names such as `lazyweb_search`, `lazyweb_get_flows`,
+`lazyweb_search_ab_tests`, `lazyweb_generate_report`, and `lazyweb_get_report`
+remain compatibility aliases during their deprecation window.
 
 All Lazyweb screenshot-bearing tools return usable optimized URLs for screenshots.
 Supabase storage-backed image URLs are signed for 365 days. Do not ask tools for
