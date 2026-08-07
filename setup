@@ -32,12 +32,19 @@ lazyweb-design-improve
 lazyweb-lite-design-research
 lazyweb-paywall-cta
 lazyweb-growth-experiment
+lazyweb-apply-design-best-practices
+lazyweb-explain-flow
+lazyweb-propose-ui-changes
 "
+# Deprecated aliases are not installed for new users, so the visible command
+# set stays focused. If an upgrading user already has one, refresh it in place
+# as a tiny compatibility wrapper until the alias retirement window closes.
+COMPAT_ALIAS_SKILLS="lazyweb-design lazyweb-quick-search lazyweb-growth-experiments"
 # The focused, user-facing slash-command set. Every other skill dir stays in the
 # repo (the server/router can still reach it via lazyweb_get_workflows) but is
 # intentionally NOT installed as a slash command, so anything else found in a
 # client skill root is stale and must be removed.
-FOCUSED_SKILLS="lazyweb-design lazyweb-quick-search lazyweb-growth-experiments lazyweb-apply-design-best-practices lazyweb-explain-flow lazyweb-propose-ui-changes lazyweb-update"
+FOCUSED_SKILLS="lazyweb-growth-score lazyweb-growth-report lazyweb-growth-backlog lazyweb-search-experiments lazyweb-search-flows lazyweb-search-screens lazyweb-update"
 # Skill roots older installer generations wrote to but the current installer no
 # longer targets AT ALL. Nothing installs there anymore, so ANY Lazyweb dir
 # found in one — including the `lazyweb` entry skill itself — is stale by
@@ -274,10 +281,17 @@ $skills_root"
       *" $skill_dir "*)
         link_or_copy "$ROOT/skills/$skill_dir" "$skills_root/$skill_dir" ;;
       *)
-        if [ -e "$skills_root/$skill_dir" ] || [ -L "$skills_root/$skill_dir" ]; then
-          rm -rf "$skills_root/$skill_dir" 2>/dev/null || true
-          [ -e "$skills_root/$skill_dir" ] || log "removed stale skill: $skill_dir ($skills_root)"
-        fi ;;
+        case " $COMPAT_ALIAS_SKILLS " in
+          *" $skill_dir "*)
+            if [ -e "$skills_root/$skill_dir" ] || [ -L "$skills_root/$skill_dir" ]; then
+              link_or_copy "$ROOT/skills/$skill_dir" "$skills_root/$skill_dir"
+            fi ;;
+          *)
+            if [ -e "$skills_root/$skill_dir" ] || [ -L "$skills_root/$skill_dir" ]; then
+              rm -rf "$skills_root/$skill_dir" 2>/dev/null || true
+              [ -e "$skills_root/$skill_dir" ] || log "removed stale skill: $skill_dir ($skills_root)"
+            fi ;;
+        esac ;;
     esac
   done
 }
@@ -308,6 +322,9 @@ verify_prune() {
       [ -e "$entry" ] || continue
       name="$(basename "$entry")"
       case " $FOCUSED_SKILLS " in
+        *" $name "*) continue ;;
+      esac
+      case " $COMPAT_ALIAS_SKILLS " in
         *" $name "*) continue ;;
       esac
       rm -rf "$entry" 2>/dev/null || true

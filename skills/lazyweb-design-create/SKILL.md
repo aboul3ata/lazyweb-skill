@@ -2,6 +2,7 @@
 name: lazyweb-design-create
 route: "INTERNAL — create/greenfield backend for lazyweb-design"
 router-terms: create, greenfield, new screen from scratch, design from scratch
+router-exclude: true
 description: |
   INTERNAL create / greenfield backend. NOT a user-facing slash command — it is
   reached via `/lazyweb-design` with `objective=create`, which redirects here for

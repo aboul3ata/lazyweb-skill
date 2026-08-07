@@ -2,6 +2,7 @@
 name: lazyweb-explain-flow
 route: "Explain how something works with a hosted flow diagram"
 router-terms: explain with a diagram, walk me through how X works, diagram why this failed, failure trace, trace what happened, show how the pieces fit, visualize how it works, explain this flow
+router-exclude: true
 description: |
   EXPLAIN how something works with a hosted, tappable flow diagram — a walkthrough,
   a failure trace, an answer to "how does X work?", a hypothetical. Saves via

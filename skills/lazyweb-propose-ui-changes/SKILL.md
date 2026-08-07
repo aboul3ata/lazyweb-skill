@@ -2,6 +2,7 @@
 name: lazyweb-propose-ui-changes
 route: "Propose reviewable UI/flow changes on a diagram (Accept/Decline)"
 router-terms: propose changes, suggest UI changes for review, review my suggestions, let me review your suggestions, annotate this flow, annotate this diagram, create a proposal, review and approve these changes, approve or reject changes, hosted proposal, explain this architecture visually
+router-exclude: true
 description: |
   Propose UI/flow changes (or explain context) on a STRUCTURED DIAGRAM that the
   user reviews and Accepts/Declines on a hosted lazyweb.com page, then apply the

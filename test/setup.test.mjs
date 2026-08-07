@@ -225,10 +225,12 @@ test("setup installs visible skills and direct MCP config into detected local cl
     for (const skillsRoot of expectedSkillRoots) {
       for (const skillName of [
         "lazyweb",
-        "lazyweb-design",
-        "lazyweb-quick-search",
-        "lazyweb-growth-experiments",
-        "lazyweb-apply-design-best-practices",
+        "lazyweb-growth-score",
+        "lazyweb-growth-report",
+        "lazyweb-growth-backlog",
+        "lazyweb-search-experiments",
+        "lazyweb-search-flows",
+        "lazyweb-search-screens",
         "lazyweb-update"
       ]) {
         const skillPath = path.join(skillsRoot, skillName, "SKILL.md");
@@ -255,11 +257,19 @@ test("setup installs visible skills and direct MCP config into detected local cl
         "lazyweb-design-improve",
         "lazyweb-lite-design-research",
         "lazyweb-paywall-cta",
-        "lazyweb-growth-experiment"
+        "lazyweb-growth-experiment",
+        "lazyweb-apply-design-best-practices",
+        "lazyweb-explain-flow",
+        "lazyweb-propose-ui-changes"
       ]) {
         const staleDir = path.join(skillsRoot, oldSkillName);
         mkdirSync(staleDir, { recursive: true });
         writeFileSync(path.join(staleDir, "SKILL.md"), "stale");
+      }
+      for (const aliasName of ["lazyweb-design", "lazyweb-quick-search", "lazyweb-growth-experiments"]) {
+        const aliasDir = path.join(skillsRoot, aliasName);
+        mkdirSync(aliasDir, { recursive: true });
+        writeFileSync(path.join(aliasDir, "SKILL.md"), "stale alias");
       }
     }
 
@@ -281,9 +291,17 @@ test("setup installs visible skills and direct MCP config into detected local cl
         "lazyweb-design-improve",
         "lazyweb-lite-design-research",
         "lazyweb-paywall-cta",
-        "lazyweb-growth-experiment"
+        "lazyweb-growth-experiment",
+        "lazyweb-apply-design-best-practices",
+        "lazyweb-explain-flow",
+        "lazyweb-propose-ui-changes"
       ]) {
         assert.equal(existsSync(path.join(skillsRoot, oldSkillName)), false, `${oldSkillName} should be cleaned up from ${skillsRoot}`);
+      }
+      for (const aliasName of ["lazyweb-design", "lazyweb-quick-search", "lazyweb-growth-experiments"]) {
+        const aliasSkill = path.join(skillsRoot, aliasName, "SKILL.md");
+        assert.ok(existsSync(aliasSkill), `${aliasName} should remain available for an upgrading install`);
+        assert.match(readFileSync(aliasSkill, "utf8"), /deprecated/i, `${aliasName} should be refreshed to the thin alias`);
       }
     }
 
@@ -395,7 +413,7 @@ test("setup verifies the prune: removes legacy + future-rename skill dirs and pr
     assert.equal(existsSync(futureDir), false, "future-rename skill dir should be pruned");
 
     // Focused set installed.
-    for (const skillName of ["lazyweb", "lazyweb-design", "lazyweb-quick-search", "lazyweb-growth-experiments", "lazyweb-apply-design-best-practices", "lazyweb-update"]) {
+    for (const skillName of ["lazyweb", "lazyweb-growth-score", "lazyweb-growth-report", "lazyweb-growth-backlog", "lazyweb-search-experiments", "lazyweb-search-flows", "lazyweb-search-screens", "lazyweb-update"]) {
       assert.ok(existsSync(path.join(skillsRoot, skillName, "SKILL.md")), `missing ${skillName}`);
     }
 
@@ -593,7 +611,7 @@ test("install_integrity_marker writes lw1.nogit.<ver>.<set12> when $ROOT has no 
   mkdirSync(fakeRoot, { recursive: true });
   writeFileSync(path.join(fakeRoot, "VERSION"), readFileSync(path.join(root, "VERSION"), "utf8"));
   mkdirSync(path.join(fakeRoot, "skills"), { recursive: true });
-  for (const s of ["lazyweb-design", "lazyweb-quick-search", "lazyweb-update", "lazyweb-design-create"]) {
+  for (const s of ["lazyweb-growth-score", "lazyweb-growth-report", "lazyweb-update", "lazyweb-design-create"]) {
     mkdirSync(path.join(fakeRoot, "skills", s), { recursive: true });
   }
 
@@ -658,7 +676,7 @@ test("installed_skill_set_hash is deterministic and matches the shipped focused 
   }
 });
 
-test("releases.json parses, has schema lw-releases-1, and contains the current HEAD entry", () => {
+test("releases.json parses and either contains the released HEAD or permits the next unreleased version", () => {
   const data = JSON.parse(readFileSync(path.join(root, "releases.json"), "utf8"));
   assert.equal(data.schema, "lw-releases-1");
   assert.ok(Array.isArray(data.releases) && data.releases.length > 0, "releases array non-empty");
@@ -678,9 +696,13 @@ test("releases.json parses, has schema lw-releases-1, and contains the current H
     seen.add(r.sha);
   }
 
-  // The current main HEAD must be present with the right version + a real set.
+  // Release automation appends the merged commit. A feature branch may carry
+  // the next VERSION before that immutable release entry can exist.
   const headEntry = data.releases.find((r) => r.sha === head);
-  assert.ok(headEntry, `releases.json contains the current HEAD ${head}`);
+  if (!headEntry) {
+    assert.notEqual(ver, data.releases[0].version, "an unlisted HEAD must carry the next unreleased VERSION");
+    return;
+  }
   assert.equal(headEntry.version, ver, "HEAD entry version matches VERSION");
   assert.match(headEntry.expected_set, /^[0-9a-f]{64}$/, "HEAD entry has a real expected_set");
 
