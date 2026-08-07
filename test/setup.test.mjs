@@ -293,7 +293,9 @@ test("setup installs visible skills and direct MCP config into detected local cl
 
     const codexConfig = readFileSync(path.join(home, ".codex", "config.toml"), "utf8");
     assert.match(codexConfig, /\[mcp_servers\.lazyweb\]/);
-    assert.match(codexConfig, /mcp-remote https:\/\/lazyweb\.example\.com\/mcp/);
+    assert.match(codexConfig, /url = "https:\/\/lazyweb\.example\.com\/mcp"/);
+    assert.match(codexConfig, /http_headers = \{ Authorization = "Bearer 11111111-1111-4111-8111-111111111111" \}/);
+    assert.doesNotMatch(codexConfig, /mcp-remote|command = "sh"|args = \[/);
     assert.doesNotMatch(codexConfig, /plugins\."lazyweb@lazyweb"/);
 
     const cursorConfig = JSON.parse(readFileSync(path.join(home, ".cursor", "mcp.json"), "utf8"));
@@ -307,6 +309,42 @@ test("setup installs visible skills and direct MCP config into detected local cl
     const claudeLog = readFileSync(path.join(dir, "claude.log"), "utf8");
     assert.match(claudeLog, /mcp remove -s user lazyweb/);
     assert.match(claudeLog, /mcp add --transport http --scope user lazyweb https:\/\/lazyweb\.example\.com\/mcp --header Authorization: Bearer 11111111-1111-4111-8111-111111111111/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("setup upgrades the legacy Codex bridge to native HTTP without clobbering neighboring config", () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "lazyweb-setup-codex-native-http-"));
+  const home = path.join(dir, "home");
+  const fakeBin = path.join(dir, "bin");
+  const codexHome = path.join(home, ".codex");
+  mkdirSync(fakeBin, { recursive: true });
+  mkdirSync(codexHome, { recursive: true });
+  symlinkSync(process.execPath, path.join(fakeBin, "node"));
+  makeExecutable(path.join(fakeBin, "codex"), "#!/usr/bin/env sh\nexit 0\n");
+  writeFileSync(path.join(codexHome, "config.toml"), [
+    'model = "gpt-5.4"',
+    "",
+    "[mcp_servers.lazyweb]",
+    'command = "sh"',
+    'args = ["-lc", "exec npx -y mcp-remote https://old.lazyweb.example/mcp --transport http-first"]',
+    "",
+    "[mcp_servers.keep_me]",
+    'url = "https://example.com/mcp"',
+    ""
+  ].join("\n"));
+
+  try {
+    const result = runSetupHost(home, fakeBin, "codex", { quiet: true });
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+
+    const codexConfig = readFileSync(path.join(codexHome, "config.toml"), "utf8");
+    assert.match(codexConfig, /^model = "gpt-5\.4"/m);
+    assert.match(codexConfig, /\[mcp_servers\.keep_me\]\nurl = "https:\/\/example\.com\/mcp"/);
+    assert.match(codexConfig, /\[mcp_servers\.lazyweb\]\nurl = "https:\/\/lazyweb\.example\.com\/mcp"/);
+    assert.match(codexConfig, /http_headers = \{ Authorization = "Bearer 11111111-1111-4111-8111-111111111111" \}/);
+    assert.doesNotMatch(codexConfig, /mcp-remote|command = "sh"|args = \[/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

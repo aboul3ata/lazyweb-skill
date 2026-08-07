@@ -535,19 +535,20 @@ install_lazyweb_bins() {
 }
 
 write_codex_mcp_config() {
+  local token="$1"
   local config_path="${CODEX_HOME:-$HOME/.codex}/config.toml"
   mkdir -p "$(dirname "$config_path")"
-  CONFIG_PATH="$config_path" MCP_URL="$MCP_URL" node <<'NODE'
+  CONFIG_PATH="$config_path" MCP_URL="$MCP_URL" LAZYWEB_CONFIG_TOKEN="$token" node <<'NODE'
 const fs = require("fs");
 const path = require("path");
 
 const configPath = process.env.CONFIG_PATH;
 const mcpUrl = process.env.MCP_URL;
-const command = `TOKEN="\${LAZYWEB_MCP_TOKEN:-}"; if [ -z "$TOKEN" ] && [ -f "$HOME/.lazyweb/lazyweb_mcp_token" ]; then TOKEN="$(cat "$HOME/.lazyweb/lazyweb_mcp_token")"; fi; exec npx -y mcp-remote ${mcpUrl} --header "Authorization: Bearer $TOKEN" --transport http-first`;
+const token = process.env.LAZYWEB_CONFIG_TOKEN;
 const block = [
   "[mcp_servers.lazyweb]",
-  'command = "sh"',
-  `args = ["-lc", ${JSON.stringify(command)}]`,
+  `url = ${JSON.stringify(mcpUrl)}`,
+  `http_headers = { Authorization = ${JSON.stringify(`Bearer ${token}`)} }`,
   ""
 ].join("\n");
 
@@ -664,7 +665,7 @@ else
     case "$host" in
       codex)
         install_skills_to_root "${CODEX_HOME:-$HOME/.codex}/skills"
-        write_codex_mcp_config
+        write_codex_mcp_config "$TOKEN"
         log "Installed Lazyweb skills and MCP config for Codex."
         ;;
       claude)
