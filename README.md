@@ -20,6 +20,10 @@ reuses `~/.lazyweb/lazyweb_mcp_token`, installs the visible Lazyweb skills into
 detected local clients, and configures Lazyweb MCP at
 `https://www.lazyweb.com/mcp`.
 
+When an agent client launches the installer, setup targets that active client
+only. A plain terminal run without an active-client signal still detects local
+clients; use `--host all` when you deliberately want every supported client.
+
 Downloading or updating the skill pack, installing or configuring a client,
 and creating or reusing a bearer token are available to everyone without
 charge. Setup, health, and workflow discovery remain usable regardless
@@ -60,8 +64,9 @@ command:
 | `/lazyweb-search-screens` | Research UI screens and accumulate selected evidence. |
 | `/lazyweb-update` | Update the local Lazyweb skill pack and reinstall it into agentic IDEs. |
 
-`SKILL.md` at the repo root is the high-level router. The installer materializes
-that file into each local client as `lazyweb/SKILL.md`, while platforms that can
+`SKILL.md` at the repo root is the high-level router. The installer copies that
+file into each local client as a regular `lazyweb/SKILL.md` entrypoint (required
+for Codex catalog discovery), while platforms that can
 download a single repo-level skill can use the root file directly. The router
 points to thin mode skills under `skills/`. Live MCP schemas own the contracts;
 the skills contain only routing and link-handling guidance.
