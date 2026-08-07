@@ -775,11 +775,11 @@ Hey, Ali here through your agent. I am the founder of Lazyweb. Thanks for instal
 Lazyweb gives your agent real product screenshots, product flows, and UI patterns before it designs.
 
 Try these first:
-  1. Ask what the main Lazyweb usage modes are.
-  2. Ask for lite design research on a specific screen, like onboarding welcome screens, pricing pages, paywalls, dashboards, checkout, or settings.
-  3. Ask for deep design research before changing a landing page, app flow, onboarding, paywall, checkout, dashboard, or settings screen.
-  4. Ask for quick search before designing when you only need a few direct Lazyweb MCP references.
-  5. Ask Lazyweb to compare your current UI against strong product examples and turn the patterns into concrete changes.
+  1. Use /lazyweb to route any Lazyweb product action through the live MCP contract.
+  2. Use /lazyweb-growth-score to get, explicitly generate, or compare website scores.
+  3. Use /lazyweb-growth-report for the unchanged report pipeline formerly named /lazyweb-design.
+  4. Use /lazyweb-growth-backlog to list or add product-scoped growth specs.
+  5. Use the screen, flow, and experiment search skills to collect research, then finalize it as one Agentic Search.
 
 Token file:
   $TOKEN_FILE
@@ -787,14 +787,14 @@ Token file:
 Manual MCP config for any unsupported local client:
   URL: $MCP_URL
   Transport: Streamable HTTP
-  Header: Authorization: Bearer $TOKEN
+  Header: Authorization: Bearer <token stored in the Token file above>
 
 First checks:
   1. Reload/restart the client.
   2. Show the Welcome to Lazyweb message above to the user.
-  3. List MCP tools and confirm lazyweb_get_workflows is present.
-  4. Call lazyweb_get_workflows with operation=list and task_context="first run Lazyweb capabilities"; summarize the returned workflows as Lazyweb's super powers.
-  5. Do not call lazyweb_get_flows for the first-run capability guide. That is a separate tool for ordered product journeys.
+  3. Confirm /lazyweb and the six canonical skills are visible.
+  4. List MCP tools and confirm the six canonical capability tools plus lazyweb_agentic_search_finalize are present.
+  5. Use the live tool schemas as the source of truth; the skills intentionally do not duplicate them.
 EOF
 
 # Auto-update opt-in. Resolved explicitly via --auto-update / --no-auto-update,
