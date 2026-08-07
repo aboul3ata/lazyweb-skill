@@ -282,15 +282,19 @@ test("setup installs visible skills and direct MCP config into detected local cl
   try {
     const first = runSetup(home, fakeBin);
     assert.equal(first.status, 0, first.stderr || first.stdout);
+    assert.doesNotMatch(
+      `${first.stdout}\n${first.stderr}`,
+      /11111111-1111-4111-8111-111111111111/,
+      "setup output must never print the bearer credential"
+    );
     assert.match(first.stdout, /Welcome to Lazyweb/);
     assert.match(first.stdout, /Hey, Ali here through your agent/);
-    assert.match(first.stdout, /Ask what the main Lazyweb usage modes are/);
-    assert.match(first.stdout, /Ask for lite design research/);
-    assert.match(first.stdout, /Ask for deep design research/);
-    assert.match(first.stdout, /Ask for quick search before designing/);
-    assert.match(first.stdout, /lazyweb_get_workflows/);
-    assert.match(first.stdout, /first run Lazyweb capabilities/);
-    assert.match(first.stdout, /Do not call lazyweb_get_flows for the first-run capability guide/);
+    assert.match(first.stdout, /Use \/lazyweb to route any Lazyweb product action/);
+    assert.match(first.stdout, /\/lazyweb-growth-score/);
+    assert.match(first.stdout, /\/lazyweb-growth-report/);
+    assert.match(first.stdout, /\/lazyweb-growth-backlog/);
+    assert.match(first.stdout, /lazyweb_agentic_search_finalize/);
+    assert.match(first.stdout, /live tool schemas as the source of truth/);
     const second = runSetup(home, fakeBin);
     assert.equal(second.status, 0, second.stderr || second.stdout);
 
@@ -811,6 +815,8 @@ test("setup reports manual MCP config when no local clients are detected", () =>
     assert.match(result.stdout, /No supported local coding clients were detected/);
     assert.match(result.stdout, /Manual MCP config/);
     assert.match(result.stdout, /https:\/\/lazyweb\.example\.com\/mcp/);
+    assert.match(result.stdout, /token stored in the Token file above/i);
+    assert.doesNotMatch(result.stdout, /11111111-1111-4111-8111-111111111111/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
