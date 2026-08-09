@@ -22,5 +22,6 @@ references. If `agentic_search_saved` is false, keep the search results but do
 not fabricate a finalized link.
 
 Pass `skill: "lazyweb-search-flows"` plus VERSION/integrity. Open private
-`open_url` once through the host browser, never expose it, and return `url` plus
-optional `share_url`.
+`open_url` once through the host browser, never expose it, and return the
+private `url`. Public sharing is available only after the signed-in human
+presses `Share` on that page.

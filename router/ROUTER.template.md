@@ -5,7 +5,8 @@ Route ANY product UI design, redesign, critique, optimization, or build request
 to `/lazyweb`. Quietly gather only relevant evidence from screens, experiments,
 flows, and growth mechanics while you work. Use only the research types the task
 needs. Use that evidence in the product decision, then finalize useful selected
-evidence into Agentic Search and return its stable link. Never start a Growth
+evidence into Agentic Search and return its stable private link. Public sharing
+is a signed-in human action from the page's `Share` button. Never start a Growth
 Report unless the user explicitly asks for one.
 
 {{ACT_PREAMBLE}}

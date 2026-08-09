@@ -32,7 +32,8 @@ remain human-only.
 For product UI work, quietly gather only relevant evidence from screens,
 experiments, flows, and growth mechanics while you work. Use only the research
 types the task needs. Finalize useful selected evidence into Agentic Search and
-return its stable link. Never start a Growth Report unless the user explicitly
+return its stable private link. Agentic Search sharing is a signed-in human
+action from the page's `Share` button. Never start a Growth Report unless the user explicitly
 asks for one.
 
 Every successful action returns `lazyweb.resource-link.v1`. Open `open_url`

@@ -82,7 +82,9 @@ for (const name of ["lazyweb-search-experiments", "lazyweb-search-flows", "lazyw
   assert.match(text, /lazyweb_agentic_search_finalize/);
   assert.match(text, /agentic_search_saved/);
   assert.match(text, /open_url/);
-  assert.match(text, /share_url/);
+  assert.match(text, /private/i);
+  assert.match(text, /Share/);
+  assert.doesNotMatch(text, /share_url/);
 }
 
 const reportSkill = read("skills/lazyweb-growth-report/SKILL.md");
