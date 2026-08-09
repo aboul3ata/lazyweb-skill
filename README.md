@@ -64,10 +64,10 @@ command:
 | `/lazyweb-search-screens` | Research UI screens and accumulate selected evidence. |
 | `/lazyweb-update` | Update the local Lazyweb skill pack and reinstall it into agentic IDEs. |
 
-`SKILL.md` at the repo root is the high-level router. The installer copies that
-file into each local client as a regular `lazyweb/SKILL.md` entrypoint (required
-for Codex catalog discovery), while platforms that can
-download a single repo-level skill can use the root file directly. The router
+`skills/lazyweb/SKILL.md` is the first-class high-level router package; the
+repo-root `SKILL.md` is an identical single-file entrypoint for platforms that
+expect it there. The installer copies the packaged file into each local client
+as a regular `lazyweb/SKILL.md` entrypoint (required for Codex catalog discovery). The router
 points to thin mode skills under `skills/`. Live MCP schemas own the contracts;
 the skills contain only routing and link-handling guidance.
 

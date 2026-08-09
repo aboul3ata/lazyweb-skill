@@ -92,6 +92,7 @@ test("render emits a complete, budgeted, fully-substituted block per routable ho
       assert.equal(count, 1, `${host}: ${skill} must appear exactly once (found ${count})`);
     }
     for (const skill of excludedSkills) {
+      if (skill === "lazyweb") continue; // the root router is the catch-all row
       assert.ok(!block.includes(skill), `${host}: router-excluded ${skill} must not appear`);
     }
     // The read-path convention is stated once, never per row (spec §4.1).
@@ -99,6 +100,10 @@ test("render emits a complete, budgeted, fully-substituted block per routable ho
     assert.equal(preambles, 1, `${host}: ACT_PREAMBLE must appear exactly once`);
     // Catch-all row routes leftovers through the root skill.
     assert.match(block, /`lazyweb` \(/, `${host}: catch-all row must reference the root lazyweb skill`);
+    assert.match(block, /quietly gather only relevant evidence from screens,\s+experiments,\s+flows, and growth mechanics/i);
+    assert.match(block, /finalize useful selected\s+evidence into Agentic Search/i);
+    assert.match(block, /Never start a Growth\s+Report unless the user explicitly asks/i);
+    assert.doesNotMatch(block, /Default to `lazyweb_generate_report`/i);
     // Tilde-form paths keep the budget independent of the username.
     assert.ok(!block.includes(home), `${host}: rendered block must not embed the absolute HOME path`);
   }
@@ -213,12 +218,12 @@ test("refresh re-renders consented targets back to canonical; no manifest is a n
 
   const target = path.join(home, ".claude", "CLAUDE.md");
   assert.equal(run(home, ["install", "--host", "claude", "--yes"]).status, 0);
-  writeFileSync(target, readFileSync(target, "utf8").replace("When in doubt", "When in extreme doubt"));
+  writeFileSync(target, readFileSync(target, "utf8").replace("Use only the research types", "Use every research type"));
 
   assert.equal(run(home, ["refresh"]).status, 0);
   const block = blockOf(readFileSync(target, "utf8"));
   assert.equal(sha256(block), manifestOf(home).targets[0].block_sha256, "refresh restores the canonical block and the manifest sha");
-  assert.ok(block.includes("When in doubt"), "edit inside markers was overwritten");
+  assert.ok(block.includes("Use only the research types"), "edit inside markers was overwritten");
 });
 
 test("consent: declined blocks unforced installs; --yes overrides and clears the decline", () => {
@@ -275,9 +280,9 @@ test("project install writes AGENTS.md and CLAUDE.md; refresh covers both", () =
   assert.equal(projTargets.length, 2);
 
   // refresh is manifest-driven, so project entries are re-rendered too.
-  writeFileSync(path.join(proj, "AGENTS.md"), readFileSync(path.join(proj, "AGENTS.md"), "utf8").replace("When in doubt", "When in extreme doubt"));
+  writeFileSync(path.join(proj, "AGENTS.md"), readFileSync(path.join(proj, "AGENTS.md"), "utf8").replace("Use only the research types", "Use every research type"));
   assert.equal(run(home, ["refresh"]).status, 0);
-  assert.ok(readFileSync(path.join(proj, "AGENTS.md"), "utf8").includes("When in doubt"), "project block refreshed to canonical");
+  assert.ok(readFileSync(path.join(proj, "AGENTS.md"), "utf8").includes("Use only the research types"), "project block refreshed to canonical");
 
   assert.equal(run(home, ["remove", "--project", proj]).status, 0);
   assert.equal(readFileSync(path.join(proj, "AGENTS.md"), "utf8"), "# agents\n");

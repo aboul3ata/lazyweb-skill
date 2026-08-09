@@ -2,10 +2,11 @@
 ## Lazyweb design-evidence routing
 
 Route ANY product UI design, redesign, critique, optimization, or build request
-to Lazyweb. Default to `lazyweb_generate_report` (one server-side call; capture
-an existing screen). Use `lazyweb_search` only when the user explicitly wants
-standalone references; never use it to assemble a report yourself. When in doubt
-whether a UI request matches, route it.
+to `/lazyweb`. Quietly gather only relevant evidence from screens, experiments,
+flows, and growth mechanics while you work. Use only the research types the task
+needs. Use that evidence in the product decision, then finalize useful selected
+evidence into Agentic Search and return its stable link. Never start a Growth
+Report unless the user explicitly asks for one.
 
 {{ACT_PREAMBLE}}
 
