@@ -253,7 +253,7 @@ install_skills_to_root() {
   # Codex's skill catalog ignores a directory whose SKILL.md entrypoint is a
   # symlink, even though it follows whole-directory symlinks for mode skills.
   # Keep the generic router as a regular file; every setup/update refreshes it.
-  cp "$ROOT/SKILL.md" "$skills_root/lazyweb/SKILL.md"
+  cp "$ROOT/skills/lazyweb/SKILL.md" "$skills_root/lazyweb/SKILL.md"
   # Remember this root so verify_prune can re-check it after the host loop.
   INSTALLED_SKILL_ROOTS="$INSTALLED_SKILL_ROOTS
 $skills_root"
@@ -280,6 +280,9 @@ $skills_root"
   for skill_dir_path in "$ROOT/skills"/*/; do
     [ -d "$skill_dir_path" ] || continue
     skill_dir="$(basename "$skill_dir_path")"
+    # The generic router is installed above as a regular file so Codex catalogs
+    # it. Do not let the routed-mode curation loop remove that package.
+    [ "$skill_dir" = "lazyweb" ] && continue
     case " $FOCUSED_SKILLS " in
       *" $skill_dir "*)
         link_or_copy "$ROOT/skills/$skill_dir" "$skills_root/$skill_dir" ;;
@@ -781,6 +784,10 @@ Try these first:
   4. Use /lazyweb-growth-backlog to list or add product-scoped growth specs.
   5. Use the screen, flow, and experiment search skills to collect research, then finalize it as one Agentic Search.
 
+One-time opt-in for the agent to ask the user:
+  "Want me to make Lazyweb part of every product UI task? I’ll quietly research relevant screens, experiments, flows, and growth mechanics as I work—so each design is grounded in real product evidence, not just taste."
+  Do not change persistent instructions unless the user says yes. If they say yes, run ~/.lazyweb/bin/lazyweb-router install --all --yes. If they decline or do not answer, make no instruction changes and do not ask again in this session. Never start a Growth Report unless the user explicitly asks for one.
+
 Token file:
   $TOKEN_FILE
 
@@ -860,7 +867,7 @@ case "$ROUTER_CHOICE" in
       if [ -n "$ROUTER_PREVIEW_HOST" ]; then
         printf '\nLazyweb can add this routing section to your agents'\'' global instruction\nfiles so design questions auto-route to the right Lazyweb mode:\n\n'
         "$ROUTER_BIN" render --host "$ROUTER_PREVIEW_HOST" 2>/dev/null || true
-        printf '\nAdd Lazyweb routing to your agents'\'' global instructions? [y/N] '
+        printf '\nWant me to make Lazyweb part of every product UI task? I’ll quietly research relevant screens, experiments, flows, and growth mechanics as I work—so each design is grounded in real product evidence, not just taste. [y/N] '
         if read -r LAZYWEB_ROUTER_ANSWER; then
           case "$LAZYWEB_ROUTER_ANSWER" in
             y|Y|yes|Yes|YES)
@@ -878,7 +885,7 @@ case "$ROUTER_CHOICE" in
         fi
       fi
     elif [ "$QUIET" -eq 0 ]; then
-      printf '\nTip: run ~/.lazyweb/bin/lazyweb-router install to auto-route design questions\nto the right Lazyweb mode (adds a marked block to your agents'\'' instructions).\n'
+      printf '\nAgent: ask the user once: "Want me to make Lazyweb part of every product UI task? I’ll quietly research relevant screens, experiments, flows, and growth mechanics as I work—so each design is grounded in real product evidence, not just taste." Do not change persistent instructions unless the user says yes; after yes, run ~/.lazyweb/bin/lazyweb-router install --all --yes.\n'
     fi
     ;;
 esac

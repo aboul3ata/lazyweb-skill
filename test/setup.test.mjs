@@ -295,6 +295,9 @@ test("setup installs visible skills and direct MCP config into detected local cl
     assert.match(first.stdout, /\/lazyweb-growth-backlog/);
     assert.match(first.stdout, /lazyweb_agentic_search_finalize/);
     assert.match(first.stdout, /live tool schemas as the source of truth/);
+    assert.match(first.stdout, /Want me to make Lazyweb part of every product UI task\?/);
+    assert.match(first.stdout, /quietly research relevant screens, experiments, flows, and growth mechanics/i);
+    assert.match(first.stdout, /Do not change persistent instructions unless the user says yes/i);
     const second = runSetup(home, fakeBin);
     assert.equal(second.status, 0, second.stderr || second.stdout);
 
@@ -318,6 +321,11 @@ test("setup installs visible skills and direct MCP config into detected local cl
         assert.ok(existsSync(skillPath), `missing installed skill ${skillPath}`);
         if (skillName === "lazyweb") {
           assert.equal(lstatSync(skillPath).isSymbolicLink(), false, "root lazyweb SKILL.md must be a regular file so Codex catalogs it");
+          assert.equal(
+            readFileSync(skillPath, "utf8"),
+            readFileSync(path.join(root, "skills", "lazyweb", "SKILL.md"), "utf8"),
+            "the installed router must come from the published skills/lazyweb package"
+          );
         } else {
           assert.ok(lstatSync(path.dirname(skillPath)).isSymbolicLink(), `${skillName} should be symlinked for updates`);
         }

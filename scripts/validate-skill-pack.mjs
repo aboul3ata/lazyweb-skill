@@ -29,6 +29,7 @@ const SAFE_DOMAIN_TOOLS = [
 
 assert.match(read("VERSION").trim(), /^\d+\.\d+\.\d+$/, "VERSION must be semver");
 assert.ok(existsSync(path.join(root, "SKILL.md")), "missing root SKILL.md");
+assert.ok(existsSync(path.join(root, "skills/lazyweb/SKILL.md")), "missing first-class skills/lazyweb package");
 assert.ok(existsSync(path.join(root, "setup")), "missing setup");
 assert.ok(statSync(path.join(root, "setup")).mode & 0o111, "setup must be executable");
 
@@ -44,11 +45,15 @@ const visible = skillDirs.filter((name) => !hasFlag(read(`skills/${name}/SKILL.m
 assert.deepEqual(visible, [...CORE.keys()].sort(), "the six capability skills are the only routed product skills");
 
 const rootSkill = read("SKILL.md");
+const packagedRootSkill = read("skills/lazyweb/SKILL.md");
+assert.equal(packagedRootSkill, rootSkill, "root SKILL.md and skills/lazyweb/SKILL.md must stay identical");
 assert.match(frontmatter(rootSkill), /^name:\s*lazyweb\s*$/m);
 assert.ok(rootSkill.split("\n").length <= 80, "root router must stay thin");
 assert.match(rootSkill, /live Lazyweb MCP tool list as the source of truth/i);
 assert.match(rootSkill, /lazyweb\.resource-link\.v1/);
 assert.match(rootSkill, /never print, share, or log it/i);
+assert.match(rootSkill, /quietly gather only relevant evidence/i);
+assert.match(rootSkill, /never start a Growth Report unless the user explicitly\s+asks/i);
 for (const name of CORE.keys()) assert.match(rootSkill, new RegExp(`\\b${name}\\b`), `root router missing ${name}`);
 for (const tool of SAFE_DOMAIN_TOOLS) assert.match(rootSkill, new RegExp(`\\b${tool}\\b`), `root router missing ${tool}`);
 for (const humanOnly of ["checkout", "billing changes", "identity changes", "team invitations", "admin actions"]) {
