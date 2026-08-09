@@ -22,5 +22,6 @@ If `agentic_search_saved` is false, return the evidence but do not invent an
 Agentic Search link.
 
 Pass `skill: "lazyweb-search-experiments"` plus VERSION/integrity. Open private
-`open_url` once in the host browser without exposing it; give the user `url`
-and optional `share_url`.
+`open_url` once in the host browser without exposing it; give the user the
+private `url`. Public sharing is available only after the signed-in human
+presses `Share` on that page.

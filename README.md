@@ -194,7 +194,7 @@ Current public gateway tools:
 | `lazyweb_search_screens` | Search screens and automatically record stable result references in Agentic Search. |
 | `lazyweb_search_flows` | Search ordered flows and accumulate them into the same Agentic Search. |
 | `lazyweb_search_experiments` | Search growth experiments and accumulate them into the same Agentic Search. |
-| `lazyweb_agentic_search_finalize` | Finalize ordered selected `result_ref` values and return private/public web links. |
+| `lazyweb_agentic_search_finalize` | Finalize ordered selected `result_ref` values and return the private web link; sharing is human-only from the page. |
 | `lazyweb_products` | Safe product CRUD; deletion requires an exact matching confirmation. |
 | `lazyweb_connections` | Read connection status or open canonical setup. |
 | `lazyweb_reports` | List/open reports or save owner-authorized feedback. |
