@@ -54,6 +54,11 @@ assert.match(rootSkill, /lazyweb\.resource-link\.v1/);
 assert.match(rootSkill, /never print, share, or log it/i);
 assert.match(rootSkill, /quietly gather only relevant evidence/i);
 assert.match(rootSkill, /never start a Growth Report unless the user explicitly\s+asks/i);
+assert.match(
+  rootSkill,
+  /Agentic Search[\s\S]{0,400}never (?:return|expose)[\s\S]{0,100}`share_url`/i,
+  "root router must suppress legacy Agentic Search share_url values"
+);
 for (const name of CORE.keys()) assert.match(rootSkill, new RegExp(`\\b${name}\\b`), `root router missing ${name}`);
 for (const tool of SAFE_DOMAIN_TOOLS) assert.match(rootSkill, new RegExp(`\\b${tool}\\b`), `root router missing ${tool}`);
 for (const humanOnly of ["checkout", "billing changes", "identity changes", "team invitations", "admin actions"]) {

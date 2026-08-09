@@ -33,10 +33,11 @@ For product UI work, quietly gather only relevant evidence from screens,
 experiments, flows, and growth mechanics while you work. Use only the research
 types the task needs. Finalize useful selected evidence into Agentic Search and
 return its stable private link. Agentic Search sharing is a signed-in human
-action from the page's `Share` button. Never start a Growth Report unless the user explicitly
+action from the page's `Share` button. Never return an Agentic Search
+`share_url`, even if a legacy server sends one. Never start a Growth Report unless the user explicitly
 asks for one.
 
 Every successful action returns `lazyweb.resource-link.v1`. Open `open_url`
 once in the host's browser (Codex preview in Codex, Claude browser in Claude,
 otherwise the system browser), but never print, share, or log it. Give the user
-the stable `url` and optional `share_url`.
+the stable `url` and, for non-Agentic resources, any optional `share_url`.
