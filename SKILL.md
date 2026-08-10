@@ -1,6 +1,6 @@
 ---
 name: lazyweb
-description: Route any Lazyweb product action to the live MCP capability that owns its current contract.
+description: Use Lazyweb to find real product evidence, improve conversion, and turn research into clear product decisions.
 router-exclude: true
 allowed-tools:
   - Bash

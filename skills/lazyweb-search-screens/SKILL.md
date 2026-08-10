@@ -1,8 +1,8 @@
 ---
 name: lazyweb-search-screens
-route: "Research product screens and visual UI patterns"
+route: "Find real product screens and UI patterns"
 router-terms: search screens, ui references, screen examples, paywall examples, design references
-description: Thin routing wrapper for search, refinement, and Agentic Search finalization using lazyweb_search_screens.
+description: Find real product screens and UI patterns to guide a design or conversion decision.
 allowed-tools:
   - Bash
 ---

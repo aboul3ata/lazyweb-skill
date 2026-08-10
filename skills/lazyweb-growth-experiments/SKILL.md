@@ -3,7 +3,7 @@ name: lazyweb-growth-experiments
 route: "Deprecated alias for experiment research"
 router-terms: growth experiments, a/b tests
 router-exclude: true
-description: Deprecated compatibility alias for lazyweb-search-experiments.
+description: Find real product experiments through the legacy lazyweb-growth-experiments name.
 ---
 
 # Lazyweb Growth Experiments (deprecated alias)

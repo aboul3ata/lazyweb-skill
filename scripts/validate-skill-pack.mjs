@@ -6,6 +6,19 @@ const root = path.resolve(new URL("..", import.meta.url).pathname);
 const read = (relativePath) => readFileSync(path.join(root, relativePath), "utf8");
 const frontmatter = (text) => text.match(/^---\n([\s\S]*?)\n---\n/)?.[1] || "";
 const hasFlag = (text, key) => new RegExp(`^${key}:\\s*true\\s*$`, "m").test(frontmatter(text));
+const inlineField = (text, key) => frontmatter(text).match(new RegExp(`^${key}:\\s*(.+)$`, "m"))?.[1]?.trim() || "";
+
+function assertOutcomeDescription(relativePath, text) {
+  const description = inlineField(text, "description");
+  assert.ok(description, `${relativePath} must have an inline description`);
+  assert.ok(description.length <= 160, `${relativePath} description must stay concise`);
+  assert.match(description, /^(?:Use|Score|Get|See|Find|Study)\b/, `${relativePath} description must lead with the user outcome`);
+  assert.doesNotMatch(
+    description,
+    /\b(?:thin|router|wrapper|contract|entry point|pipeline|facade|canonical tool)\b|lazyweb_[a-z_]+/i,
+    `${relativePath} description leaks implementation language`
+  );
+}
 
 const CORE = new Map([
   ["lazyweb-growth-score", "lazyweb_growth_score"],
@@ -48,6 +61,7 @@ const rootSkill = read("SKILL.md");
 const packagedRootSkill = read("skills/lazyweb/SKILL.md");
 assert.equal(packagedRootSkill, rootSkill, "root SKILL.md and skills/lazyweb/SKILL.md must stay identical");
 assert.match(frontmatter(rootSkill), /^name:\s*lazyweb\s*$/m);
+assertOutcomeDescription("SKILL.md", rootSkill);
 assert.ok(rootSkill.split("\n").length <= 80, "root router must stay thin");
 assert.match(rootSkill, /live Lazyweb MCP tool list as the source of truth/i);
 assert.match(rootSkill, /lazyweb\.resource-link\.v1/);
@@ -72,6 +86,7 @@ for (const [name, tool] of CORE) {
   assert.match(fm, new RegExp(`^name:\\s*${name}\\s*$`, "m"), `${relativePath} wrong name`);
   assert.match(fm, /^route:\s*.+$/m, `${relativePath} missing route`);
   assert.match(fm, /^description:\s*.+$/m, `${relativePath} missing description`);
+  assertOutcomeDescription(relativePath, text);
   assert.ok(text.split("\n").length <= 80, `${relativePath} must stay a thin wrapper`);
   assert.match(text, /lazyweb_health/, `${relativePath} must verify MCP health`);
   assert.match(text, /https:\/\/www\.lazyweb\.com\/install\.sh/, `${relativePath} missing installer`);
@@ -100,6 +115,7 @@ assert.doesNotMatch(reportSkill, /prototype|taxonomy|score rubric/i, "growth-rep
 for (const [alias, replacement] of DEPRECATED_ALIASES) {
   const text = read(`skills/${alias}/SKILL.md`);
   assert.equal(hasFlag(text, "router-exclude"), true, `${alias} must be hidden`);
+  assertOutcomeDescription(`skills/${alias}/SKILL.md`, text);
   assert.match(text, /deprecated/i);
   assert.match(text, new RegExp(`\\b${replacement}\\b`), `${alias} must route to ${replacement}`);
   assert.ok(text.split("\n").length <= 30, `${alias} must stay a tiny compatibility alias`);
@@ -115,7 +131,7 @@ assert.match(setup, /not installed for new users/i, "compatibility aliases must 
 
 const readme = read("README.md");
 for (const name of CORE.keys()) assert.match(readme, new RegExp(`/${name}\\b`), `README missing /${name}`);
-assert.match(readme, /skills contain only routing and link-handling guidance/i);
+assert.match(readme, /user-facing descriptions focused on what someone can\s+accomplish with Lazyweb/i);
 
 for (const binName of ["lazyweb-context-detect", "lazyweb-log", "lazyweb-router", "lazyweb-telemetry-flush", "lazyweb-update", "lazyweb-update-check"]) {
   const file = path.join(root, "bin", binName);

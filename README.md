@@ -55,21 +55,22 @@ command:
 
 | Skill | Use when |
 |---|---|
-| `/lazyweb` | Generic router and safe capability discovery. |
-| `/lazyweb-growth-score` | Get, explicitly generate, or compare website Growth Scores. |
-| `/lazyweb-growth-report` | Generate, poll, or iterate the unchanged report pipeline; renamed from `/lazyweb-design`. |
-| `/lazyweb-growth-backlog` | List product Backlog items or add an idempotent growth spec. |
-| `/lazyweb-search-experiments` | Research growth and monetization experiments and accumulate selected evidence. |
-| `/lazyweb-search-flows` | Research ordered product journeys and accumulate selected evidence. |
-| `/lazyweb-search-screens` | Research UI screens and accumulate selected evidence. |
+| `/lazyweb` | Start here: improve a product, research an idea, score a website, or organize growth work. |
+| `/lazyweb-growth-score` | Score a website's growth readiness or compare its progress over time. |
+| `/lazyweb-growth-report` | Get prioritized, evidence-backed ways to improve a product screen or webpage. |
+| `/lazyweb-growth-backlog` | Review growth recommendations or save a product improvement idea. |
+| `/lazyweb-search-experiments` | Find real product experiments for pricing, trials, paywalls, monetization, and conversion decisions. |
+| `/lazyweb-search-flows` | Study complete onboarding, checkout, paywall, signup, and other multi-step journeys. |
+| `/lazyweb-search-screens` | Find real product screens and UI patterns to guide a design or conversion decision. |
 | `/lazyweb-update` | Update the local Lazyweb skill pack and reinstall it into agentic IDEs. |
 
 `skills/lazyweb/SKILL.md` is the first-class high-level router package; the
 repo-root `SKILL.md` is an identical single-file entrypoint for platforms that
 expect it there. The installer copies the packaged file into each local client
 as a regular `lazyweb/SKILL.md` entrypoint (required for Codex catalog discovery). The router
-points to thin mode skills under `skills/`. Live MCP schemas own the contracts;
-the skills contain only routing and link-handling guidance.
+points to focused skills under `skills/`. Live MCP schemas own the contracts;
+the skills keep their user-facing descriptions focused on what someone can
+accomplish with Lazyweb.
 
 ## Verify
 

@@ -1,8 +1,8 @@
 ---
 name: lazyweb-growth-report
-route: "Generate or iterate a Lazyweb Growth Report"
+route: "Get prioritized ways to improve a product screen or webpage"
 router-terms: growth report, design report, improve screen, optimize screen, redesign screen
-description: Renamed thin entry point for the unchanged Lazyweb report pipeline formerly called lazyweb-design.
+description: Get an evidence-backed Growth Report with prioritized ways to improve a product screen or webpage.
 allowed-tools:
   - Bash
 ---
