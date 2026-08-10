@@ -3,7 +3,7 @@ name: lazyweb-quick-search
 route: "Deprecated alias for screen research"
 router-terms: quick search, ui references
 router-exclude: true
-description: Find real product screens and UI patterns through the legacy lazyweb-quick-search name.
+description: Deprecated name for /lazyweb-quick-search. Use /lazyweb-search-screens instead.
 ---
 
 # Lazyweb Quick Search (deprecated alias)

@@ -3,7 +3,7 @@ name: lazyweb-design
 route: "Deprecated alias for Lazyweb Growth Report"
 router-terms: design report, lazyweb design
 router-exclude: true
-description: Get an evidence-backed Growth Report through the legacy lazyweb-design name.
+description: Deprecated name for /lazyweb-design. Use /lazyweb-growth-report instead.
 ---
 
 # Lazyweb Design (deprecated alias)

@@ -115,7 +115,11 @@ assert.doesNotMatch(reportSkill, /prototype|taxonomy|score rubric/i, "growth-rep
 for (const [alias, replacement] of DEPRECATED_ALIASES) {
   const text = read(`skills/${alias}/SKILL.md`);
   assert.equal(hasFlag(text, "router-exclude"), true, `${alias} must be hidden`);
-  assertOutcomeDescription(`skills/${alias}/SKILL.md`, text);
+  assert.match(
+    inlineField(text, "description"),
+    /^Deprecated name for \/lazyweb-[a-z-]+\. Use \/lazyweb-[a-z-]+ instead\.$/,
+    `${alias} description must identify the replacement without competing for user intents`
+  );
   assert.match(text, /deprecated/i);
   assert.match(text, new RegExp(`\\b${replacement}\\b`), `${alias} must route to ${replacement}`);
   assert.ok(text.split("\n").length <= 30, `${alias} must stay a tiny compatibility alias`);
