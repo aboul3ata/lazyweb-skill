@@ -1,6 +1,6 @@
 ---
 name: lazyweb-growth-report
-route: "Create a Growth Report with prioritized product improvements"
+route: "Get prioritized ways to improve a product screen or webpage"
 router-terms: growth report, design report, improve screen, optimize screen, redesign screen
 description: Get an evidence-backed Growth Report with prioritized ways to improve a product screen or webpage.
 allowed-tools:

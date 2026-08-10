@@ -102,7 +102,7 @@ test("render emits a complete, budgeted, fully-substituted block per routable ho
     assert.match(block, /`lazyweb` \(/, `${host}: catch-all row must reference the root lazyweb skill`);
     assert.match(block, /quietly gather only relevant evidence from screens,\s+experiments,\s+flows, and growth mechanics/i);
     assert.match(block, /finalize useful selected\s+evidence into Agentic Search/i);
-    assert.match(block, /Never start a Growth\s+Report unless the user explicitly asks/i);
+    assert.match(block, /broad (?:improve|improvement)[\s\S]{0,100}may\s+use (?:a )?Growth Report/i);
     assert.doesNotMatch(block, /Default to `lazyweb_generate_report`/i);
     // Tilde-form paths keep the budget independent of the username.
     assert.ok(!block.includes(home), `${host}: rendered block must not embed the absolute HOME path`);

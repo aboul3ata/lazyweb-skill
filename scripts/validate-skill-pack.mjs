@@ -67,7 +67,7 @@ assert.match(rootSkill, /live Lazyweb MCP tool list as the source of truth/i);
 assert.match(rootSkill, /lazyweb\.resource-link\.v1/);
 assert.match(rootSkill, /never print, share, or log it/i);
 assert.match(rootSkill, /quietly gather only relevant evidence/i);
-assert.match(rootSkill, /never start a Growth Report unless the user explicitly\s+asks/i);
+assert.match(rootSkill, /broad (?:improve|improvement)[\s\S]{0,100}may\s+use (?:a )?Growth Report/i);
 assert.match(
   rootSkill,
   /Agentic Search[\s\S]{0,400}never (?:return|expose)[\s\S]{0,100}`share_url`/i,
@@ -108,11 +108,6 @@ for (const name of ["lazyweb-search-experiments", "lazyweb-search-flows", "lazyw
 }
 
 const reportSkill = read("skills/lazyweb-growth-report/SKILL.md");
-assert.match(
-  inlineField(reportSkill, "route"),
-  /Growth Report/,
-  "growth-report route must require the user to name the report instead of matching general improvement requests"
-);
 assert.match(reportSkill, /only the new name|rename changes only the skill name/i);
 assert.match(reportSkill, /unchanged/i);
 assert.doesNotMatch(reportSkill, /prototype|taxonomy|score rubric/i, "growth-report must not change report behavior");
