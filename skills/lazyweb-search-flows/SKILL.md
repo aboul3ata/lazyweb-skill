@@ -1,8 +1,8 @@
 ---
 name: lazyweb-search-flows
-route: "Research ordered multi-screen product flows"
+route: "Study complete multi-step product journeys"
 router-terms: search flows, onboarding flow, checkout flow, paywall flow, signup flow
-description: Thin routing wrapper for flow research and Agentic Search finalization using lazyweb_search_flows.
+description: Study complete product flows for onboarding, checkout, paywalls, signup, and other multi-step journeys.
 allowed-tools:
   - Bash
 ---

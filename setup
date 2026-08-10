@@ -786,7 +786,7 @@ Try these first:
 
 One-time opt-in for the agent to ask the user:
   "Want me to make Lazyweb part of every product UI task? I’ll quietly research relevant screens, experiments, flows, and growth mechanics as I work—so each design is grounded in real product evidence, not just taste."
-  Do not change persistent instructions unless the user says yes. If they say yes, run ~/.lazyweb/bin/lazyweb-router install --all --yes. If they decline or do not answer, make no instruction changes and do not ask again in this session. Never start a Growth Report unless the user explicitly asks for one.
+  Do not change persistent instructions unless the user says yes. If they say yes, run ~/.lazyweb/bin/lazyweb-router install --all --yes. If they decline or do not answer, make no instruction changes and do not ask again in this session. Broad improvement requests may use a Growth Report when it best serves the user's goal; do not require the exact product name.
 
 Token file:
   $TOKEN_FILE

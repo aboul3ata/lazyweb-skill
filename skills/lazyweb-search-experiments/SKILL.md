@@ -1,8 +1,8 @@
 ---
 name: lazyweb-search-experiments
-route: "Research growth, pricing, trial, paywall, and monetization experiments"
+route: "Find real experiments for conversion decisions"
 router-terms: search experiments, a/b test, pricing experiment, trial, paywall, monetization
-description: Thin routing wrapper for experiment research and Agentic Search finalization using lazyweb_search_experiments.
+description: Find real product experiments for pricing, trials, paywalls, monetization, and conversion decisions.
 allowed-tools:
   - Bash
 ---

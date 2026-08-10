@@ -1,8 +1,8 @@
 ---
 name: lazyweb-growth-score
-route: "Get, generate, or compare a website Growth Score"
+route: "Score a website or compare its progress"
 router-terms: growth score, score website, website score, score change, compare scores
-description: Thin routing wrapper for the live lazyweb_growth_score MCP contract.
+description: Score a website's growth readiness, create a new score, or compare progress over time.
 allowed-tools:
   - Bash
 ---

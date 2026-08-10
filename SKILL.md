@@ -1,6 +1,6 @@
 ---
 name: lazyweb
-description: Route any Lazyweb product action to the live MCP capability that owns its current contract.
+description: Use Lazyweb to find real product evidence, improve conversion, and turn research into clear product decisions.
 router-exclude: true
 allowed-tools:
   - Bash
@@ -34,8 +34,9 @@ experiments, flows, and growth mechanics while you work. Use only the research
 types the task needs. Finalize useful selected evidence into Agentic Search and
 return its stable private link. Agentic Search sharing is a signed-in human
 action from the page's `Share` button. Never return an Agentic Search
-`share_url`, even if a legacy server sends one. Never start a Growth Report unless the user explicitly
-asks for one.
+`share_url`, even if a legacy server sends one. Broad improvement requests may
+use a Growth Report when it best serves the user's goal; do not require the
+exact product name.
 
 Every successful action returns `lazyweb.resource-link.v1`. Open `open_url`
 once in the host's browser (Codex preview in Codex, Claude browser in Claude,

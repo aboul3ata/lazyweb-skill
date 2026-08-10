@@ -1,8 +1,8 @@
 ---
 name: lazyweb-growth-backlog
-route: "List Backlog recommendations or add a growth spec"
+route: "Review growth recommendations or save an improvement idea"
 router-terms: growth backlog, recommendation backlog, add growth spec, backlog item
-description: Thin routing wrapper for the live lazyweb_growth_backlog MCP contract.
+description: See your growth recommendations or add a product improvement idea to the Backlog.
 allowed-tools:
   - Bash
 ---
