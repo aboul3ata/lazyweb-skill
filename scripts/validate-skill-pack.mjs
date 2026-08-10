@@ -108,6 +108,11 @@ for (const name of ["lazyweb-search-experiments", "lazyweb-search-flows", "lazyw
 }
 
 const reportSkill = read("skills/lazyweb-growth-report/SKILL.md");
+assert.match(
+  inlineField(reportSkill, "route"),
+  /Growth Report/,
+  "growth-report route must require the user to name the report instead of matching general improvement requests"
+);
 assert.match(reportSkill, /only the new name|rename changes only the skill name/i);
 assert.match(reportSkill, /unchanged/i);
 assert.doesNotMatch(reportSkill, /prototype|taxonomy|score rubric/i, "growth-report must not change report behavior");
