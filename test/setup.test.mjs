@@ -292,6 +292,7 @@ test("setup installs visible skills and direct MCP config into detected local cl
     assert.match(first.stdout, /Use \/lazyweb to route any Lazyweb product action/);
     assert.match(first.stdout, /\/lazyweb-growth-score/);
     assert.match(first.stdout, /\/lazyweb-growth-report/);
+    assert.match(first.stdout, /design improvement feedback on an existing screen or webpage/i);
     assert.match(first.stdout, /\/lazyweb-growth-backlog/);
     assert.match(first.stdout, /lazyweb_agentic_search_finalize/);
     assert.match(first.stdout, /live tool schemas as the source of truth/);

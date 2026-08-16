@@ -780,7 +780,7 @@ Lazyweb gives your agent real product screenshots, product flows, and UI pattern
 Try these first:
   1. Use /lazyweb to route any Lazyweb product action through the live MCP contract.
   2. Use /lazyweb-growth-score to get, explicitly generate, or compare website scores.
-  3. Use /lazyweb-growth-report for the unchanged report pipeline formerly named /lazyweb-design.
+  3. Use /lazyweb-growth-report for design improvement feedback on an existing screen or webpage.
   4. Use /lazyweb-growth-backlog to list or add product-scoped growth specs.
   5. Use the screen, flow, and experiment search skills to collect research, then finalize it as one Agentic Search.
 
