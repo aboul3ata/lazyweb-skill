@@ -18,6 +18,7 @@ then call `lazyweb_health`.
 |---|---|
 | Get, explicitly generate, or compare Growth Scores | `lazyweb-growth-score` / `lazyweb_growth_score` |
 | Create or poll the unchanged Growth Report pipeline | `lazyweb-growth-report` / `lazyweb_growth_report` |
+| Improve or critique an existing design or screen | `lazyweb-growth-report` / `lazyweb_growth_report` |
 | List or add product Backlog specs | `lazyweb-growth-backlog` / `lazyweb_growth_backlog` |
 | Research experiments | `lazyweb-search-experiments` / `lazyweb_search_experiments` |
 | Research flows | `lazyweb-search-flows` / `lazyweb_search_flows` |

@@ -109,6 +109,15 @@ test("render emits a complete, budgeted, fully-substituted block per routable ho
   }
 });
 
+test("advertises design improvement through the Growth Report route", () => {
+  for (const file of ["SKILL.md", path.join("skills", "lazyweb", "SKILL.md")]) {
+    const text = readFileSync(path.join(root, file), "utf8");
+    assert.match(text, /Improve or critique an existing design or screen\s*\|\s*`lazyweb-growth-report`/);
+  }
+  const readme = readFileSync(path.join(root, "README.md"), "utf8");
+  assert.match(readme, /design improvements for a product screen or webpage/i);
+});
+
 test("render refuses hosts that get no skill files (Rule 0)", () => {
   const home = makeHome();
   for (const host of ["antigravity", "gemini"]) {

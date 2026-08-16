@@ -57,7 +57,7 @@ command:
 |---|---|
 | `/lazyweb` | Start here: improve a product, research an idea, score a website, or organize growth work. |
 | `/lazyweb-growth-score` | Score a website's growth readiness or compare its progress over time. |
-| `/lazyweb-growth-report` | Get prioritized, evidence-backed ways to improve a product screen or webpage. |
+| `/lazyweb-growth-report` | Get prioritized, evidence-backed design improvements for a product screen or webpage. |
 | `/lazyweb-growth-backlog` | Review growth recommendations or save a product improvement idea. |
 | `/lazyweb-search-experiments` | Find real product experiments for pricing, trials, paywalls, monetization, and conversion decisions. |
 | `/lazyweb-search-flows` | Study complete onboarding, checkout, paywall, signup, and other multi-step journeys. |
