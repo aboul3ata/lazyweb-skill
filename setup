@@ -366,7 +366,8 @@ Try these first:
   2. Ask for lite design research on a specific screen, like onboarding welcome screens, pricing pages, paywalls, dashboards, checkout, or settings.
   3. Ask for deep design research before changing a landing page, app flow, onboarding, paywall, checkout, dashboard, or settings screen.
   4. Ask for quick search before designing when you only need a few direct Lazyweb MCP references.
-  5. Ask Lazyweb to compare your current UI against strong product examples and turn the patterns into concrete changes.
+  5. Ask for design improvement feedback on an existing screen with /lazyweb-design-improve.
+  6. Ask Lazyweb to compare your current UI against strong product examples and turn the patterns into concrete changes.
 
 Token file:
   $TOKEN_FILE

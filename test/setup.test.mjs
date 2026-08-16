@@ -48,6 +48,7 @@ test("setup installs visible skills and direct MCP config into detected local cl
     assert.match(first.stdout, /Ask for lite design research/);
     assert.match(first.stdout, /Ask for deep design research/);
     assert.match(first.stdout, /Ask for quick search before designing/);
+    assert.match(first.stdout, /Ask for design improvement feedback on an existing screen with \/lazyweb-design-improve/);
     assert.match(first.stdout, /lazyweb_get_workflows/);
     assert.match(first.stdout, /first run Lazyweb capabilities/);
     assert.match(first.stdout, /Do not call lazyweb_get_flows for the first-run capability guide/);

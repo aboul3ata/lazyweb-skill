@@ -46,7 +46,7 @@ The installer exposes a hybrid skill surface:
 | `/lazyweb-deep-design-research` | Deep competitive analysis, best-practices research, or a full report with references. |
 | `/lazyweb-lite-design-research` | Lite grouped examples, UI references, or screenshots without a full report. |
 | `/lazyweb-quick-search` | Quick direct `lazyweb_search` preflight before designing; no report. |
-| `/lazyweb-design-improve` | Improve, critique, or compare an existing design. |
+| `/lazyweb-design-improve` | Design improvement: improve, critique, or compare an existing design. |
 | `/lazyweb-design-brainstorm` | Creative cross-category ideas or unconventional directions. |
 | `/lazyweb-optimize-paywall` | Optimize a paywall screen for paid conversion. |
 | `/lazyweb-paywall-cta` | Rewrite, evaluate, or stress-test ONE paywall CTA (button copy, not layout). |
