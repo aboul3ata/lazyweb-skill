@@ -28,6 +28,7 @@ const CORE = new Map([
   ["lazyweb-search-flows", "lazyweb_search_flows"],
   ["lazyweb-search-screens", "lazyweb_search_screens"]
 ]);
+const UTILITIES = new Set(["lazyweb-apply-design-best-practices"]);
 const DEPRECATED_ALIASES = new Map([
   ["lazyweb-design", "lazyweb-growth-report"],
   ["lazyweb-growth-experiments", "lazyweb-search-experiments"],
@@ -55,7 +56,11 @@ const skillDirs = readdirSync(path.join(root, "skills"), { withFileTypes: true }
   .map((entry) => entry.name)
   .sort();
 const visible = skillDirs.filter((name) => !hasFlag(read(`skills/${name}/SKILL.md`), "router-exclude"));
-assert.deepEqual(visible, [...CORE.keys()].sort(), "the six capability skills are the only routed product skills");
+assert.deepEqual(
+  visible,
+  [...CORE.keys(), ...UTILITIES].sort(),
+  "only capability skills and approved public utilities may be routed"
+);
 
 const rootSkill = read("SKILL.md");
 const packagedRootSkill = read("skills/lazyweb/SKILL.md");
@@ -132,7 +137,11 @@ for (const [alias, replacement] of DEPRECATED_ALIASES) {
 
 const setup = read("setup");
 const focused = setup.match(/^FOCUSED_SKILLS="([^"]+)"/m)?.[1]?.split(/\s+/).filter(Boolean) || [];
-assert.deepEqual(focused.sort(), [...CORE.keys(), "lazyweb-update"].sort(), "installer focused set must match capability skills");
+assert.deepEqual(
+  focused.sort(),
+  [...CORE.keys(), ...UTILITIES, "lazyweb-update"].sort(),
+  "installer focused set must match capability skills and approved public utilities"
+);
 for (const alias of DEPRECATED_ALIASES.keys()) {
   assert.match(setup, new RegExp(`^COMPAT_ALIAS_SKILLS=.*\\b${alias}\\b`, "m"), `${alias} must remain upgrade-compatible`);
 }
@@ -140,6 +149,7 @@ assert.match(setup, /not installed for new users/i, "compatibility aliases must 
 
 const readme = read("README.md");
 for (const name of CORE.keys()) assert.match(readme, new RegExp(`/${name}\\b`), `README missing /${name}`);
+for (const name of UTILITIES) assert.match(readme, new RegExp(`/${name}\\b`), `README missing /${name}`);
 assert.match(readme, /user-facing descriptions focused on what someone can\s+accomplish with Lazyweb/i);
 
 for (const binName of ["lazyweb-context-detect", "lazyweb-log", "lazyweb-router", "lazyweb-telemetry-flush", "lazyweb-update", "lazyweb-update-check"]) {

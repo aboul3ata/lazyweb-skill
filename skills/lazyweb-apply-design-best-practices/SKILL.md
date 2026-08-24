@@ -1,15 +1,14 @@
 ---
 name: lazyweb-apply-design-best-practices
-route: "UI craft"
-router-terms: best practices
-router-exclude: true
+route: "Best design skill for a UI craft task"
+router-terms: design best practices, design skill, UI craft
 description: |
   Apply the best available expert design guidance to the user's actual UI
-  task. Lazyweb curates 19 design aspects (web animation, frontend
-  quality, landing pages, typography, color, design systems, accessibility,
-  UX writing, mobile, dashboards, icons/SVG, 3D/WebGL, email, forms, data
-  tables, responsive layout, brand identity, video, Figma-to-code) each have
-  a ranked, evidence-backed list of the top community-rated skills with
+  task. Lazyweb curates 20 design aspects (web animation, frontend quality,
+  design audits and polish, landing pages, typography, color, design systems,
+  accessibility, UX writing, mobile, dashboards, icons/SVG, 3D/WebGL, email,
+  forms, data tables, responsive layout, brand identity, video, Figma-to-code),
+  each with a ranked, evidence-backed list of the top community-rated skills with
   direct pointers to their instruction files, plus a skeptic-verified
   hidden-gems list.
   Match the user's design task to a section, fetch the winning skill's
@@ -36,9 +35,15 @@ trusted, researched answer to "which one should my agent use for X?" — built
 from a live review sweep of skills.sh, GitHub, design Twitter/X, Reddit, and
 Hacker News.
 
-**Researched: 2026-06-11.** Every skill below was verified by fetching its
-actual repo and instruction file — nothing here is from memory. Install
-counts and stars are as displayed on skills.sh/GitHub on that date.
+**Researched: 2026-06-11.** Popular frontend, audit, motion, mobile, and
+component-library routes plus all pointer URLs were refreshed on 2026-08-23.
+Every skill below was verified against its actual repo and instruction file.
+
+Rank from real usage reports first: what someone used the skill for, what it
+improved, and where it fell short. Treat skills.sh installs and GitHub stars as
+adoption signals, not proof that a skill produces better work. A source-author
+description can explain intended use, but cannot substitute for an independent
+usage report; label thin evidence honestly.
 
 ## How to use this file
 
@@ -76,8 +81,8 @@ counts and stars are as displayed on skills.sh/GitHub on that date.
 
 When the task is about *screen-level UI evidence* — what real apps' paywalls,
 onboarding, sign-up, pricing, or checkout screens look like, or A/B test
-data — route to the current Lazyweb surfaces instead (`/lazyweb-design`,
-`/lazyweb-quick-search`, or the `lazyweb_search_ab_tests` MCP tool): verify
+data — route to the current Lazyweb surfaces instead (`/lazyweb-growth-report`,
+`/lazyweb-search-screens`, or the `lazyweb_search_experiments` MCP tool): verify
 connectivity with `lazyweb_health` first, and pass
 `"skill": "apply-design-best-practices"` plus `"version"` (from
 `cat "$HOME/.lazyweb/VERSION" 2>/dev/null || echo 0.0.0`) in every
@@ -97,14 +102,20 @@ skills below.
 - Choreograph multi-element sequences (stagger, motion personality) before writing any code; don't tune elements one-by-one.
 
 **Best specific skills**
-1. **emilkowalski/skill (emil-design-eng)** — fetch `https://raw.githubusercontent.com/emilkowalski/skill/main/skills/emil-design-eng/SKILL.md` — best for taste-driven micro-interaction polish and reviewing/fixing existing UI animations (easing, duration, what should animate at all). The author wrote the course the rest of the ecosystem copies; concrete checkable rules, not vibes. Evidence: 88.9K installs (top of skills.sh Design & UI), 2.3K stars, announced by @emilkowalski on X, mirrored on 6+ registries. Strength: strong. ← default pick
-2. **LottieFiles/motion-design-skill** — fetch `https://raw.githubusercontent.com/LottieFiles/motion-design-skill/main/skills/motion-design/SKILL.md` — best for framework-agnostic motion direction: choreography, motion personality, multi-element sequencing before any code. Evidence: 2.4K installs, 240 stars, vendor-maintained, works across CSS/Framer Motion/GSAP/Lottie. Strength: strong.
-3. **vercel-labs/open-agents (web-animation-design)** — fetch `https://raw.githubusercontent.com/vercel-labs/open-agents/main/.agents/skills/web-animation-design/SKILL.md` — best for proactive animation Q&A and structured before/after audits with the broadest trigger coverage (GSAP/React Spring/scroll/springs). Evidence: Vercel-curated, 5.6K-star repo, but only 141 per-skill installs. Strength: directional.
-4. **199-biotechnologies/motion-dev-animations-skill** — fetch `https://raw.githubusercontent.com/199-biotechnologies/motion-dev-animations-skill/main/SKILL.md` — best for writing actual Motion.dev/Framer Motion implementation code (scroll reveals, gestures, springs, layout/exit animations). The free alternative to Motion.dev's paywalled official skill. Evidence: 22 stars, no registry traction. Strength: single-source.
+1. **emilkowalski/skills — emil-design-eng** — fetch `https://raw.githubusercontent.com/emilkowalski/skills/main/skills/emil-design-eng/SKILL.md` — best default for taste-driven micro-interaction polish and animation decisions. Use the more specific siblings below when the task matches exactly. Evidence: 224.2K installs; Emil's 12-skill collection has 874.4K total installs and 31.9K stars. A public build report says it was used for a landing page's motion while Impeccable handled layout. Strength: strong. ← default pick
+2. **emilkowalski/skills — animate** — fetch `https://raw.githubusercontent.com/emilkowalski/skills/main/skills/animate/SKILL.md` — best for building one animation from scratch: whether it should animate, purpose, tool, curve, duration, properties, accessibility, then implementation. Evidence: 34.6K installs and first-party task boundaries. Strength: directional.
+3. **emilkowalski/skills — review-animations** — fetch `https://raw.githubusercontent.com/emilkowalski/skills/main/skills/review-animations/SKILL.md` — best for a strict review of an existing motion diff; it reports findings and does not edit. Evidence: 115.8K installs and multiple independent directory reviews describing its code-review use. Strength: strong.
+4. **emilkowalski/skills — improve-animations** — fetch `https://raw.githubusercontent.com/emilkowalski/skills/main/skills/improve-animations/SKILL.md` — best for surveying a whole codebase and producing prioritized, self-contained motion plans rather than implementing. Evidence: 88.3K installs; explicit audit-versus-implementation boundary in the source. Strength: directional.
+5. **emilkowalski/skills — find-animation-opportunities** — fetch `https://raw.githubusercontent.com/emilkowalski/skills/main/skills/find-animation-opportunities/SKILL.md` — best when the question is where motion would help; it proposes exact opportunities and rejects unjustified animation. Evidence: 76.4K installs. Strength: directional.
+6. **emilkowalski/skills — animation-vocabulary** — fetch `https://raw.githubusercontent.com/emilkowalski/skills/main/skills/animation-vocabulary/SKILL.md` — best when the user can describe an effect but does not know its name; use the resulting term to brief another motion skill precisely. Evidence: 103.4K installs. Strength: directional.
+7. **emilkowalski/skills — apple-design** — fetch `https://raw.githubusercontent.com/emilkowalski/skills/main/skills/apple-design/SKILL.md` — best for Apple-like fluidity, gesture behavior, and interface principles translated from WWDC to the web. Evidence: 96K installs and independent launch discussion; source scope is explicit. Strength: directional.
+8. **LottieFiles/motion-design-skill** — fetch `https://raw.githubusercontent.com/LottieFiles/motion-design-skill/main/skills/motion-design/SKILL.md` — best for framework-agnostic choreography, motion personality, and multi-element sequencing before code. Evidence: vendor-maintained, works across CSS/Framer Motion/GSAP/Lottie. Strength: strong.
 
 *Skip:* the circulated "emil-anim" gists (superseded by Emil's official skill); jezweb/claude-skills motion (registry listings look stale — no motion SKILL.md in the current tree).
 
-*Corpus note:* hard install/star numbers are solid; genuine third-party review threads are scarce — ranking leans on installs, provenance, and direct file inspection.
+*Corpus note:* install counts show unusually strong adoption, but detailed
+before/after reviews remain scarcer than source summaries. Preserve the task
+boundaries above instead of loading the whole collection for every animation.
 
 ---
 
@@ -116,11 +127,29 @@ skills below.
 - Match the design system to the product type — a fintech dashboard and a wellness app should not share a palette or type scale.
 
 **Best specific skills**
-1. **anthropics/skills — frontend-design** — fetch `https://raw.githubusercontent.com/anthropics/skills/main/skills/frontend-design/SKILL.md` — best for creative direction when generating new UI: it names the default AI design clusters and forces a committed, brief-specific direction before any code. Evidence: 531.9K installs (skills.sh #2 overall), 149K-star official repo, featured in 5+ independent 2026 roundups (Snyk, Composio, Firecrawl). Strength: strong. ← default pick
-2. **nextlevelbuilder/ui-ux-pro-max** — fetch `https://raw.githubusercontent.com/nextlevelbuilder/ui-ux-pro-max-skill/main/.claude/skills/ui-ux-pro-max/SKILL.md` — best for auto-generating a complete, product-type-matched design system (style + palette + type + UX rules) with pre-delivery anti-pattern checks. Evidence: 211.5K installs, ~90K stars, called the most popular community design skill in 2026 roundups; organic review threads thin. Strength: strong.
-3. **vercel-labs/agent-skills — web-design-guidelines** — fetch `https://raw.githubusercontent.com/vercel-labs/agent-skills/main/skills/web-design-guidelines/SKILL.md` — best for auditing existing UI code against 100+ interaction/accessibility/polish rules reported as file:line findings (quality gate, not generation). It fetches Vercel's live guidelines on every run, so it never goes stale. Evidence: ~383K installs, Vercel-official, recommended alongside frontend-design in multiple guides. Strength: strong.
+1. **anthropics/skills — frontend-design** — fetch `https://raw.githubusercontent.com/anthropics/skills/main/skills/frontend-design/SKILL.md` — best creative-direction default for generating a new interface. It names common AI design clusters and forces a committed, brief-specific direction before code. Evidence: 810.3K installs (#3 overall on skills.sh), 171K stars, official source, and repeated independent recommendations. Strength: strong. ← default pick
+2. **uizze/uizze — anti-ui-slop** — fetch `https://raw.githubusercontent.com/uizze/uizze/main/skills/anti-ui-slop/SKILL.md` — best when the work must start from product context and real UI evidence, cover required states, then pass a rendered finish gate. Evidence: 453.6K installs; independent catalogue reviewers specifically praised its finish gate, though detailed outcome reports are still thin. Strength: directional.
+3. **leonxlnx/taste-skill — design-taste-frontend** — fetch `https://raw.githubusercontent.com/leonxlnx/taste-skill/main/skills/taste-skill/SKILL.md` — best for landing pages, portfolios, and redesigns that need a stronger visual direction selected from the brief. Do not use for dashboards, data tables, or multi-step product UI. Evidence: 393.1K installs and 79.7K stars; firsthand reports describe setting its variance/motion/density dials before generation and pairing it with Impeccable and Emil. Strength: strong.
+4. **pbakaus/impeccable — impeccable** — fetch `https://raw.githubusercontent.com/pbakaus/impeccable/main/.agents/skills/impeccable/SKILL.md` — best broad lifecycle router when the task is already a verb such as critique, audit, polish, distill, adapt, harden, clarify, or onboard. Evidence: 245.1K installs and 61.9K stars; a detailed practitioner review reports using it across dashboards, marketing sites, internal tools, and client work. Strength: strong.
+5. **nextlevelbuilder/ui-ux-pro-max** — fetch `https://raw.githubusercontent.com/nextlevelbuilder/ui-ux-pro-max-skill/main/.claude/skills/ui-ux-pro-max/SKILL.md` — best for auto-generating a product-type-matched design system (style + palette + type + UX rules) with pre-delivery anti-pattern checks. Evidence: 327.7K installs and 120K stars; organic outcome reports remain thinner than adoption. Strength: directional.
+6. **vercel-labs/agent-skills — web-design-guidelines** — fetch `https://raw.githubusercontent.com/vercel-labs/agent-skills/main/skills/web-design-guidelines/SKILL.md` — best for a file-and-line audit of existing UI code, not generation. It fetches Vercel's live guidelines on every run. Evidence: 568.6K installs, Vercel-official, and repeatedly recommended as a post-build quality gate. Strength: strong.
 
 *Skip:* anthropics canvas-design (poster/art canvases, not product UI); obra/superpowers (great engineering-workflow pack, zero design-quality content).
+
+---
+
+## For design audits, critique & final polish use these
+
+**tl;dr**
+- Choose the verb before the skill: critique judges UX and hierarchy, audit checks technical quality, polish fixes final details, and redesign is a larger authorization boundary.
+- Inspect the rendered interface at desktop and mobile; source-only review cannot prove spacing, clipping, responsive behavior, or visual hierarchy.
+- Fix shared causes before isolated symptoms, then stop after a bounded confirmation pass.
+
+**Best specific skills**
+1. **pbakaus/impeccable — impeccable** — fetch `https://raw.githubusercontent.com/pbakaus/impeccable/main/.agents/skills/impeccable/SKILL.md` — best default router for choosing between critique, audit, polish, distill, harden, adapt, clarify, and related passes. Its boundaries prevent an audit request from silently becoming a redesign. Evidence: 245.1K installs; the focused `polish`, `critique`, and `audit` entries each have 83K-87K installs, plus detailed real-world usage reports. Strength: strong. ← default pick
+2. **uizze/uizze — anti-ui-slop** — fetch `https://raw.githubusercontent.com/uizze/uizze/main/skills/anti-ui-slop/SKILL.md` — best for reviewing generic UI risk against the product's own brief, components, states, and relevant real-screen evidence, then fixing when authorized. Evidence: 453.6K installs; positive independent review of its design-contract and finish-gate approach. Strength: directional.
+3. **vercel-labs/agent-skills — web-design-guidelines** — fetch `https://raw.githubusercontent.com/vercel-labs/agent-skills/main/skills/web-design-guidelines/SKILL.md` — best for deterministic code-level findings with file and line references across accessibility, forms, interaction, and polish. Evidence: 568.6K installs and official maintenance. Strength: strong.
+4. **emilkowalski/skills — review-animations** — fetch `https://raw.githubusercontent.com/emilkowalski/skills/main/skills/review-animations/SKILL.md` — best only when the review scope is motion. Pair it with a broader UI audit when layout, copy, responsiveness, or accessibility also matter. Evidence: 115.8K installs. Strength: directional.
 
 ---
 
@@ -182,10 +211,11 @@ skills below.
 - On Tailwind v4, wire theming as variables in `:root`/`.dark` mapped through `@theme inline` — most "broken dark mode" reports trace to skipping that exact pattern.
 
 **Best specific skills**
-1. **shadcn-ui/ui — shadcn skill** — fetch `https://raw.githubusercontent.com/shadcn-ui/ui/main/skills/shadcn/SKILL.md` — best for enforcing component-library consistency in an existing shadcn/Tailwind project: correct component APIs, semantic tokens, composition rules (FieldGroup+Field forms). First-party and project-aware. Evidence: 186.0K installs, ships in the 116K-star shadcn repo, documented at ui.shadcn.com/docs/skills. Strength: strong. ← default pick for existing projects
-2. **nextlevelbuilder/ui-ux-pro-max** — pointer above — best for generating a complete NEW design system when none exists: its v2 generator reasons from product type to a full system and can persist a `design-system/MASTER.md` source of truth. Evidence: 90.4K stars, top-5 in 4+ independent 2026 roundups. Strength: strong. ← default pick for greenfield
-3. **arvindrk/extract-design-system** — fetch `https://raw.githubusercontent.com/arvindrk/extract-design-system/main/skills/extract-design-system/SKILL.md` — best for extracting tokens (colors, type, spacing, radius, shadows) from an existing live site via Playwright to bootstrap a tokenized system matching a real brand. Honest guardrails in the file itself. Evidence: 123.1K registry installs but only 54 stars — popularity may be registry-inflated. Strength: directional.
-4. **secondsky/claude-skills — tailwind-v4-shadcn** — fetch `https://raw.githubusercontent.com/secondsky/claude-skills/main/plugins/tailwind-v4-shadcn/skills/tailwind-v4-shadcn/SKILL.md` — best for wiring Tailwind v4 token/theme architecture correctly and debugging broken theming (the exact variable → `@theme inline` → base styles → dark mode pattern plus the five known setup errors). Evidence: 167 stars, graded 'A' on skillsdirectory. Strength: directional.
+1. **shadcn-ui/ui — shadcn skill** — fetch `https://raw.githubusercontent.com/shadcn-ui/ui/main/skills/shadcn/SKILL.md` — best for enforcing component-library consistency in an existing shadcn/Tailwind project: correct component APIs, semantic tokens, composition rules (FieldGroup+Field forms). First-party and project-aware. Evidence: 271.7K installs, ships in the 121.9K-star shadcn repo, documented at ui.shadcn.com/docs/skills. Strength: strong. ← default pick for existing projects
+2. **emilkowalski/skills — pick-ui-library** — fetch `https://raw.githubusercontent.com/emilkowalski/skills/main/skills/pick-ui-library/SKILL.md` — best before implementation when the real question is which maintained library should own a toast, dialog, chart, command menu, or other UI primitive. Evidence: 61.5K installs and explicit library-selection scope. Strength: directional.
+3. **nextlevelbuilder/ui-ux-pro-max** — pointer above — best for generating a complete NEW design system when none exists: its v2 generator reasons from product type to a full system and can persist a `design-system/MASTER.md` source of truth. Evidence: 327.7K installs and 120K stars. Strength: strong. ← default pick for greenfield
+4. **arvindrk/extract-design-system** — fetch `https://raw.githubusercontent.com/arvindrk/extract-design-system/main/skills/extract-design-system/SKILL.md` — best for extracting tokens (colors, type, spacing, radius, shadows) from an existing live site via Playwright to bootstrap a tokenized system matching a real brand. Honest guardrails in the file itself. Evidence: 127.9K installs but much weaker repo-level adoption — treat the registry signal cautiously. Strength: directional.
+5. **secondsky/claude-skills — tailwind-v4-shadcn** — fetch `https://raw.githubusercontent.com/secondsky/claude-skills/main/plugins/tailwind-v4-shadcn/skills/tailwind-v4-shadcn/SKILL.md` — best for wiring Tailwind v4 token/theme architecture correctly and debugging broken theming (the exact variable → `@theme inline` → base styles → dark mode pattern plus the five known setup errors). Evidence: source depth is good; adoption remains modest. Strength: directional.
 
 *Skip:* frontend-design for this topic (one-shot aesthetic direction, no token governance or consistency rules); mattbx/shadcn-skills (8 stars, no traction).
 
@@ -233,12 +263,13 @@ skills below.
 
 **Best specific skills**
 1. **ehmo/platform-design-skills** — fetch `https://raw.githubusercontent.com/ehmo/platform-design-skills/main/skills/ios/SKILL.md` (Android variant alongside it in the repo) — best for enforcing HIG / Material 3 / WCAG conventions on iOS and Android screens: 450+ distilled per-platform rules incl. iPadOS/watchOS/visionOS, with checklists and anti-patterns. Evidence: 390 stars, multi-registry, surfaced in the HN "Claude Skills are awesome" thread. Strength: strong. ← default pick
-2. **nextlevelbuilder/ui-ux-pro-max** — pointer above — best for end-to-end mobile-first UI generation (design system + touch/gesture rules) across React Native, Flutter, SwiftUI. Evidence: ~211.4K installs, 90.4K stars; mobile rules verified real. Strength: strong.
-3. **wshobson/agents — mobile-ios-design / mobile-android-design** — fetch `https://raw.githubusercontent.com/wshobson/agents/main/plugins/ui-design/skills/mobile-ios-design/SKILL.md` — best for implementing native-feeling screens in code: SwiftUI patterns, NavigationStack, SF Symbols, semantic colors, Material 3 components. Evidence: 36.6K-star repo, actively pushed; per-skill signal weaker. Strength: directional.
+2. **emilkowalski/skills — animate-expo** — fetch `https://raw.githubusercontent.com/emilkowalski/skills/main/skills/animate-expo/SKILL.md` — best specifically for React Native/Expo gestures, sheets, haptics, screen transitions, and keeping motion off the JS thread. Evidence: 9.3K installs since its recent release. Strength: directional.
+3. **nextlevelbuilder/ui-ux-pro-max** — pointer above — best for end-to-end mobile-first UI generation (design system + touch/gesture rules) across React Native, Flutter, SwiftUI. Evidence: 327.7K installs and 120K stars; mobile rules verified real. Strength: strong.
+4. **wshobson/agents — mobile-ios-design / mobile-android-design** — fetch `https://raw.githubusercontent.com/wshobson/agents/main/plugins/ui-design/skills/mobile-ios-design/SKILL.md` — best for implementing native-feeling screens in code: SwiftUI patterns, NavigationStack, SF Symbols, semantic colors, Material 3 components. Evidence: 20K+ installs per platform skill and active maintenance. Strength: directional.
 
 *Skip:* sleekdotdesign sleek-design-mobile-apps (~199K installs but it's a REST wrapper for a paid platform requiring an API key); awesome-skills/mobile-app-design (dormant, shallower duplicate of ehmo's pack).
 
-For what real mobile apps' screens actually look like (evidence, not rules), pair with `/lazyweb-quick-search` or `/lazyweb-design`. For exact Apple HIG measurements or Liquid Glass implementation, see `HIGAgentSkills` and `claude-code-apple-skills` under Hidden gems.
+For what real mobile apps' screens actually look like (evidence, not rules), pair with `/lazyweb-search-screens` or `/lazyweb-growth-report`. For exact Apple HIG measurements or Liquid Glass implementation, see `HIGAgentSkills` and `claude-code-apple-skills` under Hidden gems.
 
 ---
 
@@ -342,7 +373,7 @@ For what real mobile apps' screens actually look like (evidence, not rules), pai
 - Make grids accessible by contract: `aria-sort` on the sorted `<th>` with the sort control as a real button, `scope` on every header, `role="grid"` + arrow keys only when cells are actually interactive, and context-aware row-action labels ("Edit Jane Smith", not "Edit").
 
 **Best specific skills**
-1. **openstatusHQ/data-table-filters** — fetch `https://raw.githubusercontent.com/openstatusHQ/data-table-filters/main/skills/SKILL.md` — best for building a production filterable table in React (shadcn + TanStack): faceted filters, virtualized infinite scroll, URL-persisted state with documented SSR hydration. Ships working infrastructure, not prose. Evidence: ~2,045 stars, pushed 2026-06-05, backed by openstatus's known live demo. Strength: strong. ← default pick
+1. **openstatusHQ/data-table-filters** — fetch `https://raw.githubusercontent.com/openstatusHQ/data-table-filters/main/skills/data-table-filters/SKILL.md` — best for building a production filterable table in React (shadcn + TanStack): faceted filters, virtualized infinite scroll, URL-persisted state with documented SSR hydration. Ships working infrastructure, not prose. Evidence: 2.1K stars, 384 installs, and a known live demo. Strength: strong. ← default pick
 2. **supabase/supabase — studio-ui-patterns** — fetch `https://raw.githubusercontent.com/supabase/supabase/master/.claude/skills/studio-ui-patterns/SKILL.md` — best for admin CRUD page conventions: a production team's actual three-tier table doctrine plus concrete layout rules, battle-tested in Supabase Studio. Strength: directional.
 3. **Community-Access/accessibility-agents — tables-data-specialist** — fetch `https://raw.githubusercontent.com/Community-Access/accessibility-agents/main/codex-skills/tables-data-specialist/SKILL.md` — best for auditing table/grid accessibility: the most specific table-a11y checklist found anywhere in skill form. Pair as a review pass. Strength: directional.
 
@@ -439,7 +470,8 @@ Near-misses the skeptics downgraded (kept here so we don't re-litigate them next
 
 ## Refresh protocol (when a topic is missing or stale)
 
-This table was researched 2026-06-11. The skill ecosystem turns over fast.
+The full table was researched 2026-06-11; popular frontend and motion routes
+were refreshed 2026-08-23. The skill ecosystem turns over fast.
 When the user's aspect has no section here, or this file is older than ~90
 days, re-run the sweep for that aspect — in parallel where possible:
 
@@ -449,9 +481,11 @@ days, re-run the sweep for that aspect — in parallel where possible:
 2. **Verify before recommending**: fetch the candidate's repo and raw
    SKILL.md; a skill that can't be fetched and read does not ship. Never
    invent a skill, a rank, an install count, or a quote.
-3. Count, don't vibe: a top pick needs ≥2 independent sources; label
-   strength honestly (strong / directional / single-source); discount
-   signals older than ~6 months; flag a thin corpus.
+3. Prefer actual-use reports that name the task, workflow, result, or limit.
+   Install counts and stars show adoption, not quality. A top pick should have
+   source inspection plus ≥2 independent sources when available; label
+   strength honestly (strong / directional / single-source), discount signals
+   older than ~6 months, and flag a thin corpus.
 4. Present in the same format as the sections above, apply the winner to
    the user's task, and update this file's section (and the researched date)
    so the next run benefits.

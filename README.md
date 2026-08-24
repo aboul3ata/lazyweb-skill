@@ -62,6 +62,7 @@ command:
 | `/lazyweb-search-experiments` | Find real product experiments for pricing, trials, paywalls, monetization, and conversion decisions. |
 | `/lazyweb-search-flows` | Study complete onboarding, checkout, paywall, signup, and other multi-step journeys. |
 | `/lazyweb-search-screens` | Find real product screens and UI patterns to guide a design or conversion decision. |
+| `/lazyweb-apply-design-best-practices` | Route a UI craft task to the best specialist design skill, then apply it. |
 | `/lazyweb-update` | Update the local Lazyweb skill pack and reinstall it into agentic IDEs. |
 
 `skills/lazyweb/SKILL.md` is the first-class high-level router package; the

@@ -13,6 +13,9 @@ import path from "node:path";
 const root = path.resolve(import.meta.dirname, "..");
 const skillPath = path.join(root, "skills", "lazyweb-apply-design-best-practices", "SKILL.md");
 const text = readFileSync(skillPath, "utf8");
+const setup = readFileSync(path.join(root, "setup"), "utf8");
+const readme = readFileSync(path.join(root, "README.md"), "utf8");
+const router = readFileSync(path.join(root, "SKILL.md"), "utf8");
 
 const sections = [...text.matchAll(/^## For (.+?) use these$/gm)].map((m) => m[1]);
 
@@ -33,6 +36,17 @@ test("is exposed under the apply-first public identity", () => {
   assert.match(text, /apply its rules, heuristics, and workflow/i);
   assert.match(text, /Never\s+install anything/i);
   assert.match(text, /action_required:"upgrade"/);
+});
+
+test("is installed and advertised as a visible Lazyweb skill", () => {
+  assert.doesNotMatch(text.match(/^---\n([\s\S]*?)\n---/)?.[1] ?? "", /^router-exclude:\s*true$/m);
+  assert.match(setup, /^FOCUSED_SKILLS="[^"]*\blazyweb-apply-design-best-practices\b[^"]*"$/m);
+  assert.doesNotMatch(
+    setup.match(/^LEGACY_SKILL_DIRS="\n([\s\S]*?)\n"/m)?.[1] ?? "",
+    /^lazyweb-apply-design-best-practices$/m
+  );
+  assert.match(readme, /\/lazyweb-apply-design-best-practices\b/);
+  assert.match(router, /\blazyweb-apply-design-best-practices\b/);
 });
 
 test("routing table covers the core design aspects", () => {
