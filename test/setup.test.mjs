@@ -293,6 +293,7 @@ test("setup installs visible skills and direct MCP config into detected local cl
     assert.match(first.stdout, /\/lazyweb-growth-score/);
     assert.match(first.stdout, /\/lazyweb-growth-report/);
     assert.match(first.stdout, /design improvement feedback on an existing screen or webpage/i);
+    assert.match(first.stdout, /\/lazyweb-apply-design-best-practices/);
     assert.match(first.stdout, /\/lazyweb-growth-backlog/);
     assert.match(first.stdout, /lazyweb_agentic_search_finalize/);
     assert.match(first.stdout, /live tool schemas as the source of truth/);
@@ -316,6 +317,7 @@ test("setup installs visible skills and direct MCP config into detected local cl
         "lazyweb-search-experiments",
         "lazyweb-search-flows",
         "lazyweb-search-screens",
+        "lazyweb-apply-design-best-practices",
         "lazyweb-update"
       ]) {
         const skillPath = path.join(skillsRoot, skillName, "SKILL.md");
@@ -348,7 +350,6 @@ test("setup installs visible skills and direct MCP config into detected local cl
         "lazyweb-lite-design-research",
         "lazyweb-paywall-cta",
         "lazyweb-growth-experiment",
-        "lazyweb-apply-design-best-practices",
         "lazyweb-explain-flow",
         "lazyweb-propose-ui-changes"
       ]) {
@@ -382,7 +383,6 @@ test("setup installs visible skills and direct MCP config into detected local cl
         "lazyweb-lite-design-research",
         "lazyweb-paywall-cta",
         "lazyweb-growth-experiment",
-        "lazyweb-apply-design-best-practices",
         "lazyweb-explain-flow",
         "lazyweb-propose-ui-changes"
       ]) {
@@ -503,7 +503,7 @@ test("setup verifies the prune: removes legacy + future-rename skill dirs and pr
     assert.equal(existsSync(futureDir), false, "future-rename skill dir should be pruned");
 
     // Focused set installed.
-    for (const skillName of ["lazyweb", "lazyweb-growth-score", "lazyweb-growth-report", "lazyweb-growth-backlog", "lazyweb-search-experiments", "lazyweb-search-flows", "lazyweb-search-screens", "lazyweb-update"]) {
+    for (const skillName of ["lazyweb", "lazyweb-growth-score", "lazyweb-growth-report", "lazyweb-growth-backlog", "lazyweb-search-experiments", "lazyweb-search-flows", "lazyweb-search-screens", "lazyweb-apply-design-best-practices", "lazyweb-update"]) {
       assert.ok(existsSync(path.join(skillsRoot, skillName, "SKILL.md")), `missing ${skillName}`);
     }
 

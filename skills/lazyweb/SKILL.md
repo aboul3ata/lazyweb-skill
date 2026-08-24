@@ -23,6 +23,7 @@ then call `lazyweb_health`.
 | Research experiments | `lazyweb-search-experiments` / `lazyweb_search_experiments` |
 | Research flows | `lazyweb-search-flows` / `lazyweb_search_flows` |
 | Research screens | `lazyweb-search-screens` / `lazyweb_search_screens` |
+| Apply the best specialist design skill for a UI craft task | `lazyweb-apply-design-best-practices` |
 
 For other safe app actions, inspect the live tools and use the compact domain
 tool (`lazyweb_products`, `lazyweb_connections`, `lazyweb_reports`, or

@@ -32,7 +32,6 @@ lazyweb-design-improve
 lazyweb-lite-design-research
 lazyweb-paywall-cta
 lazyweb-growth-experiment
-lazyweb-apply-design-best-practices
 lazyweb-explain-flow
 lazyweb-propose-ui-changes
 "
@@ -44,7 +43,7 @@ COMPAT_ALIAS_SKILLS="lazyweb-design lazyweb-quick-search lazyweb-growth-experime
 # repo (the server/router can still reach it via lazyweb_get_workflows) but is
 # intentionally NOT installed as a slash command, so anything else found in a
 # client skill root is stale and must be removed.
-FOCUSED_SKILLS="lazyweb-growth-score lazyweb-growth-report lazyweb-growth-backlog lazyweb-search-experiments lazyweb-search-flows lazyweb-search-screens lazyweb-update"
+FOCUSED_SKILLS="lazyweb-growth-score lazyweb-growth-report lazyweb-growth-backlog lazyweb-search-experiments lazyweb-search-flows lazyweb-search-screens lazyweb-apply-design-best-practices lazyweb-update"
 # Skill roots older installer generations wrote to but the current installer no
 # longer targets AT ALL. Nothing installs there anymore, so ANY Lazyweb dir
 # found in one — including the `lazyweb` entry skill itself — is stale by
@@ -781,8 +780,9 @@ Try these first:
   1. Use /lazyweb to route any Lazyweb product action through the live MCP contract.
   2. Use /lazyweb-growth-score to get, explicitly generate, or compare website scores.
   3. Use /lazyweb-growth-report for design improvement feedback on an existing screen or webpage.
-  4. Use /lazyweb-growth-backlog to list or add product-scoped growth specs.
-  5. Use the screen, flow, and experiment search skills to collect research, then finalize it as one Agentic Search.
+  4. Use /lazyweb-apply-design-best-practices to route a UI craft task to the best specialist skill.
+  5. Use /lazyweb-growth-backlog to list or add product-scoped growth specs.
+  6. Use the screen, flow, and experiment search skills to collect research, then finalize it as one Agentic Search.
 
 One-time opt-in for the agent to ask the user:
   "Want me to make Lazyweb part of every product UI task? I’ll quietly research relevant screens, experiments, flows, and growth mechanics as I work—so each design is grounded in real product evidence, not just taste."
