@@ -152,7 +152,7 @@ for (const name of CORE.keys()) assert.match(readme, new RegExp(`/${name}\\b`), 
 for (const name of UTILITIES) assert.match(readme, new RegExp(`/${name}\\b`), `README missing /${name}`);
 assert.match(readme, /user-facing descriptions focused on what someone can\s+accomplish with Lazyweb/i);
 
-for (const binName of ["lazyweb-context-detect", "lazyweb-log", "lazyweb-router", "lazyweb-telemetry-flush", "lazyweb-update", "lazyweb-update-check"]) {
+for (const binName of ["lazyweb-context-detect", "lazyweb-log", "lazyweb-telemetry-flush", "lazyweb-update", "lazyweb-update-check"]) {
   const file = path.join(root, "bin", binName);
   assert.ok(existsSync(file), `missing bin/${binName}`);
   assert.ok(statSync(file).mode & 0o111, `bin/${binName} must be executable`);

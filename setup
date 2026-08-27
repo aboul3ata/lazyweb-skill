@@ -11,7 +11,6 @@ AUTO_UPDATE_MARKER="${LAZYWEB_AUTO_UPDATE_MARKER:-$HOME/.lazyweb/auto_update}"
 HOST="auto"
 QUIET=0
 AUTO_UPDATE_CHOICE=""
-ROUTER_CHOICE=""
 
 # Renamed or purged skill directories from older installs. These must never
 # linger in a client skill root after setup runs, or stale slash commands stay
@@ -58,7 +57,7 @@ INSTALLED_SKILL_ROOTS=""
 
 usage() {
   cat <<'USAGE'
-Usage: ./setup [--host auto|all|codex|claude|cursor|opencode|kiro|factory|slate|hermes|antigravity] [--quiet] [--auto-update|--no-auto-update] [--router|--no-router]
+Usage: ./setup [--host auto|all|codex|claude|cursor|opencode|kiro|factory|slate|hermes|antigravity] [--quiet] [--auto-update|--no-auto-update]
 
 Installs the standalone Lazyweb skill pack and configures direct Lazyweb MCP
 access for supported local coding clients.
@@ -67,9 +66,6 @@ Flags:
   --auto-update     Opt in to silent automatic updates (creates
                     ~/.lazyweb/auto_update). Skips the interactive prompt.
   --no-auto-update  Opt out and skip the prompt; updates remain advisory.
-  --router          Install the Lazyweb autorouter (a marked routing block in
-                    each agent's global instruction file) without the prompt.
-  --no-router       Skip the autorouter and persist the decline.
 USAGE
 }
 
@@ -94,14 +90,6 @@ while [ "$#" -gt 0 ]; do
       ;;
     --no-auto-update)
       AUTO_UPDATE_CHOICE="off"
-      shift
-      ;;
-    --router)
-      ROUTER_CHOICE="on"
-      shift
-      ;;
-    --no-router)
-      ROUTER_CHOICE="off"
       shift
       ;;
     -h|--help)
@@ -548,8 +536,8 @@ install_integrity_marker() {
 
 install_lazyweb_bins() {
   mkdir -p "$HOME/.lazyweb/bin"
-  # lazyweb-hosts.sh is sourced by lazyweb-router and must sit beside it.
-  for bin_name in lazyweb-context-detect lazyweb-hosts.sh lazyweb-log lazyweb-router lazyweb-telemetry-flush lazyweb-update lazyweb-update-check; do
+  # lazyweb-hosts.sh is a shared helper library and must sit beside the bins.
+  for bin_name in lazyweb-context-detect lazyweb-hosts.sh lazyweb-log lazyweb-telemetry-flush lazyweb-update lazyweb-update-check; do
     [ -f "$ROOT/bin/$bin_name" ] || continue
     link_or_copy "$ROOT/bin/$bin_name" "$HOME/.lazyweb/bin/$bin_name"
     chmod +x "$HOME/.lazyweb/bin/$bin_name" 2>/dev/null || true
@@ -761,13 +749,6 @@ fi
 prune_legacy_skill_roots || true
 prune_claude_plugin_install || true
 
-# Autorouter refresh (specs/autorouter.md §7.4): every consented routing block
-# is silently re-rendered so the injected table stays in lockstep with the
-# skill list. No manifest -> no-op. Never blocks setup.
-if [ -s "$HOME/.lazyweb/router.manifest.json" ]; then
-  "$ROOT/bin/lazyweb-router" refresh >/dev/null 2>&1 || true
-fi
-
 cat <<EOF
 
 Lazyweb setup complete.
@@ -783,10 +764,6 @@ Try these first:
   4. Use /lazyweb-apply-design-best-practices to route a UI craft task to the best specialist skill.
   5. Use /lazyweb-growth-backlog to list or add product-scoped growth specs.
   6. Use the screen, flow, and experiment search skills to collect research, then finalize it as one Agentic Search.
-
-One-time opt-in for the agent to ask the user:
-  "Want me to make Lazyweb part of every product UI task? I’ll quietly research relevant screens, experiments, flows, and growth mechanics as I work—so each design is grounded in real product evidence, not just taste."
-  Do not change persistent instructions unless the user says yes. If they say yes, run ~/.lazyweb/bin/lazyweb-router install --all --yes. If they decline or do not answer, make no instruction changes and do not ask again in this session. Broad improvement requests may use a Growth Report when it best serves the user's goal; do not require the exact product name.
 
 Token file:
   $TOKEN_FILE
@@ -831,61 +808,6 @@ case "$AUTO_UPDATE_CHOICE" in
             ;;
         esac
       fi
-    fi
-    ;;
-esac
-
-# Autorouter opt-in (specs/autorouter.md §7.1). Resolved explicitly via
-# --router / --no-router, otherwise offered once interactively with a preview.
-# Quiet/piped installs NEVER inject: MCP configs are tooling, but instruction
-# files are user-authored prose — explicit consent only; they get a tip line.
-ROUTER_BIN="$ROOT/bin/lazyweb-router"
-ROUTER_MANIFEST="$HOME/.lazyweb/router.manifest.json"
-router_declined_flag() {
-  grep -q '^router_declined=1' "$HOME/.lazyweb/config" 2>/dev/null
-}
-case "$ROUTER_CHOICE" in
-  on)
-    "$ROUTER_BIN" install --all --yes || true
-    log "Autorouter installed. Remove later: ~/.lazyweb/bin/lazyweb-router remove --all"
-    ;;
-  off)
-    "$ROUTER_BIN" decline >/dev/null 2>&1 || true
-    log "Autorouter left off. Enable later: ~/.lazyweb/bin/lazyweb-router install"
-    ;;
-  *)
-    if [ -s "$ROUTER_MANIFEST" ] || router_declined_flag; then
-      : # already resolved (installed earlier, or declined) — never re-ask
-    elif [ "$QUIET" -eq 0 ] && [ -t 0 ]; then
-      # Preview with the first routable host so the user sees the exact block.
-      # shellcheck source=/dev/null
-      . "$ROOT/bin/lazyweb-hosts.sh"
-      ROUTER_PREVIEW_HOST=""
-      for _rh in $(host_all); do
-        if host_routable "$_rh"; then ROUTER_PREVIEW_HOST="$_rh"; break; fi
-      done
-      if [ -n "$ROUTER_PREVIEW_HOST" ]; then
-        printf '\nLazyweb can add this routing section to your agents'\'' global instruction\nfiles so design questions auto-route to the right Lazyweb mode:\n\n'
-        "$ROUTER_BIN" render --host "$ROUTER_PREVIEW_HOST" 2>/dev/null || true
-        printf '\nWant me to make Lazyweb part of every product UI task? I’ll quietly research relevant screens, experiments, flows, and growth mechanics as I work—so each design is grounded in real product evidence, not just taste. [y/N] '
-        if read -r LAZYWEB_ROUTER_ANSWER; then
-          case "$LAZYWEB_ROUTER_ANSWER" in
-            y|Y|yes|Yes|YES)
-              "$ROUTER_BIN" install --all --yes || true
-              ;;
-            n|N|no|No|NO)
-              "$ROUTER_BIN" decline || true
-              ;;
-            *)
-              # No answer (M7): skip WITHOUT persisting a decline, so the
-              # once-per-session MCP offer remains the single follow-up.
-              log "Skipped for now. Add later: ~/.lazyweb/bin/lazyweb-router install"
-              ;;
-          esac
-        fi
-      fi
-    elif [ "$QUIET" -eq 0 ]; then
-      printf '\nAgent: ask the user once: "Want me to make Lazyweb part of every product UI task? I’ll quietly research relevant screens, experiments, flows, and growth mechanics as I work—so each design is grounded in real product evidence, not just taste." Do not change persistent instructions unless the user says yes; after yes, run ~/.lazyweb/bin/lazyweb-router install --all --yes.\n'
     fi
     ;;
 esac

@@ -33,7 +33,7 @@ function runSetup(home, fakeBin) {
 }
 
 function runSetupWithoutToken(home, fakeBin, extraEnv = {}) {
-  return spawnSync("bash", [setup, "--host", "auto", "--quiet", "--no-auto-update", "--no-router"], {
+  return spawnSync("bash", [setup, "--host", "auto", "--quiet", "--no-auto-update"], {
     cwd: root,
     encoding: "utf8",
     env: {
@@ -65,7 +65,7 @@ test("auto setup targets the invoking Codex host before scanning other installed
   makeExecutable(path.join(fakeBin, "claude"), `#!/usr/bin/env sh\nprintf '%s\\n' "$*" >> "${dir}/claude.log"\nexit 0\n`);
 
   try {
-    const result = spawnSync("bash", [setup, "--host", "auto", "--quiet", "--no-auto-update", "--no-router"], {
+    const result = spawnSync("bash", [setup, "--host", "auto", "--quiet", "--no-auto-update"], {
       cwd: root,
       encoding: "utf8",
       env: {
@@ -99,7 +99,7 @@ test("an explicit active Claude host overrides ambient Codex signals", () => {
   makeExecutable(path.join(fakeBin, "claude"), "#!/usr/bin/env sh\nexit 0\n");
 
   try {
-    const result = spawnSync("bash", [setup, "--host", "auto", "--quiet", "--no-auto-update", "--no-router"], {
+    const result = spawnSync("bash", [setup, "--host", "auto", "--quiet", "--no-auto-update"], {
       cwd: root,
       encoding: "utf8",
       env: {
@@ -297,9 +297,12 @@ test("setup installs visible skills and direct MCP config into detected local cl
     assert.match(first.stdout, /\/lazyweb-growth-backlog/);
     assert.match(first.stdout, /lazyweb_agentic_search_finalize/);
     assert.match(first.stdout, /live tool schemas as the source of truth/);
-    assert.match(first.stdout, /Want me to make Lazyweb part of every product UI task\?/);
-    assert.match(first.stdout, /quietly research relevant screens, experiments, flows, and growth mechanics/i);
-    assert.match(first.stdout, /Do not change persistent instructions unless the user says yes/i);
+    // The autorouter (persistent-instruction routing block + its agent-facing
+    // opt-in ask) is removed: install output must never instruct an agent to
+    // edit persistent instructions or run a router binary.
+    assert.doesNotMatch(first.stdout, /Want me to make Lazyweb part of every product UI task\?/);
+    assert.doesNotMatch(first.stdout, /lazyweb-router/);
+    assert.doesNotMatch(first.stdout, /change persistent instructions/i);
     const second = runSetup(home, fakeBin);
     assert.equal(second.status, 0, second.stderr || second.stdout);
 

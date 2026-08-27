@@ -133,53 +133,6 @@ or `--no-auto-update` to skip the prompt in scripted installs. Disable later
 with `rm ~/.lazyweb/auto_update`. The check itself is non-blocking
 (time-boxed to 3s, cached 24h) and never delays your request.
 
-## Autorouter (opt-in)
-
-The autorouter writes a small, marker-delimited routing block into each
-detected agent's **global** instruction file (`~/.claude/CLAUDE.md` for
-Claude Code, `~/.codex/AGENTS.md` for Codex — the same file the Codex app
-shows as "Custom instructions" — and `~/.config/opencode/AGENTS.md` for
-OpenCode), so plain design questions like "show me some paywall examples"
-auto-route to the right Lazyweb mode without invoking a skill.
-
-`./setup` offers this once on an interactive run (with a preview of the
-exact block); pass `--router` or `--no-router` to decide in scripted
-installs. Piped/quiet installs never write instruction files. Manage it
-any time:
-
-```bash
-~/.lazyweb/bin/lazyweb-router install   # preview + consent, then write
-~/.lazyweb/bin/lazyweb-router status    # per host: installed / modified / absent
-~/.lazyweb/bin/lazyweb-router remove --all
-```
-
-Everything lives between `<!-- LAZYWEB:ROUTER:BEGIN -->` / `:END -->`
-markers; nothing outside them is ever touched, and updates silently refresh
-only blocks you already approved. Hosts with no documented global file
-(Cursor today; Kiro/Factory/Slate/Hermes until their global-file behavior is
-verified) are served by the project-level flow below.
-
-### Team install (project-level)
-
-To give a whole repo routing — every contributor, plus hosts that only read
-project files (Cursor, GitHub Copilot's coding agent):
-
-```bash
-~/.lazyweb/bin/lazyweb-router install --project /path/to/repo
-```
-
-This writes the same marked block to the project's `AGENTS.md` **and**
-`CLAUDE.md` (Claude Code does not read AGENTS.md natively; if CLAUDE.md
-symlinks or `@`-imports AGENTS.md, only AGENTS.md is written). It is never
-automatic — it edits files that land in your repo and show up in PRs.
-
-For any unsupported host, print the block and paste it into that host's
-rules/instructions UI yourself:
-
-```bash
-~/.lazyweb/bin/lazyweb-router render --host claude
-```
-
 ## Tool Surfaces
 
 Use MCP tools for Lazyweb database access. Always inspect the live tool list
