@@ -88,7 +88,7 @@ Agent flow (all agent-emitted strings are short; bytes never touch the model):
 1. `{upload_url, key} = lazyweb_request_image_upload({mime_type})`  (MCP, session-authed)
 2. `curl -fsS -X PUT -H "content-type: <mime>" --data-binary @current-state.png "$upload_url"`  (Bash; **no Lazyweb credential** — the presigned URL is the auth)
 3. `{image_url} = lazyweb_resolve_image_upload({key})`
-4. pass `image_url` to `synthesize` / `start_mockup` / `render` / `compare_image` / `find_similar`
+4. pass `image_url` to `lazyweb_generate_report` / `render` / `compare_image` / `find_similar` (the low-level `synthesize` / `start_mockup` chain is deprecated — current clients get a `tool_deprecated` rejection)
 
 Why this is the target:
 - **No static token, no file to go missing** → fixes the connector class entirely.
