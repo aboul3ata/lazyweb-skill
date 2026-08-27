@@ -749,6 +749,45 @@ fi
 prune_legacy_skill_roots || true
 prune_claude_plugin_install || true
 
+# One-time autorouter retirement (removed in 0.15.8): strip every
+# manifest-tracked LAZYWEB:ROUTER block the old consent flow wrote into
+# instruction files, then drop the manifest and the stale router binary.
+# Only files recorded in ~/.lazyweb/router.manifest.json are touched, and a
+# BEGIN marker without END is left alone (corrupt — never guess at user files).
+if [ -s "$HOME/.lazyweb/router.manifest.json" ] && command -v node >/dev/null 2>&1; then
+  node - <<'RETIRE_ROUTER_EOF' || true
+const fs = require("fs");
+const path = require("path");
+const os = require("os");
+const MANIFEST = path.join(os.homedir(), ".lazyweb", "router.manifest.json");
+const BEGIN = "<!-- LAZYWEB:ROUTER:BEGIN";
+const ENDM = "<!-- LAZYWEB:ROUTER:END -->";
+let manifest;
+try { manifest = JSON.parse(fs.readFileSync(MANIFEST, "utf8")); } catch { process.exit(0); }
+for (const target of manifest.targets || []) {
+  try {
+    if (!target || !target.file || !fs.existsSync(target.file)) continue;
+    const cur = fs.readFileSync(target.file, "utf8");
+    const bi = cur.indexOf(BEGIN);
+    if (bi === -1) continue;
+    const ee = cur.indexOf(ENDM, bi);
+    if (ee === -1) continue; // corrupt block: leave it alone
+    let rest = cur.slice(0, bi).replace(/\n+$/, "\n") + cur.slice(ee + ENDM.length);
+    rest = rest.replace(/\n{3,}/g, "\n\n");
+    if (target.created_file && rest.trim() === "") {
+      fs.unlinkSync(target.file);
+      console.log(`Autorouter retired: removed its block and deleted ${target.file} (the router created that file)`);
+    } else {
+      fs.writeFileSync(target.file, rest.replace(/\s+$/, "") + "\n");
+      console.log(`Autorouter retired: removed the LAZYWEB:ROUTER block from ${target.file}`);
+    }
+  } catch {}
+}
+try { fs.unlinkSync(MANIFEST); } catch {}
+RETIRE_ROUTER_EOF
+fi
+rm -f "$HOME/.lazyweb/bin/lazyweb-router" 2>/dev/null || true
+
 cat <<EOF
 
 Lazyweb setup complete.

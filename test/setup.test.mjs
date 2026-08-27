@@ -279,6 +279,31 @@ test("setup installs visible skills and direct MCP config into detected local cl
   makeExecutable(path.join(fakeBin, "codex"), "#!/usr/bin/env sh\nexit 0\n");
   makeExecutable(path.join(fakeBin, "claude"), `#!/usr/bin/env sh\nprintf '%s\\n' "$*" >> "${dir}/claude.log"\nexit 0\n`);
 
+  // Pre-0.15.8 consented autorouter install: a manifest-tracked block in the
+  // user's CLAUDE.md plus the stale router binary. Setup must retire it.
+  mkdirSync(path.join(home, ".claude"), { recursive: true });
+  mkdirSync(path.join(home, ".lazyweb", "bin"), { recursive: true });
+  const migratedFile = path.join(home, ".claude", "CLAUDE.md");
+  writeFileSync(
+    migratedFile,
+    [
+      "# My own instructions",
+      "",
+      "Keep answers short.",
+      "",
+      "<!-- LAZYWEB:ROUTER:BEGIN — managed by Lazyweb -->",
+      "## Use Lazyweb for ALL product UI work",
+      "route everything",
+      "<!-- LAZYWEB:ROUTER:END -->",
+      ""
+    ].join("\n")
+  );
+  writeFileSync(
+    path.join(home, ".lazyweb", "router.manifest.json"),
+    JSON.stringify({ targets: [{ host: "claude", file: migratedFile, created_file: false }] })
+  );
+  writeFileSync(path.join(home, ".lazyweb", "bin", "lazyweb-router"), "#!/usr/bin/env bash\nexit 0\n");
+
   try {
     const first = runSetup(home, fakeBin);
     assert.equal(first.status, 0, first.stderr || first.stdout);
@@ -303,6 +328,16 @@ test("setup installs visible skills and direct MCP config into detected local cl
     assert.doesNotMatch(first.stdout, /Want me to make Lazyweb part of every product UI task\?/);
     assert.doesNotMatch(first.stdout, /lazyweb-router/);
     assert.doesNotMatch(first.stdout, /change persistent instructions/i);
+
+    // Autorouter retirement: a manifest-tracked LAZYWEB:ROUTER block from a
+    // pre-0.15.8 consented install is stripped on upgrade; everything outside
+    // the markers is untouched, and the manifest + stale binary are removed.
+    const migrated = readFileSync(migratedFile, "utf8");
+    assert.doesNotMatch(migrated, /LAZYWEB:ROUTER/);
+    assert.match(migrated, /# My own instructions/);
+    assert.match(migrated, /Keep answers short\./);
+    assert.equal(existsSync(path.join(home, ".lazyweb", "router.manifest.json")), false);
+    assert.equal(existsSync(path.join(home, ".lazyweb", "bin", "lazyweb-router")), false);
     const second = runSetup(home, fakeBin);
     assert.equal(second.status, 0, second.stderr || second.stdout);
 
