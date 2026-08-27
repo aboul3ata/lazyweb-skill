@@ -764,6 +764,7 @@ const BEGIN = "<!-- LAZYWEB:ROUTER:BEGIN";
 const ENDM = "<!-- LAZYWEB:ROUTER:END -->";
 let manifest;
 try { manifest = JSON.parse(fs.readFileSync(MANIFEST, "utf8")); } catch { process.exit(0); }
+const failed = [];
 for (const target of manifest.targets || []) {
   try {
     if (!target || !target.file || !fs.existsSync(target.file)) continue;
@@ -772,18 +773,32 @@ for (const target of manifest.targets || []) {
     if (bi === -1) continue;
     const ee = cur.indexOf(ENDM, bi);
     if (ee === -1) continue; // corrupt block: leave it alone
-    let rest = cur.slice(0, bi).replace(/\n+$/, "\n") + cur.slice(ee + ENDM.length);
-    rest = rest.replace(/\n{3,}/g, "\n\n");
+    // Normalize ONLY the splice seam: everything outside the markers is the
+    // user's own text and keeps its exact whitespace.
+    const left = cur.slice(0, bi).replace(/\n*$/, "");
+    const right = cur.slice(ee + ENDM.length).replace(/^\n*/, "");
+    let rest;
+    if (left === "" && right === "") rest = "";
+    else if (left === "") rest = right;
+    else if (right === "") rest = left + "\n";
+    else rest = left + "\n\n" + right;
     if (target.created_file && rest.trim() === "") {
       fs.unlinkSync(target.file);
       console.log(`Autorouter retired: removed its block and deleted ${target.file} (the router created that file)`);
     } else {
-      fs.writeFileSync(target.file, rest.replace(/\s+$/, "") + "\n");
+      fs.writeFileSync(target.file, rest === "" ? "" : rest.replace(/\n*$/, "") + "\n");
       console.log(`Autorouter retired: removed the LAZYWEB:ROUTER block from ${target.file}`);
     }
-  } catch {}
+  } catch (err) {
+    failed.push(target);
+    console.error(`Autorouter retirement could not clean ${target && target.file}: ${err && err.message}. Remove the LAZYWEB:ROUTER block from it manually; it will be retried on the next update.`);
+  }
 }
-try { fs.unlinkSync(MANIFEST); } catch {}
+if (failed.length) {
+  try { fs.writeFileSync(MANIFEST, JSON.stringify({ targets: failed }, null, 2) + "\n"); } catch {}
+} else {
+  try { fs.unlinkSync(MANIFEST); } catch {}
+}
 RETIRE_ROUTER_EOF
 fi
 rm -f "$HOME/.lazyweb/bin/lazyweb-router" 2>/dev/null || true

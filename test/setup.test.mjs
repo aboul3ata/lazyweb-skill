@@ -291,6 +291,10 @@ test("setup installs visible skills and direct MCP config into detected local cl
       "",
       "Keep answers short.",
       "",
+      "",
+      "",
+      "Stay curious.",
+      "",
       "<!-- LAZYWEB:ROUTER:BEGIN — managed by Lazyweb -->",
       "## Use Lazyweb for ALL product UI work",
       "route everything",
@@ -336,6 +340,9 @@ test("setup installs visible skills and direct MCP config into detected local cl
     assert.doesNotMatch(migrated, /LAZYWEB:ROUTER/);
     assert.match(migrated, /# My own instructions/);
     assert.match(migrated, /Keep answers short\./);
+    // User-authored whitespace outside the markers survives verbatim (the
+    // migration normalizes only the splice seam).
+    assert.match(migrated, /Keep answers short\.\n\n\n\nStay curious\./);
     assert.equal(existsSync(path.join(home, ".lazyweb", "router.manifest.json")), false);
     assert.equal(existsSync(path.join(home, ".lazyweb", "bin", "lazyweb-router")), false);
     const second = runSetup(home, fakeBin);
