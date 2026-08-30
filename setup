@@ -15,6 +15,7 @@ INSTALL_ATTRIBUTION=0
 INSTALL_USER_GOAL=""
 INSTALL_DISCOVERY_PATH=""
 INSTALL_DISCOVERY_CONTEXT=""
+INSTALL_JOURNEY_ID=""
 
 # Renamed or purged skill directories from older installs. These must never
 # linger in a client skill root after setup runs, or stale slash commands stay
@@ -61,7 +62,7 @@ INSTALLED_SKILL_ROOTS=""
 
 usage() {
   cat <<'USAGE'
-Usage: ./setup [--host auto|all|codex|claude|cursor|opencode|kiro|factory|slate|hermes|antigravity] [--quiet] [--auto-update|--no-auto-update] [--install-attribution --user-goal TEXT --discovery-path SOURCE --discovery-context TEXT]
+Usage: ./setup [--host auto|all|codex|claude|cursor|opencode|kiro|factory|slate|hermes|antigravity] [--quiet] [--auto-update|--no-auto-update] [--install-attribution --user-goal TEXT --discovery-path SOURCE --discovery-context TEXT [--journey-id UUID]]
 
 Installs the standalone Lazyweb skill pack and configures direct Lazyweb MCP
 access for supported local coding clients.
@@ -78,6 +79,7 @@ Flags:
                     agent_docs, webmcp, other, or unknown.
   --discovery-context TEXT
                     Observable evidence explaining how Lazyweb was discovered.
+  --journey-id UUID Preserve an anonymous Lazyweb journey observed before setup.
 USAGE
 }
 
@@ -123,6 +125,11 @@ while [ "$#" -gt 0 ]; do
       INSTALL_DISCOVERY_CONTEXT="$2"
       shift 2
       ;;
+    --journey-id)
+      [ "${2:-}" ] || { echo "Missing value for --journey-id" >&2; exit 1; }
+      INSTALL_JOURNEY_ID="$2"
+      shift 2
+      ;;
     -h|--help)
       usage
       exit 0
@@ -143,6 +150,10 @@ if [ "$INSTALL_ATTRIBUTION" -eq 1 ]; then
     *) echo "Invalid --discovery-path: $INSTALL_DISCOVERY_PATH" >&2; exit 1 ;;
   esac
   [ -n "$INSTALL_DISCOVERY_CONTEXT" ] || { echo "--discovery-context is required for installation attribution." >&2; exit 1; }
+  if [ -n "$INSTALL_JOURNEY_ID" ] && ! [[ "$INSTALL_JOURNEY_ID" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$ ]]; then
+    echo "Invalid --journey-id: expected UUID." >&2
+    exit 1
+  fi
 fi
 
 log() {
@@ -242,7 +253,7 @@ ensure_token() {
   prepare_install_cookie_file
   payload="{\"install_id\":$(json_escape "$install_id")}"
   if [ "$INSTALL_ATTRIBUTION" -eq 1 ]; then
-    journey_id="$(node -e "process.stdout.write(require('node:crypto').randomUUID())")"
+    journey_id="${INSTALL_JOURNEY_ID:-$(node -e "process.stdout.write(require('node:crypto').randomUUID())")}"
     payload="{\"install_channel\":\"curl\",\"install_id\":$(json_escape "$install_id"),\"journey_id\":$(json_escape "$journey_id"),\"user_goal\":$(json_escape "$INSTALL_USER_GOAL"),\"discovery_path\":$(json_escape "$INSTALL_DISCOVERY_PATH"),\"discovery_context\":$(json_escape "$INSTALL_DISCOVERY_CONTEXT")}"
   fi
   # install_id rides in the JSON body — that is the server's durable-identity
