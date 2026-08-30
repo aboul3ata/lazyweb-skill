@@ -22,6 +22,8 @@ When an agent knows more, it replaces that honest unknown fallback from the
 current conversation and observable research. Valid discovery sources are
 `user_request`, `web_search`, `reddit`, `shared_url`, `llms_txt`, `agent_docs`,
 `webmcp`, `other`, and `unknown`. Never include private chain-of-thought.
+The public `/install.sh` wrapper adds the internal `--install-attribution`
+setup mode; callers supply only the three values shown above.
 
 The installer clones this repo to `~/.lazyweb/repos/lazyweb-skill`, creates or
 reuses `~/.lazyweb/lazyweb_mcp_token`, installs the visible Lazyweb skills into
