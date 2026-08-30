@@ -13,13 +13,13 @@ Paste this into a local coding agent or terminal:
 
 ```bash
 curl -fsSL https://www.lazyweb.com/install.sh | bash -s -- \
-  --user-goal 'Describe the original user request' \
+  --user-goal 'Install Lazyweb MCP for the current request' \
   --discovery-path 'unknown' \
-  --discovery-context 'Replace with observable source evidence before running'
+  --discovery-context 'Public agent documentation was used without observable acquisition context'
 ```
 
-When an agent runs the installer, it replaces those values from the current
-conversation and observable research. Valid discovery sources are
+When an agent knows more, it replaces that honest unknown fallback from the
+current conversation and observable research. Valid discovery sources are
 `user_request`, `web_search`, `reddit`, `shared_url`, `llms_txt`, `agent_docs`,
 `webmcp`, `other`, and `unknown`. Never include private chain-of-thought.
 
