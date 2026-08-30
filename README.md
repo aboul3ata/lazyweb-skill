@@ -24,6 +24,10 @@ current conversation and observable research. Valid discovery sources are
 `webmcp`, `other`, and `unknown`. Never include private chain-of-thought.
 The public `/install.sh` wrapper adds the internal `--install-attribution`
 setup mode; callers supply only the three values shown above.
+When the command came from a tracked Lazyweb agent document, the wrapper also
+passes an internal `--journey-id` so the installation can be joined to the
+public Lazyweb resources that agent fetched first. A copied bare command still
+works and setup generates a new journey ID.
 
 The installer clones this repo to `~/.lazyweb/repos/lazyweb-skill`, creates or
 reuses `~/.lazyweb/lazyweb_mcp_token`, installs the visible Lazyweb skills into

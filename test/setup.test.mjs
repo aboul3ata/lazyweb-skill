@@ -54,7 +54,7 @@ function runSetupWithoutToken(home, fakeBin, extraEnv = {}) {
   });
 }
 
-function runAttributedSetup(home, fakeBin, extraEnv = {}) {
+function runAttributedSetup(home, fakeBin, extraEnv = {}, extraArgs = []) {
   return spawnSync("bash", [
     setup,
     "--host", "auto",
@@ -63,7 +63,8 @@ function runAttributedSetup(home, fakeBin, extraEnv = {}) {
     "--install-attribution",
     "--user-goal", "Find stronger onboarding examples",
     "--discovery-path", "reddit",
-    "--discovery-context", "The agent opened a Reddit thread recommending Lazyweb."
+    "--discovery-context", "The agent opened a Reddit thread recommending Lazyweb.",
+    ...extraArgs
   ], {
     cwd: root,
     encoding: "utf8",
@@ -106,6 +107,49 @@ printf '%s\\n' '{"ok":true,"token":"11111111-1111-4111-8111-111111111111","userI
     assert.match(installCall, /Reddit thread recommending Lazyweb/);
     assert.match(installCall, /journey_id/);
     assert.doesNotMatch(`${result.stdout}\n${result.stderr}`, /11111111-1111-4111-8111-111111111111|Reddit thread/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("attributed setup preserves a journey observed before installation", () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "lazyweb-attributed-observed-journey-"));
+  const home = path.join(dir, "home");
+  const fakeBin = path.join(dir, "bin");
+  const curlLog = path.join(dir, "curl.log");
+  const journeyId = "11111111-2222-4333-8444-555555555555";
+  mkdirSync(fakeBin, { recursive: true });
+  mkdirSync(home, { recursive: true });
+  symlinkSync(process.execPath, path.join(fakeBin, "node"));
+  makeExecutable(path.join(fakeBin, "codex"), "#!/usr/bin/env sh\nexit 0\n");
+  makeExecutable(path.join(fakeBin, "curl"), `#!/usr/bin/env bash
+printf '%s\\n' "$*" >> "${curlLog}"
+printf '%s\\n' '{"ok":true,"token":"11111111-1111-4111-8111-111111111111","userId":"11111111-1111-4111-8111-111111111111","attributionRecorded":true}' '200'
+`);
+
+  try {
+    const result = runAttributedSetup(home, fakeBin, {}, ["--journey-id", journeyId]);
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const installCall = readFileSync(curlLog, "utf8");
+    assert.match(installCall, new RegExp(`"journey_id":"${journeyId}"`));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("attributed setup rejects a malformed observed journey", () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "lazyweb-attributed-invalid-journey-"));
+  const home = path.join(dir, "home");
+  const fakeBin = path.join(dir, "bin");
+  mkdirSync(fakeBin, { recursive: true });
+  mkdirSync(home, { recursive: true });
+  symlinkSync(process.execPath, path.join(fakeBin, "node"));
+
+  try {
+    const result = runAttributedSetup(home, fakeBin, {}, ["--journey-id", "not-a-journey"]);
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /Invalid --journey-id/);
+    assert.equal(existsSync(path.join(home, ".codex", "config.toml")), false);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
