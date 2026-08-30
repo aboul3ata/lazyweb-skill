@@ -54,6 +54,130 @@ function runSetupWithoutToken(home, fakeBin, extraEnv = {}) {
   });
 }
 
+function runAttributedSetup(home, fakeBin, extraEnv = {}) {
+  return spawnSync("bash", [
+    setup,
+    "--host", "auto",
+    "--quiet",
+    "--no-auto-update",
+    "--install-attribution",
+    "--user-goal", "Find stronger onboarding examples",
+    "--discovery-path", "reddit",
+    "--discovery-context", "The agent opened a Reddit thread recommending Lazyweb."
+  ], {
+    cwd: root,
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      HOME: home,
+      PATH: `${fakeBin}:/usr/bin:/bin:/usr/sbin:/sbin`,
+      LAZYWEB_MCP_TOKEN: "11111111-1111-4111-8111-111111111111",
+      LAZYWEB_MCP_URL: "https://lazyweb.example.com/mcp",
+      LAZYWEB_INSTALL_TOKEN_URL: "https://lazyweb.example.com/api/mcp/install-token?install_channel=curl",
+      CODEX_HOME: path.join(home, ".codex"),
+      CODEX_THREAD_ID: "fresh-codex-eval",
+      CLAUDECODE: "",
+      ...extraEnv
+    }
+  });
+}
+
+test("attributed setup submits context even when an MCP token already exists", () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "lazyweb-attributed-existing-token-"));
+  const home = path.join(dir, "home");
+  const fakeBin = path.join(dir, "bin");
+  const curlLog = path.join(dir, "curl.log");
+  mkdirSync(fakeBin, { recursive: true });
+  mkdirSync(home, { recursive: true });
+  symlinkSync(process.execPath, path.join(fakeBin, "node"));
+  makeExecutable(path.join(fakeBin, "codex"), "#!/usr/bin/env sh\nexit 0\n");
+  makeExecutable(path.join(fakeBin, "curl"), `#!/usr/bin/env bash
+printf '%s\\n' "$*" >> "${curlLog}"
+printf '%s\\n' '{"ok":true,"token":"11111111-1111-4111-8111-111111111111","userId":"11111111-1111-4111-8111-111111111111","attributionRecorded":true}' '200'
+`);
+
+  try {
+    const result = runAttributedSetup(home, fakeBin);
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const installCall = readFileSync(curlLog, "utf8");
+    assert.match(installCall, /Authorization: Bearer 11111111-1111-4111-8111-111111111111/);
+    assert.match(installCall, /Find stronger onboarding examples/);
+    assert.match(installCall, /reddit/);
+    assert.match(installCall, /Reddit thread recommending Lazyweb/);
+    assert.match(installCall, /journey_id/);
+    assert.doesNotMatch(`${result.stdout}\n${result.stderr}`, /11111111-1111-4111-8111-111111111111|Reddit thread/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("attributed setup mints a fresh token with the same required context", () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "lazyweb-attributed-fresh-token-"));
+  const home = path.join(dir, "home");
+  const fakeBin = path.join(dir, "bin");
+  const curlLog = path.join(dir, "curl.log");
+  mkdirSync(fakeBin, { recursive: true });
+  mkdirSync(home, { recursive: true });
+  symlinkSync(process.execPath, path.join(fakeBin, "node"));
+  makeExecutable(path.join(fakeBin, "codex"), "#!/usr/bin/env sh\nexit 0\n");
+  makeExecutable(path.join(fakeBin, "curl"), `#!/usr/bin/env bash
+printf '%s\\n' "$*" >> "${curlLog}"
+printf '%s\\n' '{"ok":true,"token":"22222222-2222-4222-8222-222222222222","userId":"22222222-2222-4222-8222-222222222222","attributionRecorded":null}' '200'
+`);
+
+  try {
+    const result = runAttributedSetup(home, fakeBin, { LAZYWEB_MCP_TOKEN: "" });
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const installCall = readFileSync(curlLog, "utf8");
+    assert.doesNotMatch(installCall, /Authorization: Bearer/);
+    assert.match(installCall, /"install_channel":"curl"/);
+    assert.match(installCall, /Find stronger onboarding examples/);
+    assert.match(installCall, /reddit/);
+    assert.equal(
+      readFileSync(path.join(home, ".lazyweb", "lazyweb_mcp_token"), "utf8").trim(),
+      "22222222-2222-4222-8222-222222222222"
+    );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("attributed setup rejects a missing user goal before changing client config", () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "lazyweb-attributed-missing-goal-"));
+  const home = path.join(dir, "home");
+  const fakeBin = path.join(dir, "bin");
+  mkdirSync(fakeBin, { recursive: true });
+  mkdirSync(home, { recursive: true });
+  symlinkSync(process.execPath, path.join(fakeBin, "node"));
+
+  try {
+    const result = spawnSync("bash", [
+      setup,
+      "--host", "auto",
+      "--quiet",
+      "--no-auto-update",
+      "--install-attribution",
+      "--discovery-path", "reddit",
+      "--discovery-context", "A Reddit thread recommended Lazyweb."
+    ], {
+      cwd: root,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        HOME: home,
+        PATH: `${fakeBin}:/usr/bin:/bin:/usr/sbin:/sbin`,
+        LAZYWEB_MCP_TOKEN: "11111111-1111-4111-8111-111111111111",
+        CODEX_HOME: path.join(home, ".codex")
+      }
+    });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /--user-goal is required/);
+    assert.equal(existsSync(path.join(home, ".codex", "config.toml")), false);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test("auto setup targets the invoking Codex host before scanning other installed clients", () => {
   const dir = mkdtempSync(path.join(tmpdir(), "lazyweb-setup-active-codex-"));
   const home = path.join(dir, "home");

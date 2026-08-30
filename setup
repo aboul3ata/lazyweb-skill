@@ -11,6 +11,10 @@ AUTO_UPDATE_MARKER="${LAZYWEB_AUTO_UPDATE_MARKER:-$HOME/.lazyweb/auto_update}"
 HOST="auto"
 QUIET=0
 AUTO_UPDATE_CHOICE=""
+INSTALL_ATTRIBUTION=0
+INSTALL_USER_GOAL=""
+INSTALL_DISCOVERY_PATH=""
+INSTALL_DISCOVERY_CONTEXT=""
 
 # Renamed or purged skill directories from older installs. These must never
 # linger in a client skill root after setup runs, or stale slash commands stay
@@ -57,7 +61,7 @@ INSTALLED_SKILL_ROOTS=""
 
 usage() {
   cat <<'USAGE'
-Usage: ./setup [--host auto|all|codex|claude|cursor|opencode|kiro|factory|slate|hermes|antigravity] [--quiet] [--auto-update|--no-auto-update]
+Usage: ./setup [--host auto|all|codex|claude|cursor|opencode|kiro|factory|slate|hermes|antigravity] [--quiet] [--auto-update|--no-auto-update] [--install-attribution --user-goal TEXT --discovery-path SOURCE --discovery-context TEXT]
 
 Installs the standalone Lazyweb skill pack and configures direct Lazyweb MCP
 access for supported local coding clients.
@@ -66,6 +70,14 @@ Flags:
   --auto-update     Opt in to silent automatic updates (creates
                     ~/.lazyweb/auto_update). Skips the interactive prompt.
   --no-auto-update  Opt out and skip the prompt; updates remain advisory.
+  --install-attribution
+                    Record why this acquisition installation happened.
+  --user-goal TEXT  Concise summary of the original user request.
+  --discovery-path SOURCE
+                    user_request, web_search, reddit, shared_url, llms_txt,
+                    agent_docs, webmcp, other, or unknown.
+  --discovery-context TEXT
+                    Observable evidence explaining how Lazyweb was discovered.
 USAGE
 }
 
@@ -92,6 +104,25 @@ while [ "$#" -gt 0 ]; do
       AUTO_UPDATE_CHOICE="off"
       shift
       ;;
+    --install-attribution)
+      INSTALL_ATTRIBUTION=1
+      shift
+      ;;
+    --user-goal)
+      [ "${2:-}" ] || { echo "Missing value for --user-goal" >&2; exit 1; }
+      INSTALL_USER_GOAL="$2"
+      shift 2
+      ;;
+    --discovery-path)
+      [ "${2:-}" ] || { echo "Missing value for --discovery-path" >&2; exit 1; }
+      INSTALL_DISCOVERY_PATH="$2"
+      shift 2
+      ;;
+    --discovery-context)
+      [ "${2:-}" ] || { echo "Missing value for --discovery-context" >&2; exit 1; }
+      INSTALL_DISCOVERY_CONTEXT="$2"
+      shift 2
+      ;;
     -h|--help)
       usage
       exit 0
@@ -103,6 +134,16 @@ while [ "$#" -gt 0 ]; do
       ;;
   esac
 done
+
+if [ "$INSTALL_ATTRIBUTION" -eq 1 ]; then
+  [ -n "$INSTALL_USER_GOAL" ] || { echo "--user-goal is required for installation attribution." >&2; exit 1; }
+  [ -n "$INSTALL_DISCOVERY_PATH" ] || { echo "--discovery-path is required for installation attribution." >&2; exit 1; }
+  case "$INSTALL_DISCOVERY_PATH" in
+    user_request|web_search|reddit|shared_url|llms_txt|agent_docs|webmcp|other|unknown) ;;
+    *) echo "Invalid --discovery-path: $INSTALL_DISCOVERY_PATH" >&2; exit 1 ;;
+  esac
+  [ -n "$INSTALL_DISCOVERY_CONTEXT" ] || { echo "--discovery-context is required for installation attribution." >&2; exit 1; }
+fi
 
 log() {
   [ "$QUIET" -eq 1 ] || printf '%s\n' "$*"
@@ -180,34 +221,48 @@ print_install_access_error() {
 ensure_token() {
   mkdir -p "$(dirname "$TOKEN_FILE")"
 
+  local existing_token=""
+
   if [ -n "${LAZYWEB_MCP_TOKEN:-}" ]; then
-    printf '%s\n' "$LAZYWEB_MCP_TOKEN" > "$TOKEN_FILE"
+    existing_token="$LAZYWEB_MCP_TOKEN"
+  elif [ -s "$TOKEN_FILE" ]; then
+    existing_token="$(tr -d '[:space:]' < "$TOKEN_FILE")"
+  fi
+
+  if [ "$INSTALL_ATTRIBUTION" -eq 0 ] && [ -n "$existing_token" ]; then
+    printf '%s\n' "$existing_token" > "$TOKEN_FILE"
     chmod 600 "$TOKEN_FILE" 2>/dev/null || true
-    printf '%s' "$LAZYWEB_MCP_TOKEN"
+    printf '%s' "$existing_token"
     return 0
   fi
 
-  if [ -s "$TOKEN_FILE" ]; then
-    tr -d '[:space:]' < "$TOKEN_FILE"
-    return 0
-  fi
-
-  [ "$QUIET" -eq 1 ] || printf '%s\n' "Creating a Lazyweb MCP setup credential..." >&2
-  local token response body status install_id
+  [ "$QUIET" -eq 1 ] || [ -n "$existing_token" ] || printf '%s\n' "Creating a Lazyweb MCP setup credential..." >&2
+  local token response body status install_id journey_id payload
   install_id="$(ensure_install_id)"
   prepare_install_cookie_file
+  payload="{\"install_id\":$(json_escape "$install_id")}"
+  if [ "$INSTALL_ATTRIBUTION" -eq 1 ]; then
+    journey_id="$(node -e "process.stdout.write(require('node:crypto').randomUUID())")"
+    payload="{\"install_channel\":\"curl\",\"install_id\":$(json_escape "$install_id"),\"journey_id\":$(json_escape "$journey_id"),\"user_goal\":$(json_escape "$INSTALL_USER_GOAL"),\"discovery_path\":$(json_escape "$INSTALL_DISCOVERY_PATH"),\"discovery_context\":$(json_escape "$INSTALL_DISCOVERY_CONTEXT")}"
+  fi
   # install_id rides in the JSON body — that is the server's durable-identity
   # contract (body-only, never the URL): presenting a known install_id returns
   # the ORIGINAL user/token instead of minting a fresh identity, so re-runs on
   # the same machine keep one account even if the token file was lost. The
   # X-Lazyweb-Install-Id header stays for older deployments that only log it.
-  if ! response="$(curl -sS -X POST "$INSTALL_TOKEN_URL" \
-    -H "content-type: application/json" \
-    -H "X-Lazyweb-Install-Id: $install_id" \
-    -b "$INSTALL_COOKIE_FILE" \
-    -c "$INSTALL_COOKIE_FILE" \
-    -d "{\"install_id\":\"$install_id\"}" \
-    -w $'\n%{http_code}')"; then
+  local -a curl_args=(
+    -sS -X POST "$INSTALL_TOKEN_URL"
+    -H "content-type: application/json"
+    -H "X-Lazyweb-Install-Id: $install_id"
+    -b "$INSTALL_COOKIE_FILE"
+    -c "$INSTALL_COOKIE_FILE"
+    -d "$payload"
+    -w $'\n%{http_code}'
+  )
+  if [ "$INSTALL_ATTRIBUTION" -eq 1 ] && [ -n "$existing_token" ]; then
+    curl_args+=( -H "Authorization: Bearer $existing_token" )
+  fi
+  if ! response="$(curl "${curl_args[@]}")"; then
     echo "Lazyweb MCP setup could not reach $INSTALL_TOKEN_URL. Please retry." >&2
     exit 1
   fi
@@ -225,6 +280,10 @@ ensure_token() {
     | node -e "let s='';process.stdin.on('data',d=>s+=d);process.stdin.on('end',()=>{try{const j=JSON.parse(s);process.stdout.write(j.token||j.userId||'')}catch(_err){process.exitCode=1}})")"
   if [ -z "$token" ]; then
     echo "Lazyweb MCP setup returned no usable token. Please retry." >&2
+    exit 1
+  fi
+  if [ -n "$existing_token" ] && [ "$token" != "$existing_token" ]; then
+    echo "Lazyweb MCP setup returned a different identity for the existing token." >&2
     exit 1
   fi
   printf '%s\n' "$token" > "$TOKEN_FILE"

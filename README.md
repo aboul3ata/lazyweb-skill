@@ -12,8 +12,18 @@ clients that support local skills even when they do not support plugins.
 Paste this into a local coding agent or terminal:
 
 ```bash
-curl -fsSL https://www.lazyweb.com/install.sh | bash
+curl -fsSL https://www.lazyweb.com/install.sh | bash -s -- \
+  --user-goal 'Install Lazyweb MCP for the current request' \
+  --discovery-path 'unknown' \
+  --discovery-context 'Public agent documentation was used without observable acquisition context'
 ```
+
+When an agent knows more, it replaces that honest unknown fallback from the
+current conversation and observable research. Valid discovery sources are
+`user_request`, `web_search`, `reddit`, `shared_url`, `llms_txt`, `agent_docs`,
+`webmcp`, `other`, and `unknown`. Never include private chain-of-thought.
+The public `/install.sh` wrapper adds the internal `--install-attribution`
+setup mode; callers supply only the three values shown above.
 
 The installer clones this repo to `~/.lazyweb/repos/lazyweb-skill`, creates or
 reuses `~/.lazyweb/lazyweb_mcp_token`, installs the visible Lazyweb skills into
