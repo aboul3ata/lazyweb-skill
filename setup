@@ -12,9 +12,16 @@ HOST="auto"
 QUIET=0
 AUTO_UPDATE_CHOICE=""
 INSTALL_ATTRIBUTION=0
+INSTALL_ATTRIBUTION_REQUIRED=0
+INSTALL_EXPERIMENT_TOKEN=""
 INSTALL_USER_GOAL=""
 INSTALL_DISCOVERY_PATH=""
 INSTALL_DISCOVERY_CONTEXT=""
+INSTALL_USER_COMPANY=""
+INSTALL_USER_COMPANY_SET=0
+INSTALL_SUBJECT_PRODUCT_OR_COMPANY=""
+INSTALL_INTENDED_OUTCOME=""
+INSTALL_ALTERNATIVES=()
 INSTALL_JOURNEY_ID=""
 
 # Renamed or purged skill directories from older installs. These must never
@@ -62,7 +69,7 @@ INSTALLED_SKILL_ROOTS=""
 
 usage() {
   cat <<'USAGE'
-Usage: ./setup [--host auto|all|codex|claude|cursor|opencode|kiro|factory|slate|hermes|antigravity] [--quiet] [--auto-update|--no-auto-update] [--install-attribution --user-goal TEXT --discovery-path SOURCE --discovery-context TEXT [--journey-id UUID]]
+Usage: ./setup [--host auto|all|codex|claude|cursor|opencode|kiro|factory|slate|hermes|antigravity] [--quiet] [--auto-update|--no-auto-update] [--install-attribution --user-goal TEXT --discovery-path SOURCE --discovery-context TEXT --user-company TEXT|unknown --intended-outcome TEXT [--subject-product-or-company TEXT] [--alternative-considered TEXT] [--journey-id UUID]]
 
 Installs the standalone Lazyweb skill pack and configures direct Lazyweb MCP
 access for supported local coding clients.
@@ -79,6 +86,14 @@ Flags:
                     agent_docs, webmcp, other, or unknown.
   --discovery-context TEXT
                     Observable evidence explaining how Lazyweb was discovered.
+  --user-company TEXT|unknown
+                    Company or product the user represents, or explicit unknown.
+  --subject-product-or-company TEXT
+                    Optional product or company being researched.
+  --intended-outcome TEXT
+                    What successful Lazyweb use should accomplish.
+  --alternative-considered TEXT
+                    Optional tool or source considered first; repeat up to five.
   --journey-id UUID Preserve an anonymous Lazyweb journey observed before setup.
 USAGE
 }
@@ -110,6 +125,15 @@ while [ "$#" -gt 0 ]; do
       INSTALL_ATTRIBUTION=1
       shift
       ;;
+    --install-attribution-required)
+      INSTALL_ATTRIBUTION_REQUIRED=1
+      shift
+      ;;
+    --install-experiment-token)
+      [ "${2:-}" ] || { echo "Missing value for --install-experiment-token" >&2; exit 1; }
+      INSTALL_EXPERIMENT_TOKEN="$2"
+      shift 2
+      ;;
     --user-goal)
       [ "${2:-}" ] || { echo "Missing value for --user-goal" >&2; exit 1; }
       INSTALL_USER_GOAL="$2"
@@ -123,6 +147,28 @@ while [ "$#" -gt 0 ]; do
     --discovery-context)
       [ "${2:-}" ] || { echo "Missing value for --discovery-context" >&2; exit 1; }
       INSTALL_DISCOVERY_CONTEXT="$2"
+      shift 2
+      ;;
+    --user-company)
+      [ "${2:-}" ] || { echo "Missing value for --user-company" >&2; exit 1; }
+      INSTALL_USER_COMPANY="$2"
+      INSTALL_USER_COMPANY_SET=1
+      shift 2
+      ;;
+    --subject-product-or-company)
+      [ "${2:-}" ] || { echo "Missing value for --subject-product-or-company" >&2; exit 1; }
+      INSTALL_SUBJECT_PRODUCT_OR_COMPANY="$2"
+      shift 2
+      ;;
+    --intended-outcome)
+      [ "${2:-}" ] || { echo "Missing value for --intended-outcome" >&2; exit 1; }
+      INSTALL_INTENDED_OUTCOME="$2"
+      shift 2
+      ;;
+    --alternative-considered)
+      [ "${2:-}" ] || { echo "Missing value for --alternative-considered" >&2; exit 1; }
+      [ "${#INSTALL_ALTERNATIVES[@]}" -lt 5 ] || { echo "--alternative-considered accepts at most five values." >&2; exit 1; }
+      INSTALL_ALTERNATIVES+=("$2")
       shift 2
       ;;
     --journey-id)
@@ -142,18 +188,9 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
-if [ "$INSTALL_ATTRIBUTION" -eq 1 ]; then
-  [ -n "$INSTALL_USER_GOAL" ] || { echo "--user-goal is required for installation attribution." >&2; exit 1; }
-  [ -n "$INSTALL_DISCOVERY_PATH" ] || { echo "--discovery-path is required for installation attribution." >&2; exit 1; }
-  case "$INSTALL_DISCOVERY_PATH" in
-    user_request|web_search|reddit|shared_url|llms_txt|agent_docs|webmcp|other|unknown) ;;
-    *) echo "Invalid --discovery-path: $INSTALL_DISCOVERY_PATH" >&2; exit 1 ;;
-  esac
-  [ -n "$INSTALL_DISCOVERY_CONTEXT" ] || { echo "--discovery-context is required for installation attribution." >&2; exit 1; }
-  if [ -n "$INSTALL_JOURNEY_ID" ] && ! [[ "$INSTALL_JOURNEY_ID" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$ ]]; then
-    echo "Invalid --journey-id: expected UUID." >&2
-    exit 1
-  fi
+if [ -n "$INSTALL_JOURNEY_ID" ] && ! [[ "$INSTALL_JOURNEY_ID" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$ ]]; then
+  echo "Invalid --journey-id: expected UUID." >&2
+  exit 1
 fi
 
 log() {
@@ -166,6 +203,22 @@ has_cmd() {
 
 json_escape() {
   node -e 'process.stdout.write(JSON.stringify(process.argv[1]))' "$1"
+}
+
+validate_install_attribution() {
+  [ "$INSTALL_ATTRIBUTION" -eq 1 ] || {
+    echo "Fresh Lazyweb installation requires attribution from the canonical /install.sh flow." >&2
+    exit 2
+  }
+  case "$INSTALL_USER_GOAL" in ""|REPLACE_WITH_*) echo "--user-goal is required for installation attribution." >&2; exit 1 ;; esac
+  case "$INSTALL_DISCOVERY_PATH" in
+    user_request|web_search|reddit|shared_url|llms_txt|agent_docs|webmcp|other|unknown) ;;
+    *) echo "Invalid --discovery-path: $INSTALL_DISCOVERY_PATH" >&2; exit 1 ;;
+  esac
+  case "$INSTALL_DISCOVERY_CONTEXT" in ""|REPLACE_WITH_*) echo "--discovery-context is required for installation attribution." >&2; exit 1 ;; esac
+  [ "$INSTALL_USER_COMPANY_SET" -eq 1 ] || { echo "--user-company is required for installation attribution." >&2; exit 1; }
+  case "$INSTALL_USER_COMPANY" in ""|REPLACE_WITH_*) echo "--user-company must name the user's company or explicitly say unknown." >&2; exit 1 ;; esac
+  case "$INSTALL_INTENDED_OUTCOME" in ""|REPLACE_WITH_*) echo "--intended-outcome is required for installation attribution." >&2; exit 1 ;; esac
 }
 
 link_or_copy() {
@@ -240,21 +293,40 @@ ensure_token() {
     existing_token="$(tr -d '[:space:]' < "$TOKEN_FILE")"
   fi
 
-  if [ "$INSTALL_ATTRIBUTION" -eq 0 ] && [ -n "$existing_token" ]; then
+  if [ -n "$existing_token" ]; then
     printf '%s\n' "$existing_token" > "$TOKEN_FILE"
     chmod 600 "$TOKEN_FILE" 2>/dev/null || true
     printf '%s' "$existing_token"
     return 0
   fi
 
+  if [ -z "$INSTALL_EXPERIMENT_TOKEN" ]; then
+    echo "Fresh Lazyweb installation requires attribution from the canonical installer." >&2
+    echo "Run: curl -fsSL https://www.lazyweb.com/install.sh | bash" >&2
+    exit 2
+  fi
+  if [ "$INSTALL_ATTRIBUTION_REQUIRED" -eq 1 ] || [ "$INSTALL_ATTRIBUTION" -eq 1 ]; then
+    validate_install_attribution
+  fi
+
   [ "$QUIET" -eq 1 ] || [ -n "$existing_token" ] || printf '%s\n' "Creating a Lazyweb MCP setup credential..." >&2
-  local token response body status install_id journey_id payload
+  local token response body status install_id journey_id payload user_company_json subject_json alternatives_json
   install_id="$(ensure_install_id)"
   prepare_install_cookie_file
-  payload="{\"install_id\":$(json_escape "$install_id")}"
+  journey_id="${INSTALL_JOURNEY_ID:-$(node -e "process.stdout.write(require('node:crypto').randomUUID())")}"
+  payload="{\"install_channel\":\"curl\",\"install_id\":$(json_escape "$install_id"),\"journey_id\":$(json_escape "$journey_id"),\"install_experiment_token\":$(json_escape "$INSTALL_EXPERIMENT_TOKEN")}"
   if [ "$INSTALL_ATTRIBUTION" -eq 1 ]; then
-    journey_id="${INSTALL_JOURNEY_ID:-$(node -e "process.stdout.write(require('node:crypto').randomUUID())")}"
-    payload="{\"install_channel\":\"curl\",\"install_id\":$(json_escape "$install_id"),\"journey_id\":$(json_escape "$journey_id"),\"user_goal\":$(json_escape "$INSTALL_USER_GOAL"),\"discovery_path\":$(json_escape "$INSTALL_DISCOVERY_PATH"),\"discovery_context\":$(json_escape "$INSTALL_DISCOVERY_CONTEXT")}"
+    case "$INSTALL_USER_COMPANY" in
+      unknown|Unknown|UNKNOWN) user_company_json="null" ;;
+      *) user_company_json="$(json_escape "$INSTALL_USER_COMPANY")" ;;
+    esac
+    if [ -n "$INSTALL_SUBJECT_PRODUCT_OR_COMPANY" ]; then
+      subject_json="$(json_escape "$INSTALL_SUBJECT_PRODUCT_OR_COMPANY")"
+    else
+      subject_json="null"
+    fi
+    alternatives_json="$(node -e 'process.stdout.write(JSON.stringify(process.argv.slice(1)))' "${INSTALL_ALTERNATIVES[@]}")"
+    payload="${payload%?},\"user_goal\":$(json_escape "$INSTALL_USER_GOAL"),\"discovery_path\":$(json_escape "$INSTALL_DISCOVERY_PATH"),\"discovery_context\":$(json_escape "$INSTALL_DISCOVERY_CONTEXT"),\"user_company\":$user_company_json,\"subject_product_or_company\":$subject_json,\"intended_outcome\":$(json_escape "$INSTALL_INTENDED_OUTCOME"),\"alternatives_considered\":$alternatives_json}"
   fi
   # install_id rides in the JSON body — that is the server's durable-identity
   # contract (body-only, never the URL): presenting a known install_id returns
@@ -270,9 +342,6 @@ ensure_token() {
     -d "$payload"
     -w $'\n%{http_code}'
   )
-  if [ "$INSTALL_ATTRIBUTION" -eq 1 ] && [ -n "$existing_token" ]; then
-    curl_args+=( -H "Authorization: Bearer $existing_token" )
-  fi
   if ! response="$(curl "${curl_args[@]}")"; then
     echo "Lazyweb MCP setup could not reach $INSTALL_TOKEN_URL. Please retry." >&2
     exit 1
