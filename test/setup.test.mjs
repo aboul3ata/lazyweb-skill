@@ -120,6 +120,50 @@ printf '%s\\n' '{"ok":true,"token":"11111111-1111-4111-8111-111111111111","userI
   }
 });
 
+test("treatment recovers a returning account from install ID without repeating acquisition questions", () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "lazyweb-existing-install-id-treatment-"));
+  const home = path.join(dir, "home");
+  const fakeBin = path.join(dir, "bin");
+  const curlLog = path.join(dir, "curl.log");
+  const installId = "11111111-2222-4333-8444-555555555555";
+  mkdirSync(fakeBin, { recursive: true });
+  mkdirSync(path.join(home, ".lazyweb"), { recursive: true });
+  writeFileSync(path.join(home, ".lazyweb", "install_id"), `${installId}\n`);
+  symlinkSync(process.execPath, path.join(fakeBin, "node"));
+  makeExecutable(path.join(fakeBin, "codex"), "#!/usr/bin/env sh\nexit 0\n");
+  makeExecutable(path.join(fakeBin, "curl"), `#!/usr/bin/env bash
+printf '%s\\n' "$*" >> "${curlLog}"
+printf '%s\\n' '{"ok":true,"token":"44444444-4444-4444-8444-444444444444","userId":"44444444-4444-4444-8444-444444444444"}' '200'
+`);
+
+  try {
+    const result = spawnSync("bash", [
+      setup, "--host", "auto", "--quiet", "--no-auto-update",
+      "--install-experiment-token", "test-signed-treatment-ticket",
+      "--install-attribution-required",
+      "--journey-id", "66666666-6666-4666-8666-666666666666"
+    ], {
+      cwd: root,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        HOME: home,
+        PATH: `${fakeBin}:/usr/bin:/bin:/usr/sbin:/sbin`,
+        LAZYWEB_MCP_TOKEN: "",
+        LAZYWEB_MCP_URL: "https://lazyweb.example.com/mcp",
+        LAZYWEB_INSTALL_TOKEN_URL: "https://lazyweb.example.com/api/mcp/install-token?install_channel=curl",
+        CODEX_HOME: path.join(home, ".codex")
+      }
+    });
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const installCall = readFileSync(curlLog, "utf8");
+    assert.match(installCall, new RegExp(`"install_id":"${installId}"`));
+    assert.doesNotMatch(installCall, /user_goal|discovery_context|user_company|intended_outcome/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test("fresh setup rejects missing attribution before token creation or client changes", () => {
   const dir = mkdtempSync(path.join(tmpdir(), "lazyweb-fresh-missing-attribution-"));
   const home = path.join(dir, "home");

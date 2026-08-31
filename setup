@@ -305,7 +305,7 @@ ensure_token() {
     echo "Run: curl -fsSL https://www.lazyweb.com/install.sh | bash" >&2
     exit 2
   fi
-  if [ "$INSTALL_ATTRIBUTION_REQUIRED" -eq 1 ] || [ "$INSTALL_ATTRIBUTION" -eq 1 ]; then
+  if [ "$INSTALL_ATTRIBUTION" -eq 1 ] || { [ "$INSTALL_ATTRIBUTION_REQUIRED" -eq 1 ] && [ ! -s "$INSTALL_ID_FILE" ]; }; then
     validate_install_attribution
   fi
 
