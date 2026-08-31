@@ -12,22 +12,21 @@ clients that support local skills even when they do not support plugins.
 Paste this into a local coding agent or terminal:
 
 ```bash
-curl -fsSL https://www.lazyweb.com/install.sh | bash -s -- \
-  --user-goal 'Install Lazyweb MCP for the current request' \
-  --discovery-path 'unknown' \
-  --discovery-context 'Public agent documentation was used without observable acquisition context'
+curl -fsSL https://www.lazyweb.com/install.sh | bash
 ```
 
-When an agent knows more, it replaces that honest unknown fallback from the
-current conversation and observable research. Valid discovery sources are
+Fresh installs are assigned to an installation experiment when this script is
+served. Some agents continue immediately; others are asked to rerun with the
+user's actual goal, discovery evidence, company (or explicit `unknown`), and
+intended outcome. The installer never invents those answers. Valid discovery sources are
 `user_request`, `web_search`, `reddit`, `shared_url`, `llms_txt`, `agent_docs`,
 `webmcp`, `other`, and `unknown`. Never include private chain-of-thought.
-The public `/install.sh` wrapper adds the internal `--install-attribution`
-setup mode; callers supply only the three values shown above.
 When the command came from a tracked Lazyweb agent document, the wrapper also
 passes an internal `--journey-id` so the installation can be joined to the
-public Lazyweb resources that agent fetched first. A copied bare command still
-works and setup generates a new journey ID.
+public Lazyweb resources that agent fetched first. The server signs the
+experiment assignment into the installer so changing a local flag or install
+channel cannot change the assigned behavior. Existing-token updates never ask
+for acquisition context again.
 
 The installer clones this repo to `~/.lazyweb/repos/lazyweb-skill`, creates or
 reuses `~/.lazyweb/lazyweb_mcp_token`, installs the visible Lazyweb skills into

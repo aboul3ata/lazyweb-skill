@@ -33,7 +33,16 @@ function runSetup(home, fakeBin) {
 }
 
 function runSetupWithoutToken(home, fakeBin, extraEnv = {}) {
-  return spawnSync("bash", [setup, "--host", "auto", "--quiet", "--no-auto-update"], {
+  return spawnSync("bash", [
+    setup, "--host", "auto", "--quiet", "--no-auto-update",
+    "--install-experiment-token", "test-signed-control-ticket",
+    "--install-attribution",
+    "--user-goal", "Install Lazyweb for the current product task",
+    "--discovery-path", "user_request",
+    "--discovery-context", "The user explicitly requested a fresh Lazyweb installation.",
+    "--user-company", "unknown",
+    "--intended-outcome", "Use Lazyweb product evidence in the current task"
+  ], {
     cwd: root,
     encoding: "utf8",
     env: {
@@ -60,10 +69,14 @@ function runAttributedSetup(home, fakeBin, extraEnv = {}, extraArgs = []) {
     "--host", "auto",
     "--quiet",
     "--no-auto-update",
+    "--install-experiment-token", "test-signed-treatment-ticket",
+    "--install-attribution-required",
     "--install-attribution",
     "--user-goal", "Find stronger onboarding examples",
     "--discovery-path", "reddit",
     "--discovery-context", "The agent opened a Reddit thread recommending Lazyweb.",
+    "--user-company", "unknown",
+    "--intended-outcome", "Improve onboarding conversion with real product evidence",
     ...extraArgs
   ], {
     cwd: root,
@@ -83,7 +96,7 @@ function runAttributedSetup(home, fakeBin, extraEnv = {}, extraArgs = []) {
   });
 }
 
-test("attributed setup submits context even when an MCP token already exists", () => {
+test("existing-token updates remain frictionless even when the fetched installer is treatment", () => {
   const dir = mkdtempSync(path.join(tmpdir(), "lazyweb-attributed-existing-token-"));
   const home = path.join(dir, "home");
   const fakeBin = path.join(dir, "bin");
@@ -100,13 +113,83 @@ printf '%s\\n' '{"ok":true,"token":"11111111-1111-4111-8111-111111111111","userI
   try {
     const result = runAttributedSetup(home, fakeBin);
     assert.equal(result.status, 0, result.stderr || result.stdout);
-    const installCall = readFileSync(curlLog, "utf8");
-    assert.match(installCall, /Authorization: Bearer 11111111-1111-4111-8111-111111111111/);
-    assert.match(installCall, /Find stronger onboarding examples/);
-    assert.match(installCall, /reddit/);
-    assert.match(installCall, /Reddit thread recommending Lazyweb/);
-    assert.match(installCall, /journey_id/);
+    assert.equal(existsSync(curlLog), false);
     assert.doesNotMatch(`${result.stdout}\n${result.stderr}`, /11111111-1111-4111-8111-111111111111|Reddit thread/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("fresh setup rejects missing attribution before token creation or client changes", () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "lazyweb-fresh-missing-attribution-"));
+  const home = path.join(dir, "home");
+  const fakeBin = path.join(dir, "bin");
+  const curlLog = path.join(dir, "curl.log");
+  mkdirSync(fakeBin, { recursive: true });
+  mkdirSync(home, { recursive: true });
+  symlinkSync(process.execPath, path.join(fakeBin, "node"));
+  makeExecutable(path.join(fakeBin, "codex"), "#!/usr/bin/env sh\nexit 0\n");
+  makeExecutable(path.join(fakeBin, "curl"), `#!/usr/bin/env sh\nprintf '%s\\n' "$*" >> "${curlLog}"\nexit 1\n`);
+
+  try {
+    const result = spawnSync("bash", [setup, "--host", "auto", "--quiet", "--no-auto-update"], {
+      cwd: root,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        HOME: home,
+        PATH: `${fakeBin}:/usr/bin:/bin:/usr/sbin:/sbin`,
+        LAZYWEB_MCP_TOKEN: "",
+        LAZYWEB_MCP_URL: "https://lazyweb.example.com/mcp",
+        LAZYWEB_INSTALL_TOKEN_URL: "https://lazyweb.example.com/api/mcp/install-token",
+        CODEX_HOME: path.join(home, ".codex")
+      }
+    });
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /Fresh Lazyweb installation requires attribution/);
+    assert.equal(existsSync(curlLog), false);
+    assert.equal(existsSync(path.join(home, ".codex", "config.toml")), false);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("control fresh setup preserves missing attribution instead of inventing answers", () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "lazyweb-control-missing-attribution-"));
+  const home = path.join(dir, "home");
+  const fakeBin = path.join(dir, "bin");
+  const curlLog = path.join(dir, "curl.log");
+  mkdirSync(fakeBin, { recursive: true });
+  mkdirSync(home, { recursive: true });
+  symlinkSync(process.execPath, path.join(fakeBin, "node"));
+  makeExecutable(path.join(fakeBin, "codex"), "#!/usr/bin/env sh\nexit 0\n");
+  makeExecutable(path.join(fakeBin, "curl"), `#!/usr/bin/env bash
+printf '%s\\n' "$*" >> "${curlLog}"
+printf '%s\\n' '{"ok":true,"token":"33333333-3333-4333-8333-333333333333","userId":"33333333-3333-4333-8333-333333333333"}' '200'
+`);
+
+  try {
+    const result = spawnSync("bash", [
+      setup, "--host", "auto", "--quiet", "--no-auto-update",
+      "--install-experiment-token", "test-signed-control-ticket",
+      "--journey-id", "11111111-2222-4333-8444-555555555555"
+    ], {
+      cwd: root,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        HOME: home,
+        PATH: `${fakeBin}:/usr/bin:/bin:/usr/sbin:/sbin`,
+        LAZYWEB_MCP_TOKEN: "",
+        LAZYWEB_MCP_URL: "https://lazyweb.example.com/mcp",
+        LAZYWEB_INSTALL_TOKEN_URL: "https://lazyweb.example.com/api/mcp/install-token?install_channel=curl",
+        CODEX_HOME: path.join(home, ".codex")
+      }
+    });
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const installCall = readFileSync(curlLog, "utf8");
+    assert.match(installCall, /install_experiment_token/);
+    assert.doesNotMatch(installCall, /user_goal|discovery_context|user_company|intended_outcome/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -128,7 +211,7 @@ printf '%s\\n' '{"ok":true,"token":"11111111-1111-4111-8111-111111111111","userI
 `);
 
   try {
-    const result = runAttributedSetup(home, fakeBin, {}, ["--journey-id", journeyId]);
+    const result = runAttributedSetup(home, fakeBin, { LAZYWEB_MCP_TOKEN: "" }, ["--journey-id", journeyId]);
     assert.equal(result.status, 0, result.stderr || result.stdout);
     const installCall = readFileSync(curlLog, "utf8");
     assert.match(installCall, new RegExp(`"journey_id":"${journeyId}"`));
@@ -200,9 +283,13 @@ test("attributed setup rejects a missing user goal before changing client config
       "--host", "auto",
       "--quiet",
       "--no-auto-update",
+      "--install-experiment-token", "test-signed-treatment-ticket",
+      "--install-attribution-required",
       "--install-attribution",
       "--discovery-path", "reddit",
-      "--discovery-context", "A Reddit thread recommended Lazyweb."
+      "--discovery-context", "A Reddit thread recommended Lazyweb.",
+      "--user-company", "unknown",
+      "--intended-outcome", "Improve onboarding conversion"
     ], {
       cwd: root,
       encoding: "utf8",
@@ -210,7 +297,7 @@ test("attributed setup rejects a missing user goal before changing client config
         ...process.env,
         HOME: home,
         PATH: `${fakeBin}:/usr/bin:/bin:/usr/sbin:/sbin`,
-        LAZYWEB_MCP_TOKEN: "11111111-1111-4111-8111-111111111111",
+        LAZYWEB_MCP_TOKEN: "",
         CODEX_HOME: path.join(home, ".codex")
       }
     });
@@ -339,7 +426,7 @@ fi
     for (const call of calls) {
       assert.match(call, new RegExp(`X-Lazyweb-Install-Id: ${installId}`));
       assert.ok(
-        call.includes(`{"install_id":"${installId}"}`),
+        call.includes(`"install_id":"${installId}"`),
         "install_id must ride in the JSON body (the server's durable-identity contract)"
       );
       assert.match(call, /install_cookies/);
@@ -426,7 +513,7 @@ esac
     assert.ok(installCall);
     assert.match(installCall, new RegExp(`X-Lazyweb-Install-Id: ${installId}`));
     assert.ok(
-      installCall.includes(`{"install_id":"${installId}"}`),
+      installCall.includes(`"install_id":"${installId}"`),
       "install_id must ride in the JSON body (the server's durable-identity contract)"
     );
     assert.match(installCall, /install_cookies/);
