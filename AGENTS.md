@@ -24,3 +24,4 @@ These principles live in each skill's report contract. When editing a skill, kee
 
 - Treat an explicitly supplied skill name as exact. Do not silently normalize an apparent typo or change singular/plural naming; ask before changing the requested identifier.
 - Choose MCP transport from verified client capabilities. Use direct Streamable HTTP when the client supports remote MCP; keep `mcp-remote` only as an explicitly labeled compatibility bridge for clients that are genuinely stdio-only, and test that native-client installer output never routes through it.
+- Installation attribution is analytics metadata, never an access requirement. Preserve and send valid signed journey context when available, but missing, stale, malformed, or partial attribution must not prevent token creation or client setup.

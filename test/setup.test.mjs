@@ -164,7 +164,7 @@ printf '%s\\n' '{"ok":true,"token":"44444444-4444-4444-8444-444444444444","userI
   }
 });
 
-test("fresh setup rejects missing attribution before token creation or client changes", () => {
+test("fresh setup mints without attribution or a signed assignment", () => {
   const dir = mkdtempSync(path.join(tmpdir(), "lazyweb-fresh-missing-attribution-"));
   const home = path.join(dir, "home");
   const fakeBin = path.join(dir, "bin");
@@ -173,7 +173,10 @@ test("fresh setup rejects missing attribution before token creation or client ch
   mkdirSync(home, { recursive: true });
   symlinkSync(process.execPath, path.join(fakeBin, "node"));
   makeExecutable(path.join(fakeBin, "codex"), "#!/usr/bin/env sh\nexit 0\n");
-  makeExecutable(path.join(fakeBin, "curl"), `#!/usr/bin/env sh\nprintf '%s\\n' "$*" >> "${curlLog}"\nexit 1\n`);
+  makeExecutable(path.join(fakeBin, "curl"), `#!/usr/bin/env bash
+printf '%s\\n' "$*" >> "${curlLog}"
+printf '%s\\n' '{"ok":true,"token":"55555555-5555-4555-8555-555555555555","userId":"55555555-5555-4555-8555-555555555555"}' '200'
+`);
 
   try {
     const result = spawnSync("bash", [setup, "--host", "auto", "--quiet", "--no-auto-update"], {
@@ -189,10 +192,14 @@ test("fresh setup rejects missing attribution before token creation or client ch
         CODEX_HOME: path.join(home, ".codex")
       }
     });
-    assert.notEqual(result.status, 0);
-    assert.match(result.stderr, /Fresh Lazyweb installation requires attribution/);
-    assert.equal(existsSync(curlLog), false);
-    assert.equal(existsSync(path.join(home, ".codex", "config.toml")), false);
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    const installCall = readFileSync(curlLog, "utf8");
+    assert.match(installCall, /"install_experiment_token":""/);
+    assert.doesNotMatch(installCall, /user_goal|discovery_context|user_company|intended_outcome/);
+    assert.equal(
+      readFileSync(path.join(home, ".lazyweb", "lazyweb_mcp_token"), "utf8").trim(),
+      "55555555-5555-4555-8555-555555555555"
+    );
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
@@ -313,13 +320,19 @@ printf '%s\\n' '{"ok":true,"token":"22222222-2222-4222-8222-222222222222","userI
   }
 });
 
-test("attributed setup rejects a missing user goal before changing client config", () => {
+test("partial attribution never blocks setup", () => {
   const dir = mkdtempSync(path.join(tmpdir(), "lazyweb-attributed-missing-goal-"));
   const home = path.join(dir, "home");
   const fakeBin = path.join(dir, "bin");
+  const curlLog = path.join(dir, "curl.log");
   mkdirSync(fakeBin, { recursive: true });
   mkdirSync(home, { recursive: true });
   symlinkSync(process.execPath, path.join(fakeBin, "node"));
+  makeExecutable(path.join(fakeBin, "codex"), "#!/usr/bin/env sh\nexit 0\n");
+  makeExecutable(path.join(fakeBin, "curl"), `#!/usr/bin/env bash
+printf '%s\\n' "$*" >> "${curlLog}"
+printf '%s\\n' '{"ok":true,"token":"66666666-6666-4666-8666-666666666666","userId":"66666666-6666-4666-8666-666666666666"}' '200'
+`);
 
   try {
     const result = spawnSync("bash", [
@@ -342,12 +355,12 @@ test("attributed setup rejects a missing user goal before changing client config
         HOME: home,
         PATH: `${fakeBin}:/usr/bin:/bin:/usr/sbin:/sbin`,
         LAZYWEB_MCP_TOKEN: "",
+        LAZYWEB_INSTALL_TOKEN_URL: "https://lazyweb.example.com/api/mcp/install-token",
         CODEX_HOME: path.join(home, ".codex")
       }
     });
-    assert.equal(result.status, 1);
-    assert.match(result.stderr, /--user-goal is required/);
-    assert.equal(existsSync(path.join(home, ".codex", "config.toml")), false);
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    assert.match(readFileSync(curlLog, "utf8"), /"user_goal":""/);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

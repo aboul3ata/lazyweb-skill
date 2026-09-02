@@ -12,7 +12,6 @@ HOST="auto"
 QUIET=0
 AUTO_UPDATE_CHOICE=""
 INSTALL_ATTRIBUTION=0
-INSTALL_ATTRIBUTION_REQUIRED=0
 INSTALL_EXPERIMENT_TOKEN=""
 INSTALL_USER_GOAL=""
 INSTALL_DISCOVERY_PATH=""
@@ -126,7 +125,7 @@ while [ "$#" -gt 0 ]; do
       shift
       ;;
     --install-attribution-required)
-      INSTALL_ATTRIBUTION_REQUIRED=1
+      # Legacy no-op: previously rendered installers may still pass this flag.
       shift
       ;;
     --install-experiment-token)
@@ -203,22 +202,6 @@ has_cmd() {
 
 json_escape() {
   node -e 'process.stdout.write(JSON.stringify(process.argv[1]))' "$1"
-}
-
-validate_install_attribution() {
-  [ "$INSTALL_ATTRIBUTION" -eq 1 ] || {
-    echo "Fresh Lazyweb installation requires attribution from the canonical /install.sh flow." >&2
-    exit 2
-  }
-  case "$INSTALL_USER_GOAL" in ""|REPLACE_WITH_*) echo "--user-goal is required for installation attribution." >&2; exit 1 ;; esac
-  case "$INSTALL_DISCOVERY_PATH" in
-    user_request|web_search|reddit|shared_url|llms_txt|agent_docs|webmcp|other|unknown) ;;
-    *) echo "Invalid --discovery-path: $INSTALL_DISCOVERY_PATH" >&2; exit 1 ;;
-  esac
-  case "$INSTALL_DISCOVERY_CONTEXT" in ""|REPLACE_WITH_*) echo "--discovery-context is required for installation attribution." >&2; exit 1 ;; esac
-  [ "$INSTALL_USER_COMPANY_SET" -eq 1 ] || { echo "--user-company is required for installation attribution." >&2; exit 1; }
-  case "$INSTALL_USER_COMPANY" in ""|REPLACE_WITH_*) echo "--user-company must name the user's company or explicitly say unknown." >&2; exit 1 ;; esac
-  case "$INSTALL_INTENDED_OUTCOME" in ""|REPLACE_WITH_*) echo "--intended-outcome is required for installation attribution." >&2; exit 1 ;; esac
 }
 
 link_or_copy() {
@@ -298,15 +281,6 @@ ensure_token() {
     chmod 600 "$TOKEN_FILE" 2>/dev/null || true
     printf '%s' "$existing_token"
     return 0
-  fi
-
-  if [ -z "$INSTALL_EXPERIMENT_TOKEN" ]; then
-    echo "Fresh Lazyweb installation requires attribution from the canonical installer." >&2
-    echo "Run: curl -fsSL https://www.lazyweb.com/install.sh | bash" >&2
-    exit 2
-  fi
-  if [ "$INSTALL_ATTRIBUTION" -eq 1 ] || { [ "$INSTALL_ATTRIBUTION_REQUIRED" -eq 1 ] && [ ! -s "$INSTALL_ID_FILE" ]; }; then
-    validate_install_attribution
   fi
 
   [ "$QUIET" -eq 1 ] || [ -n "$existing_token" ] || printf '%s\n' "Creating a Lazyweb MCP setup credential..." >&2
