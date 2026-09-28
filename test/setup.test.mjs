@@ -815,6 +815,27 @@ test("setup upgrades the legacy Codex bridge to native HTTP without clobbering n
   }
 });
 
+test("setup preserves an existing signed-OAuth Lazyweb connection", () => {
+  const dir = mkdtempSync(path.join(tmpdir(), "lazyweb-setup-codex-oauth-"));
+  const home = path.join(dir, "home");
+  const fakeBin = path.join(dir, "bin");
+  const codexHome = path.join(home, ".codex");
+  mkdirSync(fakeBin, { recursive: true });
+  mkdirSync(codexHome, { recursive: true });
+  symlinkSync(process.execPath, path.join(fakeBin, "node"));
+  makeExecutable(path.join(fakeBin, "codex"), "#!/usr/bin/env sh\nexit 0\n");
+  const original = '[mcp_servers.lazyweb]\nurl = "https://lazyweb.example.com/mcp"\n\n[mcp_servers.keep_me]\nurl = "https://example.com/mcp"\n';
+  writeFileSync(path.join(codexHome, "config.toml"), original);
+
+  try {
+    const result = runSetupHost(home, fakeBin, "codex", { quiet: true });
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    assert.equal(readFileSync(path.join(codexHome, "config.toml"), "utf8"), original);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 function runSetupHost(home, fakeBin, host, { quiet = false } = {}) {
   const args = [setup, "--host", host];
   if (quiet) args.push("--quiet");

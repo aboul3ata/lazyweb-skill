@@ -683,6 +683,15 @@ try {
 }
 
 const lines = text.split(/\n/);
+const start = lines.findIndex(line => /^\s*\[mcp_servers\.lazyweb\]\s*$/.test(line));
+if (start !== -1) {
+  const end = lines.findIndex((line, index) => index > start && /^\s*\[[^\]]+\]\s*$/.test(line));
+  const current = lines.slice(start + 1, end === -1 ? undefined : end).join("\n");
+  if (current.includes(`url = ${JSON.stringify(mcpUrl)}`) &&
+      !/^\s*(?:http_headers|bearer_token_env_var)\s*=/m.test(current)) {
+    process.exit(0); // Keep an existing native OAuth connection instead of replacing it with a UUID token.
+  }
+}
 const out = [];
 let skipping = false;
 for (const line of lines) {
