@@ -32,6 +32,12 @@ reuses `~/.lazyweb/lazyweb_mcp_token`, installs the visible Lazyweb skills into
 detected local clients, and configures Lazyweb MCP at
 `https://www.lazyweb.com/mcp`.
 
+Approved private-workspace users should sign in with OAuth on the existing
+`lazyweb` MCP entry. In Codex, run
+`codex mcp add lazyweb --url https://www.lazyweb.com/mcp --oauth-client-registration dcr`
+and verify the account email. Future skill-pack updates preserve that OAuth
+connection instead of replacing it with the public install token.
+
 When an agent client launches the installer, setup targets that active client
 only. A plain terminal run without an active-client signal still detects local
 clients; use `--host all` when you deliberately want every supported client.
